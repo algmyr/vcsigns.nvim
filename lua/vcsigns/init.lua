@@ -137,13 +137,40 @@ local function _command(arg)
   fun(bufnr)
 end
 
-function M.setup()
+local default_config = {
+  auto_enable = true,
+  signs = {
+    add = {
+      text = "▏",
+      hl = "SignAdd",
+    },
+    change = {
+      text = "▏",
+      hl = "SignChange",
+    },
+    delete = {
+      text = "▁",
+      hl = "SignDelete",
+    },
+    delete_first_line = {
+      text = "▔",
+      hl = "SignDeleteFirstLine",
+    },
+    change_delete = {
+      text = "▏▔",
+      hl = "SignChangeDelete",
+    },
+  },
+}
+
+function M.setup(user_config)
   -- Disabled at least for debugging.
   -- if vim.g.vcsigns_loaded then
   --   return
   -- end
   -- vim.g.vcsigns_loaded = true
-  local auto_enable = true
+
+  local config = vim.tbl_deep_extend("force", default_config, user_config or {})
 
   vim.api.nvim_create_user_command(
     "VCSigns",
@@ -151,7 +178,9 @@ function M.setup()
     { desc = "VCSigns command", nargs = 1, bar = true }
   )
 
-  if auto_enable then
+  M.sign.signs = config.signs
+
+  if config.auto_enable then
     -- Enable VCSigns for all buffers.
     vim.api.nvim_create_autocmd("BufEnter", {
       pattern = "*",

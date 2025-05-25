@@ -1,16 +1,7 @@
 local M = {}
 
-local function _sign(text, hl)
-  return { text = text, hl = "Sign" .. hl }
-end
-
--- TODO(algmyr): Make these configurable.
-local sign_add = _sign("▏", "Add")
-local sign_change = _sign("▏", "Change")
-local sign_delete = _sign("▁", "Delete")
-local sign_delete_first_line = _sign("▔", "DeleteFirstLine")
-local sign_change_delete =
-  _sign(sign_change.text .. sign_delete_first_line.text, "ChangeDelete")
+-- Will be overridden by user config.
+M.signs = nil
 
 local function _sign_namespace()
   return vim.api.nvim_create_namespace "vcsigns"
@@ -48,32 +39,32 @@ function M.add_signs(bufnr, hunks)
     if hunk.minus_count == 0 and hunk.plus_count > 0 then
       -- Pure add.
       added = added + hunk.plus_count
-      _add_sign_range(hunk.plus_start, hunk.plus_count, sign_add)
+      _add_sign_range(hunk.plus_start, hunk.plus_count, M.signs.add)
     elseif hunk.minus_count > 0 and hunk.plus_count == 0 then
       -- Pure delete.
       deleted = deleted + hunk.minus_count
       if hunk.plus_start == 0 then
         -- First line delete.
-        _add_sign(1, sign_delete_first_line)
+        _add_sign(1, M.signs.delete_first_line)
       elseif show_count then
         -- Delete with count.  TODO(algmyr)
       else
         -- Delete without count.
-        _add_sign(hunk.plus_start, sign_delete)
+        _add_sign(hunk.plus_start, M.signs.delete)
       end
       -- TODO(algmyr): Need trimming logic for the count case.
     elseif hunk.minus_count > 0 and hunk.plus_count > 0 then
       if hunk.minus_count == hunk.plus_count then
         -- All lines changed.
         modified = modified + hunk.plus_count
-        _add_sign_range(hunk.plus_start, hunk.plus_count, sign_change)
+        _add_sign_range(hunk.plus_start, hunk.plus_count, M.signs.change)
       elseif hunk.minus_count < hunk.plus_count then
         -- Some lines added.
         local diff = hunk.plus_count - hunk.minus_count
         modified = modified + hunk.minus_count
         added = added + diff
-        _add_sign_range(hunk.plus_start, hunk.minus_count, sign_change)
-        _add_sign_range(hunk.plus_start + hunk.minus_count, diff, sign_add)
+        _add_sign_range(hunk.plus_start, hunk.minus_count, M.signs.change)
+        _add_sign_range(hunk.plus_start + hunk.minus_count, diff, M.signs.add)
       else
         -- Some lines deleted.
         local diff = hunk.minus_count - hunk.plus_count
@@ -86,9 +77,13 @@ function M.add_signs(bufnr, hunks)
         end
 
         if not prev_line_available then
-          _add_sign(hunk.plus_start, sign_change_delete)
+          _add_sign(hunk.plus_start, M.signs.change_delete)
         end
-        _add_sign_range(hunk.plus_start + 1, hunk.plus_count - 1, sign_change)
+        _add_sign_range(
+          hunk.plus_start + 1,
+          hunk.plus_count - 1,
+          M.signs.change
+        )
       end
     end
   end

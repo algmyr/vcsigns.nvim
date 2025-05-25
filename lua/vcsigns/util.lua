@@ -11,4 +11,20 @@ function M.verbose(msg, label)
   end
 end
 
+function M.run_with_timeout(cmd, callback)
+  if callback == nil then
+    return vim.system(cmd, { timeout = 2000 })
+  end
+
+  return vim.system(cmd, { timeout = 2000 }, function(out)
+    if out.code == 124 then
+      M.util.verbose("Command timed out: " .. table.concat(cmd, " "), "run")
+      return
+    end
+    vim.schedule(function()
+      callback(out)
+    end)
+  end)
+end
+
 return M

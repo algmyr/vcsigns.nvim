@@ -77,19 +77,15 @@ function M.update_signs(bufnr)
     local cmd = vcs.show_cmd(bufnr)
     local new_contents = table.concat(buffer_lines, "\n")
 
-    vim.system(cmd, {}, function(out)
-      vim.schedule(function()
-        local old_contents = out.stdout
-        if not old_contents then
-          M.util.verbose(
-            "No output from command, skipping diff",
-            "update_signs"
-          )
-          return
-        end
-        local hunks = M.diff.compute_diff(old_contents, new_contents)
-        M.sign.add_signs(bufnr, hunks)
-      end)
+    M.util.run_with_timeout(cmd, function(out)
+      -- TODO(algmyr): Handle unexpected error codes.
+      local old_contents = out.stdout
+      if not old_contents then
+        M.util.verbose("No output from command, skipping diff", "update_signs")
+        return
+      end
+      local hunks = M.diff.compute_diff(old_contents, new_contents)
+      M.sign.add_signs(bufnr, hunks)
     end)
   else
     M.util.verbose(
@@ -97,12 +93,17 @@ function M.update_signs(bufnr)
       "update_signs"
     )
     local cmd = vcs.diff_cmd(bufnr)
-    vim.system(cmd, {}, function(out)
-      vim.schedule(function()
-        local lines = vim.split(out.stdout, "\n", { plain = true })
-        local hunks = M.diff.get_hunks(lines)
-        M.sign.add_signs(bufnr, hunks)
-      end)
+    M.util.run_with_timeout(cmd, function(out)
+      if out.code ~= 0 then
+        M.util.verbose(
+          "Error running show command: " .. out.stderr,
+          "update_signs"
+        )
+        return
+      end
+      local lines = vim.split(out.stdout, "\n", { plain = true })
+      local hunks = M.diff.get_hunks(lines)
+      M.sign.add_signs(bufnr, hunks)
     end)
   end
 end

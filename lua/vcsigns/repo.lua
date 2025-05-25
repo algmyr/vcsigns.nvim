@@ -84,7 +84,7 @@ function M.detect_vcs(bufnr)
     )
     local vcs = M.get_vcs(name)
     local detect_cmd = vcs.detect_cmd()
-    local res = vim.system(detect_cmd, {}):wait()
+    local res = require("vcsigns").util.run_with_timeout(detect_cmd):wait()
     if res.code == 0 then
       return vcs
     end

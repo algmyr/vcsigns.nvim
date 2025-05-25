@@ -120,6 +120,40 @@ local function _stop(bufnr)
   vim.b[bufnr].vcsigns_vcs = nil
 end
 
+local last_target_notification = nil
+
+local function _target_change_message()
+  local msg = string.format("Now diffing against HEAD~%d", vim.g.target_commit)
+  last_target_notification = vim.notify(
+    msg,
+    vim.log.levels.INFO,
+    { title = "VCSigns", replace = last_target_notification }
+  )
+end
+
+local function _older(bufnr)
+  vim.g.target_commit = vim.g.target_commit + 1
+  _target_change_message()
+  M.update_signs(bufnr)
+end
+
+local function _newer(bufnr)
+  if vim.g.target_commit > 0 then
+    vim.g.target_commit = vim.g.target_commit - 1
+    _target_change_message()
+    M.update_signs(bufnr)
+  else
+    last_target_notification = vim.notify(
+      "No timetravel! Cannot diff against HEAD~-1",
+      vim.log.levels.WARN,
+      {
+        title = "VCSigns",
+        replace = last_target_notification,
+      }
+    )
+  end
+end
+
 local function _command(arg)
   local bufnr = vim.api.nvim_get_current_buf()
   local cmd = arg.fargs[1]
@@ -127,6 +161,8 @@ local function _command(arg)
     trigger = M.update_signs,
     start = _start,
     stop = _stop,
+    newer = _newer,
+    older = _older,
   }
 
   local fun = command_map[cmd]
@@ -169,6 +205,8 @@ function M.setup(user_config)
   --   return
   -- end
   -- vim.g.vcsigns_loaded = true
+
+  vim.g.target_commit = 0
 
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
 

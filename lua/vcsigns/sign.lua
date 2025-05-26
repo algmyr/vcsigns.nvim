@@ -11,7 +11,7 @@ end
 ---@param hunks Hunk[]
 ---@return nil
 function M.add_signs(bufnr, hunks)
-  local show_count = false
+  local show_delete_count = vim.g.vcsigns_show_delete_count
 
   local added = 0
   local modified = 0
@@ -46,13 +46,23 @@ function M.add_signs(bufnr, hunks)
       if hunk.plus_start == 0 then
         -- First line delete.
         _add_sign(1, M.signs.delete_first_line)
-      elseif show_count then
-        -- Delete with count.  TODO(algmyr)
+      elseif show_delete_count then
+        -- Delete with count.
+        local sign = vim.deepcopy(M.signs.delete)
+        if hunk.minus_count == 1 then
+          -- Keep the sign as is.
+        elseif hunk.minus_count < 10 then
+          sign.text = hunk.minus_count .. sign.text
+        elseif hunk.minus_count < 100 then
+          sign.text = hunk.minus_count .. ""
+        else
+          sign.text = ">" .. sign.text
+        end
+        _add_sign(hunk.plus_start, sign)
       else
         -- Delete without count.
         _add_sign(hunk.plus_start, M.signs.delete)
       end
-      -- TODO(algmyr): Need trimming logic for the count case.
     elseif hunk.minus_count > 0 and hunk.plus_count > 0 then
       if hunk.minus_count == hunk.plus_count then
         -- All lines changed.

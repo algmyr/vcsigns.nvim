@@ -176,6 +176,7 @@ end
 
 local default_config = {
   auto_enable = true,
+  show_delete_count = true,
   signs = {
     add = {
       text = "▏",
@@ -210,6 +211,7 @@ function M.setup(user_config)
   vim.g.target_commit = 0
 
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
+  vim.g.vcsigns_show_delete_count = config.show_delete_count
 
   vim.api.nvim_create_user_command(
     "VCSigns",

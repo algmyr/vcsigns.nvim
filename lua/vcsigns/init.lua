@@ -68,6 +68,8 @@ function M.update_signs(bufnr)
     return
   end
 
+  local file_dir = M.util.file_dir(bufnr)
+
   if vim.bo[bufnr].modified then
     M.util.verbose(
       "Buffer is modified, diffing against buffer contents",
@@ -77,7 +79,7 @@ function M.update_signs(bufnr)
     local cmd = vcs.show_cmd(bufnr)
     local new_contents = table.concat(buffer_lines, "\n")
 
-    M.util.run_with_timeout(cmd, function(out)
+    M.util.run_with_timeout(cmd, { cwd = file_dir }, function(out)
       -- TODO(algmyr): Handle unexpected error codes.
       local old_contents = out.stdout
       if not old_contents then
@@ -93,7 +95,7 @@ function M.update_signs(bufnr)
       "update_signs"
     )
     local cmd = vcs.diff_cmd(bufnr)
-    M.util.run_with_timeout(cmd, function(out)
+    M.util.run_with_timeout(cmd, { cwd = file_dir }, function(out)
       if out.code ~= 0 then
         M.util.verbose(
           "Error running show command: " .. out.stderr,

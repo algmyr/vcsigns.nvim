@@ -178,8 +178,11 @@ local function _command(arg)
 end
 
 local default_config = {
+  -- Enable in all buffers by default.
   auto_enable = true,
+  -- Shot the number of deleted lines in the sign column.
   show_delete_count = true,
+  -- Signs to use for different types of changes.
   signs = {
     add = {
       text = "▏",
@@ -215,6 +218,7 @@ function M.setup(user_config)
 
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
+  M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {
     desc = "VCSigns command",
@@ -230,8 +234,6 @@ function M.setup(user_config)
       end, vim.tbl_keys(command_map))
     end,
   })
-
-  M.sign.signs = config.signs
 
   if config.auto_enable then
     -- Enable VCSigns for all buffers.

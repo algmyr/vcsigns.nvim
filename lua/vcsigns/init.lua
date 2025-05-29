@@ -157,16 +157,17 @@ local function _newer(bufnr)
   end
 end
 
+local command_map = {
+  trigger = M.update_signs,
+  start = _start,
+  stop = _stop,
+  newer = _newer,
+  older = _older,
+}
+
 local function _command(arg)
   local bufnr = vim.api.nvim_get_current_buf()
   local cmd = arg.fargs[1]
-  local command_map = {
-    trigger = M.update_signs,
-    start = _start,
-    stop = _stop,
-    newer = _newer,
-    older = _older,
-  }
 
   local fun = command_map[cmd]
   if not fun then
@@ -215,11 +216,20 @@ function M.setup(user_config)
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
 
-  vim.api.nvim_create_user_command(
-    "VCSigns",
-    _command,
-    { desc = "VCSigns command", nargs = 1, bar = true }
-  )
+  vim.api.nvim_create_user_command("VCSigns", _command, {
+    desc = "VCSigns command",
+    nargs = 1,
+    bar = true,
+    complete = function(_, line)
+      if line:match "^%s*VCSigns %w+ " then
+        return {}
+      end
+      local prefix = line:match "^%s*VCSigns (%w*)" or ""
+      return vim.tbl_filter(function(key)
+        return key:find(prefix) == 1
+      end, vim.tbl_keys(command_map))
+    end,
+  })
 
   M.sign.signs = config.signs
 

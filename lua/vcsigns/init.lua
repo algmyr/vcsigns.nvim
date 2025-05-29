@@ -4,6 +4,7 @@ M.repo = require "vcsigns.repo"
 M.util = require "vcsigns.util"
 M.diff = require "vcsigns.diff"
 M.sign = require "vcsigns.sign"
+M.fold = require "vcsigns.fold"
 
 local function _set_buflocal_autocmds(bufnr)
   local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
@@ -87,6 +88,10 @@ function M.update_signs(bufnr)
         return
       end
       local hunks = M.diff.compute_diff(old_contents, new_contents)
+      -- TODO(algmyr): Think about when the hunks should be computed.
+      --               Having it bundled with the sign update is kinda awkward.
+      vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
+      vim.b[bufnr].vcsigns_hunks = hunks
       M.sign.add_signs(bufnr, hunks)
     end)
   else
@@ -105,6 +110,8 @@ function M.update_signs(bufnr)
       end
       local lines = vim.split(out.stdout, "\n", { plain = true })
       local hunks = M.diff.get_hunks(lines)
+      vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
+      vim.b[bufnr].vcsigns_hunks = hunks
       M.sign.add_signs(bufnr, hunks)
     end)
   end
@@ -163,6 +170,7 @@ local command_map = {
   stop = _stop,
   newer = _newer,
   older = _older,
+  fold = M.fold.toggle,
 }
 
 local function _command(arg)
@@ -205,6 +213,23 @@ local default_config = {
       hl = "SignChangeDelete",
     },
   },
+  -- Sizes of context to add fold levels for (order doesn't matter).
+  -- E.g. { 1, 3 } would mean one fold level with a context of 1 line,
+  -- and one fold level with a context of 3 lines:
+  --                      level
+  -- |    3 | Context       2
+  -- |    4 | Context       2
+  -- |    5 | Context       1
+  -- |    6 | Context       1
+  -- |    7 | Context       0
+  -- | +  8 | Added         0
+  -- | +  9 | More Added    0
+  -- |   10 | Context       0
+  -- |   11 | Context       1
+  -- |   12 | Context       1
+  -- |   13 | Context       2
+  -- |   14 | Context       2
+  fold_context_sizes = { 3 },
 }
 
 function M.setup(user_config)
@@ -218,6 +243,7 @@ function M.setup(user_config)
 
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
+  vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
   M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {

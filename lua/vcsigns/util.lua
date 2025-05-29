@@ -12,7 +12,6 @@ function M.verbose(msg, label)
 end
 
 function M.run_with_timeout(cmd, opts, callback)
-  vim.print(cmd)
   require("vcsigns").util.verbose(
     "Running command: " .. table.concat(cmd, " "),
     "run_with_timeout"

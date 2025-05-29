@@ -1,0 +1,77 @@
+*vcsigns.txt*  Show vcs signs in the sign gutter.
+
+         VCSigns - A sign gutter extension inspired by vim-signify.
+
+===============================================================================
+1. VCSigns command
+
+OPERATION CONTROL
+
+:VCSigns start    Start the VCSigns extension.
+                  By default, it will be started automatically
+
+:VCSigns stop     Stop the VCSigns extension.
+
+HUNK OPERATIONS
+
+:VCSigns hunk_next    Jump to the next hunk in the file.
+                      Accepts a number argument to jump multiple hunks.
+                      
+:VCSigns hunk_prev    Jump to the previous hunk in the file.
+                      Accepts a number argument to jump multiple hunks.
+                      
+:VCSigns hunk_undo    Undo hunk.
+                      Accepts a range to undo all hunks in the range.
+                      
+:VCSigns hunk_diff    Show hunk diff inline in the current buffer.
+                      Accepts a range to show diffs for all hunks in the range.
+                     
+
+DIFFBASE SELECTION
+
+:VCSigns newer    Diff against a newer commit.
+                  Accepts a number argument to specify how many steps to jump.
+
+:VCSigns older    Diff against an older commit.
+                  Accepts a number argument to specify how many steps to jump.
+
+FOLDING
+
+:VCSigns fold    Toggle folding of non-diff lines.
+
+
+DEBUG
+
+:VCSigns trigger    Debug command for manually triggering a sign update.
+
+===============================================================================
+2. Configuration
+
+See init.lua for the default configuration options.
+
+HIGHLIGHT GROUPS
+This plugin uses a handful of highlight groups.
+
+- `SignAdd`  (default: `DiffAdd`)
+  Sign color for added lines.
+- `SignDelete`  (default: `DiffDelete`)
+  Sign color for deleted lines.
+- `SignDeleteFirstLine`  (default: `DiffDelete`)
+  Sign color for deleted lines at the start of a file.
+- `SignChange`  (default: `DiffChange`)
+  Sign color for changed lines.
+- `SignChangeDelete`  (default: `SignChange`)
+  Sign color for changed lines that also have deletions. (rarely used)
+- `VcsignsDiffAdd`  (default: `DiffAdd`)
+  Highlight for added lines in inline diffs.
+- `VcsignsDiffDelete`  (default: `DiffDelete`)
+  Highlight for deleted lines in inline diffs.
+
+===============================================================================
+3. Lua API
+
+The useful entry points to do the same operations as the commands above are
+defined in the `vcsigns.actions` module.
+
+A basic text object is provided in the `vcsigns.textobj` module, suitable for
+an omap mapping.

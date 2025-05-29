@@ -5,6 +5,7 @@ M.util = require "vcsigns.util"
 M.diff = require "vcsigns.diff"
 M.sign = require "vcsigns.sign"
 M.fold = require "vcsigns.fold"
+M.keys = require "vcsigns.keys"
 
 local function _set_buflocal_autocmds(bufnr)
   local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
@@ -242,6 +243,8 @@ function M.setup(user_config)
       end, vim.tbl_keys(command_map))
     end,
   })
+
+  M.keys.setup()
 
   if config.auto_enable then
     -- Enable VCSigns for all buffers.

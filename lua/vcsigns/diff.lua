@@ -44,4 +44,56 @@ function M.compute_diff(old_contents, new_contents)
   return hunks
 end
 
+local function _partition_hunks(lnum, hunks)
+  local before = {}
+  local on = nil
+  local after = {}
+
+  for _, hunk in ipairs(hunks) do
+    -- Special case the current hunk, do not include it in before/after.
+    if hunk.plus_start <= lnum and lnum < hunk.plus_start + hunk.plus_count then
+      on = hunk
+      goto continue
+    end
+    if hunk.plus_start < lnum then
+      table.insert(before, hunk)
+    end
+    if hunk.plus_start > lnum then
+      table.insert(after, hunk)
+    end
+    ::continue::
+  end
+
+  return before, on, after
+end
+
+--- Get the `count`th previous hunk.
+---@param lnum integer
+---@param hunks Hunk[]
+---@param count integer
+---@return Hunk?
+function M.prev_hunk(lnum, hunks, count)
+  local before, _, _ = _partition_hunks(lnum, hunks)
+  return before[#before - (count - 1)] or before[1]
+end
+
+--- Get the `count`th next hunk.
+---@param lnum integer
+---@param hunks Hunk[]
+---@param count integer
+---@return Hunk?
+function M.next_hunk(lnum, hunks, count)
+  local _, _, after = _partition_hunks(lnum, hunks)
+  return after[count] or after[#after]
+end
+
+--- Get the current hunk for a given line number, if any.
+---@param lnum integer
+---@param hunks Hunk[]
+---@return Hunk?
+function M.cur_hunk(lnum, hunks)
+  local _, on, _ = _partition_hunks(lnum, hunks)
+  return on
+end
+
 return M

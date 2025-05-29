@@ -1,21 +1,41 @@
 local M = {}
 
 ---@class Hunk
----@field minus_start integer
----@field minus_count integer
----@field plus_start integer
----@field plus_count integer
+---@field minus_start integer Start of the minus side
+---@field minus_count integer Count of the minus side
+---@field minus_lines string[] Lines in the minus side
+---@field plus_start integer Start of the plus side
+---@field plus_count integer Count of the plus side
+---@field plus_lines string[] Lines in the plus side
 local Hunk = {}
+
+---@param tbl table The table to slice.
+---@param start integer The starting index (1-based).
+---@param count integer The number of elements to take.
+---@return table A new table containing the sliced elements.
+local function slice(tbl, start, count)
+  local result = {}
+  for i = start, start + count - 1 do
+    if i >= 1 and i <= #tbl then
+      table.insert(result, tbl[i])
+    end
+  end
+  return result
+end
 
 --- Convert a hunk quad to a Hunk.
 ---@param hunk_quad integer[]
+---@param old_lines string[] The old lines of the file.
+---@param new_lines string[] The new lines of the file.
 ---@return Hunk
-local function _quad_to_hunk(hunk_quad)
+local function _quad_to_hunk(hunk_quad, old_lines, new_lines)
   return {
     minus_start = hunk_quad[1],
     minus_count = hunk_quad[2],
+    minus_lines = slice(old_lines, hunk_quad[1], hunk_quad[2]),
     plus_start = hunk_quad[3],
     plus_count = hunk_quad[4],
+    plus_lines = slice(new_lines, hunk_quad[3], hunk_quad[4]),
   }
 end
 
@@ -38,8 +58,10 @@ function M.compute_diff(old_contents, new_contents)
   end
 
   local hunks = {}
+  local old_lines = vim.split(old_contents, "\n", { plain = true })
+  local new_lines = vim.split(new_contents, "\n", { plain = true })
   for _, quad in ipairs(hunk_quads) do
-    table.insert(hunks, _quad_to_hunk(quad))
+    table.insert(hunks, _quad_to_hunk(quad, old_lines, new_lines))
   end
   return hunks
 end
@@ -50,8 +72,10 @@ local function _partition_hunks(lnum, hunks)
   local after = {}
 
   for _, hunk in ipairs(hunks) do
+    -- Allow to actually be on a deletion hunk, which has count 0.
+    local count = math.max(1, hunk.plus_count)
     -- Special case the current hunk, do not include it in before/after.
-    if hunk.plus_start <= lnum and lnum < hunk.plus_start + hunk.plus_count then
+    if hunk.plus_start <= lnum and lnum < hunk.plus_start + count then
       on = hunk
       goto continue
     end

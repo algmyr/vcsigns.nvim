@@ -38,6 +38,33 @@ function M.setup()
       vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
     end
   end, "Go to previous hunk")
+  map("n", "<plug>(vcsigns-hunk-undo)", function()
+    local lnum = vim.fn.line "."
+    local hunks = vim.b.vcsigns_hunks
+    local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+    if not hunk then
+      vim.notify(
+        "No hunk under cursor",
+        vim.log.levels.WARN,
+        { title = "VCSigns" }
+      )
+      return
+    end
+    local start = hunk.plus_start - 1
+    if hunk.plus_count == 0 then
+      -- Special case of undoing a pure deletion.
+      -- To append after `start` we insert before `start + 1`.
+      start = start + 1
+    end
+    vim.api.nvim_buf_set_lines(
+      0,
+      start,
+      start + hunk.plus_count,
+      true,
+      hunk.minus_lines
+    )
+    require("vcsigns").update_signs(0)
+  end, "Go to previous hunk")
 end
 
 return M

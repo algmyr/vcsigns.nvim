@@ -19,17 +19,33 @@ function M.add_signs(bufnr, hunks)
 
   local ns = _sign_namespace()
 
+  local sign_lines = {}
   local function _add_sign(line, sign)
     vim.api.nvim_buf_set_extmark(bufnr, ns, line - 1, 0, {
       sign_text = sign.text,
       sign_hl_group = sign.hl,
     })
+    sign_lines[line] = true
   end
 
   local function _add_sign_range(start, count, sign)
     for i = 0, count - 1 do
       _add_sign(start + i, sign)
     end
+  end
+
+  local function _delete_with_count(delete_count)
+    local sign = vim.deepcopy(M.signs.delete)
+    if delete_count == 1 then
+      -- Keep the sign as is.
+    elseif delete_count < 10 then
+      sign.text = delete_count .. sign.text
+    elseif delete_count < 100 then
+      sign.text = delete_count .. ""
+    else
+      sign.text = ">" .. sign.text
+    end
+    return sign
   end
 
   -- Clear previous extmarks.
@@ -47,17 +63,7 @@ function M.add_signs(bufnr, hunks)
         -- First line delete.
         _add_sign(1, M.signs.delete_first_line)
       elseif show_delete_count then
-        -- Delete with count.
-        local sign = vim.deepcopy(M.signs.delete)
-        if hunk.minus_count == 1 then
-          -- Keep the sign as is.
-        elseif hunk.minus_count < 10 then
-          sign.text = hunk.minus_count .. sign.text
-        elseif hunk.minus_count < 100 then
-          sign.text = hunk.minus_count .. ""
-        else
-          sign.text = ">" .. sign.text
-        end
+        local sign = _delete_with_count(hunk.minus_count)
         _add_sign(hunk.plus_start, sign)
       else
         -- Delete without count.
@@ -81,14 +87,16 @@ function M.add_signs(bufnr, hunks)
         modified = modified + hunk.plus_count
         deleted = deleted + diff
 
-        local prev_line_available = false -- Is this needed?
-        if prev_line_available then
-          -- TODO(algmyr): Handle this case.
-        end
+        local prev_line_available = hunk.plus_start > 1
+          and not sign_lines[hunk.plus_start - 1]
 
-        if not prev_line_available then
+        if prev_line_available then
+          local sign = _delete_with_count(diff)
+          _add_sign(hunk.plus_start, sign)
+        else
           _add_sign(hunk.plus_start, M.signs.change_delete)
         end
+
         _add_sign_range(
           hunk.plus_start + 1,
           hunk.plus_count - 1,

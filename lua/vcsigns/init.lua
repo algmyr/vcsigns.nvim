@@ -70,51 +70,24 @@ function M.update_signs(bufnr)
   end
 
   local file_dir = M.util.file_dir(bufnr)
+  local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local new_contents = table.concat(buffer_lines, "\n") .. "\n"
 
-  if vim.bo[bufnr].modified then
-    M.util.verbose(
-      "Buffer is modified, diffing against buffer contents",
-      "update_signs"
-    )
-    local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-    local cmd = vcs.show_cmd(bufnr)
-    local new_contents = table.concat(buffer_lines, "\n") .. "\n"
-
-    M.util.run_with_timeout(cmd, { cwd = file_dir }, function(out)
-      -- TODO(algmyr): Handle unexpected error codes.
-      local old_contents = out.stdout
-      if not old_contents then
-        M.util.verbose("No output from command, skipping diff", "update_signs")
-        return
-      end
-      local hunks = M.diff.compute_diff(old_contents, new_contents)
-      -- TODO(algmyr): Think about when the hunks should be computed.
-      --               Having it bundled with the sign update is kinda awkward.
-      vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
-      vim.b[bufnr].vcsigns_hunks = hunks
-      M.sign.add_signs(bufnr, hunks)
-    end)
-  else
-    M.util.verbose(
-      "Buffer is not modified, get diff from vcs directly",
-      "update_signs"
-    )
-    local cmd = vcs.diff_cmd(bufnr)
-    M.util.run_with_timeout(cmd, { cwd = file_dir }, function(out)
-      if out.code ~= 0 then
-        M.util.verbose(
-          "Error running show command: " .. out.stderr,
-          "update_signs"
-        )
-        return
-      end
-      local lines = vim.split(out.stdout, "\n", { plain = true })
-      local hunks = M.diff.get_hunks(lines)
-      vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
-      vim.b[bufnr].vcsigns_hunks = hunks
-      M.sign.add_signs(bufnr, hunks)
-    end)
-  end
+  M.util.run_with_timeout(vcs.show_cmd(bufnr), { cwd = file_dir }, function(out)
+    -- TODO(algmyr): Handle unexpected error codes?
+    --               Or just assume error means file doesn't exist?
+    local old_contents = out.stdout
+    if not old_contents then
+      M.util.verbose("No output from command, skipping diff", "update_signs")
+      return
+    end
+    local hunks = M.diff.compute_diff(old_contents, new_contents)
+    -- TODO(algmyr): Think about when the hunks should be computed.
+    --               Having it bundled with the sign update is kinda awkward.
+    vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
+    vim.b[bufnr].vcsigns_hunks = hunks
+    M.sign.add_signs(bufnr, hunks)
+  end)
 end
 
 local function _stop(bufnr)

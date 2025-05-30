@@ -3,7 +3,6 @@ local M = {}
 ---@class Vcs
 ---@field name string
 ---@field show_cmd fun(bufnr: integer): string[]
----@field diff_cmd fun(bufnr: integer): string[]
 ---@field detect_cmd fun(): string[]
 local Vcs = {}
 
@@ -36,20 +35,6 @@ M.vcs = {
         target.file,
       }
     end,
-    diff_cmd = function(target)
-      return {
-        "jj",
-        "diff",
-        "--git",
-        "--context=0",
-        "--from",
-        jj_target(target.commit),
-        "--to",
-        "@",
-        "--",
-        target.file,
-      }
-    end,
   },
   git = {
     detect_cmd = function()
@@ -57,18 +42,6 @@ M.vcs = {
     end,
     show_cmd = function(target)
       return { "git", "show", git_target(target.commit) .. ":./" .. target.file }
-    end,
-    diff_cmd = function(target)
-      return {
-        "git",
-        "diff",
-        "--no-color",
-        "--no-ext-diff",
-        "-U0",
-        git_target(target.commit),
-        "--",
-        target.file,
-      }
     end,
   },
   hg = {
@@ -81,22 +54,6 @@ M.vcs = {
         "cat",
         "--config",
         "extensions.color=!",
-        "--rev",
-        hg_target(target.commit),
-        "--",
-        target.file,
-      }
-    end,
-    diff_cmd = function(target)
-      return {
-        "hg",
-        "diff",
-        "--config",
-        "extensions.color=!",
-        "--config",
-        "defaults.diff=",
-        "--nodates",
-        "-U0",
         "--rev",
         hg_target(target.commit),
         "--",
@@ -162,9 +119,6 @@ function M.get_vcs(vcs_name)
   local vcs = {}
   vcs._base = vcs_base
   vcs.name = vcs_name
-  vcs.diff_cmd = function(bufnr)
-    return vcs._base.diff_cmd(_get_target(bufnr))
-  end
   vcs.show_cmd = function(bufnr)
     return vcs._base.show_cmd(_get_target(bufnr))
   end

@@ -77,7 +77,7 @@ function M.update_signs(bufnr)
     )
     local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     local cmd = vcs.show_cmd(bufnr)
-    local new_contents = table.concat(buffer_lines, "\n")
+    local new_contents = table.concat(buffer_lines, "\n") .. "\n"
 
     M.util.run_with_timeout(cmd, { cwd = file_dir }, function(out)
       -- TODO(algmyr): Handle unexpected error codes.

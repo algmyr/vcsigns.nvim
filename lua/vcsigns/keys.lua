@@ -65,6 +65,12 @@ function M.setup()
     )
     require("vcsigns").update_signs(0)
   end, "Go to previous hunk")
+  map("n", "<plug>(vcsigns-hunk-highlight)", function()
+    local lnum = vim.fn.line "."
+    local hunks = vim.b.vcsigns_hunks
+    local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+    require("vcsigns").high.highlight_hunk(0, hunk)
+  end, "Highlight hunk under cursor")
 end
 
 return M

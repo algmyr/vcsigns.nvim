@@ -7,167 +7,50 @@ M.sign = require "vcsigns.sign"
 M.fold = require "vcsigns.fold"
 M.keys = require "vcsigns.keys"
 M.high = require "vcsigns.high"
+M.actions = require "vcsigns.actions"
 
-local function _set_buflocal_autocmds(bufnr)
-  local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
-
-  -- Clear existing autocommands in this buffer only.
-  vim.api.nvim_clear_autocmds { buffer = bufnr, group = group }
-
-  local events = {
-    "BufEnter",
-    "WinEnter",
-    "BufWritePost",
-    "CursorHold",
-    "CursorHoldI",
-    "FocusGained",
-    "ShellCmdPost",
-    "VimResume",
-  }
-  vim.api.nvim_create_autocmd(events, {
-    group = group,
-    buffer = bufnr,
-    callback = function()
-      if not vim.b[bufnr].vcsigns_detecting then
-        M.update_signs(bufnr)
-      end
-    end,
-    desc = "Update VCSigns",
-  })
-end
-
----@param bufnr integer The buffer number.
-local function _start(bufnr)
-  -- Clear existing state.
-  vim.b[bufnr].vcsigns_detecting = nil
-  vim.b[bufnr].vcsigns_vcs = nil
-
-  local vcs = M.repo.detect_vcs(bufnr)
-  vim.b[bufnr].vcsigns_detecting = false
-  if not vcs then
-    M.util.verbose("No VCS detected", "start")
-    return
-  end
-  M.util.verbose("Detected VCS " .. vcs.name, "start")
-  vim.b[bufnr].vcsigns_vcs = vcs
-
-  _set_buflocal_autocmds(bufnr)
-end
-
----@param bufnr integer The buffer number.
-function M.update_signs(bufnr)
-  if vim.bo[bufnr].buftype ~= "" then
-    -- Not a normal file buffer, don't do anything.
-    M.util.verbose("Not a normal file buffer, skipping.", "update_signs")
-    return
-  end
-  local detecting = vim.b[bufnr].vcsigns_detecting
-  if detecting == nil then
-    M.util.verbose("Buffer not initialized yet, doing so now.", "update_signs")
-    _start(bufnr)
-  end
-  if detecting then
-    M.util.verbose("Busy detecting, skipping.", "update_signs")
-    return
-  end
-  local vcs = vim.b[bufnr].vcsigns_vcs
-  if not vcs then
-    M.util.verbose("No VCS detected for buffer, skipping.", "update_signs")
-    return
-  end
-
-  local file_dir = M.util.file_dir(bufnr)
-  local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local new_contents = table.concat(buffer_lines, "\n") .. "\n"
-
-  M.util.run_with_timeout(vcs.show_cmd(bufnr), { cwd = file_dir }, function(out)
-    -- If the buffer was deleted, bail.
-    if not vim.api.nvim_buf_is_valid(bufnr) then
-      M.util.verbose("Buffer no longer valid, skipping diff", "update_signs")
-      return
+--- Decorator to wrap a function that takes no arguments.
+local function _no_args(fun)
+  local function wrap(bufnr, args)
+    if #args > 0 then
+      error "This VCSigns command does not take any arguments"
     end
-    -- TODO(algmyr): Handle unexpected error codes?
-    --               Or just assume error means file doesn't exist?
-    local old_contents = out.stdout
-    if not old_contents then
-      M.util.verbose("No output from command, skipping diff", "update_signs")
-      return
-    end
-    local hunks = M.diff.compute_diff(old_contents, new_contents)
-    -- TODO(algmyr): Think about when the hunks should be computed.
-    --               Having it bundled with the sign update is kinda awkward.
-    vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
-    vim.b[bufnr].vcsigns_hunks = hunks
-    M.sign.add_signs(bufnr, hunks)
-  end)
-end
-
-local function _stop(bufnr)
-  -- Clear autocommands.
-  local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
-  vim.api.nvim_clear_autocmds { buffer = bufnr, group = group }
-
-  -- Clear signs.
-  M.sign.clear_signs(bufnr)
-
-  -- Clear buffer-local variables.
-  vim.b[bufnr].vcsigns_detecting = nil
-  vim.b[bufnr].vcsigns_vcs = nil
-end
-
-local last_target_notification = nil
-
-local function _target_change_message()
-  local msg = string.format("Now diffing against HEAD~%d", vim.g.target_commit)
-  last_target_notification = vim.notify(
-    msg,
-    vim.log.levels.INFO,
-    { title = "VCSigns", replace = last_target_notification }
-  )
-end
-
-local function _older(bufnr)
-  vim.g.target_commit = vim.g.target_commit + 1
-  _target_change_message()
-  M.update_signs(bufnr)
-end
-
-local function _newer(bufnr)
-  if vim.g.target_commit > 0 then
-    vim.g.target_commit = vim.g.target_commit - 1
-    _target_change_message()
-    M.update_signs(bufnr)
-  else
-    last_target_notification = vim.notify(
-      "No timetravel! Cannot diff against HEAD~-1",
-      vim.log.levels.WARN,
-      {
-        title = "VCSigns",
-        replace = last_target_notification,
-      }
-    )
+    fun(bufnr)
   end
+  return wrap
+end
+
+local function _with_count(fun)
+  local function wrap(bufnr, args)
+    if #args > 1 then
+      error "This VCSigns command takes at most one argument"
+    end
+    local count = tonumber(args[1]) or 1
+    fun(bufnr, count)
+  end
+  return wrap
 end
 
 local command_map = {
-  trigger = M.update_signs,
-  start = _start,
-  stop = _stop,
-  newer = _newer,
-  older = _older,
-  fold = M.fold.toggle,
+  trigger = _no_args(M.actions.update_signs),
+  start = _no_args(M.actions.start),
+  stop = _no_args(M.actions.stop),
+  newer = _with_count(M.actions.target_newer_commit),
+  older = _with_count(M.actions.target_older_commit),
+  fold = _no_args(M.fold.toggle),
 }
 
 local function _command(arg)
   local bufnr = vim.api.nvim_get_current_buf()
   local cmd = arg.fargs[1]
+  local args = vim.list_slice(arg.fargs, 2)
 
   local fun = command_map[cmd]
   if not fun then
     error("Unknown VCSigns command: " .. cmd)
     return
   end
-  fun(bufnr)
+  fun(bufnr, args)
 end
 
 local default_config = {
@@ -237,7 +120,7 @@ function M.setup(user_config)
 
   vim.api.nvim_create_user_command("VCSigns", _command, {
     desc = "VCSigns command",
-    nargs = 1,
+    nargs = "*",
     bar = true,
     complete = function(_, line)
       if line:match "^%s*VCSigns %w+ " then
@@ -258,7 +141,7 @@ function M.setup(user_config)
       pattern = "*",
       callback = function(args)
         local bufnr = args.buf
-        M.update_signs(bufnr)
+        M.actions.update_signs(bufnr)
       end,
       desc = "Auto-enable VCSigns on buffer read",
     })

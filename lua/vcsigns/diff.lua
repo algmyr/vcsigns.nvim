@@ -25,10 +25,11 @@ end
 ---@return Hunk[] The computed hunks.
 function M.compute_diff(old_contents, new_contents)
   -- TODO(algmyr): Is the case of an empty buffer handled correctly?
+  local algorithm = vim.g.vcsigns_diff_algorithm
   local hunk_quads = vim.diff(
     old_contents,
     new_contents,
-    { result_type = "indices", algorithm = "histogram" }
+    { result_type = "indices", algorithm = algorithm }
   )
   ---@cast hunk_quads integer[][]?
 

@@ -203,6 +203,9 @@ local default_config = {
   -- |   13 | Context       2
   -- |   14 | Context       2
   fold_context_sizes = { 3 },
+  -- Diff algorithm to use.
+  -- See `:help vim.diff()` for available algorithms.
+  diff_algorithm = "histogram",
 }
 
 function M.setup(user_config)
@@ -217,6 +220,7 @@ function M.setup(user_config)
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
+  vim.g.vcsigns_diff_algorithm = config.diff_algorithm
   M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {

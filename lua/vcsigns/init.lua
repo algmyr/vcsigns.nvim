@@ -55,6 +55,11 @@ end
 
 ---@param bufnr integer The buffer number.
 function M.update_signs(bufnr)
+  if vim.bo[bufnr].buftype ~= "" then
+    -- Not a normal file buffer, don't do anything.
+    M.util.verbose("Not a normal file buffer, skipping.", "update_signs")
+    return
+  end
   local detecting = vim.b[bufnr].vcsigns_detecting
   if detecting == nil then
     M.util.verbose("Buffer not initialized yet, doing so now.", "update_signs")

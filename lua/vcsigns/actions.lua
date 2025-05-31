@@ -152,4 +152,73 @@ function M.update_signs(bufnr)
   end)
 end
 
+---@param bufnr integer The buffer number.
+---@param count integer The number of hunks ahead.
+function M.next_hunk(bufnr, count)
+  if vim.o.diff then
+    vim.cmd "normal! ]c"
+    return
+  end
+  local lnum = vim.fn.line "."
+  local hunks = vim.b[bufnr].vcsigns_hunks
+  local hunk = require("vcsigns").diff.next_hunk(lnum, hunks, count)
+  if hunk then
+    vim.cmd "normal! m`"
+    vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
+  end
+end
+
+---@param bufnr integer The buffer number.
+---@param count integer The number of hunks ahead.
+function M.prev_hunk(bufnr, count)
+  if vim.o.diff then
+    vim.cmd "normal! [c"
+    return
+  end
+  local lnum = vim.fn.line "."
+  local hunks = vim.b[bufnr].vcsigns_hunks
+  local hunk = require("vcsigns").diff.prev_hunk(lnum, hunks, count)
+  if hunk then
+    vim.cmd "normal! m`"
+    vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
+  end
+end
+
+---@param bufnr integer The buffer number.
+function M.hunk_undo(bufnr)
+  local lnum = vim.fn.line "."
+  local hunks = vim.b[bufnr].vcsigns_hunks
+  local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+  if not hunk then
+    vim.notify(
+      "No hunk under cursor",
+      vim.log.levels.WARN,
+      { title = "VCSigns" }
+    )
+    return
+  end
+  local start = hunk.plus_start - 1
+  if hunk.plus_count == 0 then
+    -- Special case of undoing a pure deletion.
+    -- To append after `start` we insert before `start + 1`.
+    start = start + 1
+  end
+  vim.api.nvim_buf_set_lines(
+    bufnr,
+    start,
+    start + hunk.plus_count,
+    true,
+    hunk.minus_lines
+  )
+  M.update_signs(bufnr)
+end
+
+---@param bufnr integer The buffer number.
+function M.show_diff(bufnr)
+  local lnum = vim.fn.line "."
+  local hunks = vim.b.vcsigns_hunks
+  local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+  require("vcsigns").high.highlight_hunk(bufnr, hunk)
+end
+
 return M

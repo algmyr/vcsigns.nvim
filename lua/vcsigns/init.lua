@@ -5,7 +5,6 @@ M.util = require "vcsigns.util"
 M.diff = require "vcsigns.diff"
 M.sign = require "vcsigns.sign"
 M.fold = require "vcsigns.fold"
-M.keys = require "vcsigns.keys"
 M.high = require "vcsigns.high"
 M.actions = require "vcsigns.actions"
 
@@ -38,6 +37,10 @@ local command_map = {
   newer = _with_count(M.actions.target_newer_commit),
   older = _with_count(M.actions.target_older_commit),
   fold = _no_args(M.fold.toggle),
+  next_hunk = _with_count(M.actions.next_hunk),
+  prev_hunk = _with_count(M.actions.prev_hunk),
+  hunk_undo = _no_args(M.actions.hunk_undo),
+  show_diff = _no_args(M.actions.show_diff),
 }
 
 local function _command(arg)
@@ -132,8 +135,6 @@ function M.setup(user_config)
       end, vim.tbl_keys(command_map))
     end,
   })
-
-  M.keys.setup()
 
   if config.auto_enable then
     -- Enable VCSigns for all buffers.

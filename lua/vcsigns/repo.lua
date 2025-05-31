@@ -134,6 +134,14 @@ end
 function M.detect_vcs(bufnr)
   -- TODO(algmyr): Take into account the current working directory?
   local file_dir = require("vcsigns").util.file_dir(bufnr)
+  -- If the file dir does not exist, things will end poorly.
+  if vim.fn.isdirectory(file_dir) == 0 then
+    require("vcsigns").util.verbose(
+      "File directory does not exist: " .. file_dir,
+      "detect_vcs"
+    )
+    return nil
+  end
   for name, _ in pairs(M.vcs) do
     require("vcsigns").util.verbose(
       "Trying to detect VCS " .. name,

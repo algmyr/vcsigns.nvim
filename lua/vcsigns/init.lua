@@ -74,6 +74,11 @@ function M.update_signs(bufnr)
   local new_contents = table.concat(buffer_lines, "\n") .. "\n"
 
   M.util.run_with_timeout(vcs.show_cmd(bufnr), { cwd = file_dir }, function(out)
+    -- If the buffer was deleted, bail.
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      M.util.verbose("Buffer no longer valid, skipping diff", "update_signs")
+      return
+    end
     -- TODO(algmyr): Handle unexpected error codes?
     --               Or just assume error means file doesn't exist?
     local old_contents = out.stdout

@@ -1,11 +1,10 @@
 local M = {}
 
-local function _get_levels(hunks)
-  local context = vim.g.vcsigns_fold_context_sizes
+function M.get_levels_impl(hunks, context, last_line)
   local max_level = #context
 
   local levels = {}
-  for line = 1, vim.fn.line "$" do
+  for line = 1, last_line do
     levels[line] = max_level
   end
 
@@ -14,7 +13,7 @@ local function _get_levels(hunks)
       local start = hunk.plus_start
       local count = hunk.plus_count
       for i = start - margin, start + count - 1 + margin do
-        if i >= 1 and i <= vim.fn.line "$" then
+        if i >= 1 and i <= last_line then
           levels[i] = value
         end
       end
@@ -30,6 +29,12 @@ local function _get_levels(hunks)
   end
 
   return levels
+end
+
+local function _get_levels(hunks)
+  local context = vim.g.vcsigns_fold_context_sizes
+  local last_line = vim.fn.line "$"
+  return M.get_levels_impl(hunks, context, last_line)
 end
 
 ---@param lnum integer

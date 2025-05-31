@@ -21,10 +21,14 @@ function M.add_signs(bufnr, hunks)
 
   local sign_lines = {}
   local function _add_sign(line, sign)
-    vim.api.nvim_buf_set_extmark(bufnr, ns, line - 1, 0, {
+    local config = {
       sign_text = sign.text,
       sign_hl_group = sign.hl,
-    })
+    }
+    if vim.g.vcsigns_highlight_number then
+      config.number_hl_group = sign.hl
+    end
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line - 1, 0, config)
     sign_lines[line] = true
   end
 

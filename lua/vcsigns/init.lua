@@ -61,6 +61,8 @@ local default_config = {
   auto_enable = true,
   -- Shot the number of deleted lines in the sign column.
   show_delete_count = true,
+  -- Highlight the number in the sign column.
+  highlight_number = true,
   -- Signs to use for different types of changes.
   signs = {
     add = {
@@ -119,6 +121,7 @@ function M.setup(user_config)
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
   vim.g.vcsigns_diff_algorithm = config.diff_algorithm
+  vim.g.vcsigns_highlight_number = config.highlight_number
   M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {

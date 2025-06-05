@@ -12,8 +12,8 @@ local function put_virtual_hunk(bufnr, ns, hunk)
   local spacer = string.rep(" ", 1000)
   for _, l in ipairs(hunk.minus_lines) do
     table.insert(virt_lines, {
-      { l, { "DiffDelete" } },
-      { spacer, { "DiffDelete" } },
+      { l, { "VcsignsDiffDelete" } },
+      { spacer, { "VcsignsDiffDelete" } },
     })
   end
 
@@ -26,7 +26,7 @@ local function put_virtual_hunk(bufnr, ns, hunk)
   )
   if hunk.plus_count > 0 then
     vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
-      line_hl_group = "DiffAdd",
+      line_hl_group = "VcsignsDiffAdd",
       end_row = line + hunk.plus_count - 1,
     })
   end

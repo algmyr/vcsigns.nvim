@@ -152,6 +152,20 @@ function M.setup(user_config)
       desc = "Auto-enable VCSigns on buffer read",
     })
   end
+
+  -- Set default highlights.
+  -- The default diff colors are pretty terrible, but they exist.
+  vim.cmd [[
+    " Diff lines.
+    highlight default link VcsignsDiffAdd      DiffAdd
+    highlight default link VcsignsDiffDelete   DiffDelete
+    " Sign colors.
+    highlight default link SignAdd             DiffAdd
+    highlight default link SignDelete          DiffDelete
+    highlight default link SignDeleteFirstLine SignDelete
+    highlight default link SignChange          DiffChange
+    highlight default link SignChangeDelete    SignChange
+  ]]
 end
 
 return M

@@ -1,5 +1,7 @@
 local M = {}
 
+local util = require "vcsigns.util"
+
 -- Will be overridden by user config.
 M.signs = nil
 
@@ -18,9 +20,21 @@ function M.add_signs(bufnr, hunks)
   local deleted = 0
 
   local ns = _sign_namespace()
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
 
   local sign_lines = {}
   local function _add_sign(line, sign)
+    if line < 1 or line > line_count then
+      util.verbose(
+        string.format(
+          "Tried to add sign on line %d for a buffer with %d lines.",
+          line,
+          line_count
+        ),
+        "add_signs"
+      )
+      return
+    end
     local config = {
       sign_text = sign.text,
       sign_hl_group = sign.hl,

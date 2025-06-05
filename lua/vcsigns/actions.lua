@@ -130,6 +130,8 @@ function M.update_signs(bufnr)
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local new_contents = table.concat(buffer_lines, "\n") .. "\n"
 
+  local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
+
   util.run_with_timeout(vcs.show_cmd(bufnr), { cwd = file_dir }, function(out)
     -- If the buffer was deleted, bail.
     if not vim.api.nvim_buf_is_valid(bufnr) then
@@ -146,6 +148,16 @@ function M.update_signs(bufnr)
     local hunks = diff.compute_diff(old_contents, new_contents)
     -- TODO(algmyr): Think about when the hunks should be computed.
     --               Having it bundled with the sign update is kinda awkward.
+    local last = vim.b[bufnr].vcsigns_last_update or 0
+    if start_time <= last then
+      util.verbose(
+        "Skipping update, we already have a newer update.",
+        "update_signs"
+      )
+      return
+    end
+
+    vim.b[bufnr].vcsigns_last_update = start_time
     vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
     vim.b[bufnr].vcsigns_hunks = hunks
     sign.add_signs(bufnr, hunks)

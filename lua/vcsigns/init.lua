@@ -59,6 +59,9 @@ end
 local default_config = {
   -- Enable in all buffers by default.
   auto_enable = true,
+  -- Initial target commit to show.
+  -- 0 means the current commit, 1 is one commit before that, etc.
+  target_commit = 0,
   -- Shot the number of deleted lines in the sign column.
   show_delete_count = true,
   -- Highlight the number in the sign column.
@@ -115,13 +118,12 @@ function M.setup(user_config)
   -- end
   -- vim.g.vcsigns_loaded = true
 
-  vim.g.target_commit = 0
-
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
   vim.g.vcsigns_diff_algorithm = config.diff_algorithm
   vim.g.vcsigns_highlight_number = config.highlight_number
+  vim.g.vcsigns_target_commit = config.target_commit
   M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {

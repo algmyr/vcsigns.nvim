@@ -73,7 +73,7 @@ local function _get_path(bufnr)
 end
 
 local function _target_commit()
-  return vim.g.target_commit or 0
+  return vim.g.vcsigns_target_commit or 0
 end
 
 local function _get_target(bufnr)

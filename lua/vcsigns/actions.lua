@@ -68,7 +68,8 @@ end
 local last_target_notification = nil
 
 local function _target_change_message()
-  local msg = string.format("Now diffing against HEAD~%d", vim.g.target_commit)
+  local msg =
+    string.format("Now diffing against HEAD~%d", vim.g.vcsigns_target_commit)
   last_target_notification = vim.notify(
     msg,
     vim.log.levels.INFO,
@@ -79,7 +80,7 @@ end
 ---@param bufnr integer The buffer number.
 ---@param steps integer Number of steps to go back in time.
 function M.target_older_commit(bufnr, steps)
-  vim.g.target_commit = vim.g.target_commit + steps
+  vim.g.vcsigns_target_commit = vim.g.vcsigns_target_commit + steps
   _target_change_message()
   M.update_signs(bufnr)
 end
@@ -87,9 +88,9 @@ end
 ---@param bufnr integer The buffer number.
 ---@param steps integer Number of steps to go forward in time.
 function M.target_newer_commit(bufnr, steps)
-  local new_target = vim.g.target_commit - steps
+  local new_target = vim.g.vcsigns_target_commit - steps
   if new_target >= 0 then
-    vim.g.target_commit = new_target
+    vim.g.vcsigns_target_commit = new_target
     _target_change_message()
     M.update_signs(bufnr)
   else

@@ -146,6 +146,12 @@ function M.update_signs(bufnr)
       util.verbose("No output from command, skipping diff", "update_signs")
       return
     end
+    if old_contents == "" and new_contents == "\n" then
+      -- Special case of a newly created but empty file.
+      -- This is just to avoid showing an "empty" buffer as a line added.
+      -- Just a cosmetic thing.
+      old_contents = "\n"
+    end
     local hunks = diff.compute_diff(old_contents, new_contents)
     -- TODO(algmyr): Think about when the hunks should be computed.
     --               Having it bundled with the sign update is kinda awkward.

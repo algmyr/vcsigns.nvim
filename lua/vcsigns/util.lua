@@ -12,10 +12,7 @@ function M.verbose(msg, label)
 end
 
 function M.run_with_timeout(cmd, opts, callback)
-  require("vcsigns").util.verbose(
-    "Running command: " .. table.concat(cmd, " "),
-    "run_with_timeout"
-  )
+  M.verbose("Running command: " .. table.concat(cmd, " "), "run_with_timeout")
   local merged_opts = vim.tbl_deep_extend("force", { timeout = 2000 }, opts)
   if callback == nil then
     return vim.system(cmd, merged_opts)
@@ -23,7 +20,7 @@ function M.run_with_timeout(cmd, opts, callback)
 
   return vim.system(cmd, merged_opts, function(out)
     if out.code == 124 then
-      M.util.verbose("Command timed out: " .. table.concat(cmd, " "), "run")
+      M.verbose("Command timed out: " .. table.concat(cmd, " "), "run")
       return
     end
     vim.schedule(function()

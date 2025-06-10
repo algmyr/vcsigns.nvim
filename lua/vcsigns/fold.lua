@@ -28,6 +28,15 @@ function M.get_levels_impl(hunks, context, last_line)
     f(margin, max_level - i)
   end
 
+  -- Clean up of plateaus of length 1 that are pointless to fold.
+  for line = 1, last_line do
+    local prev = levels[line - 1] or levels[line + 1]
+    local next = levels[line + 1] or levels[line - 1]
+    if prev == next and levels[line] > next then
+      levels[line] = prev
+    end
+  end
+
   return levels
 end
 

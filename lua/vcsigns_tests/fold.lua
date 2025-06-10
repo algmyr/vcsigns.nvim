@@ -58,6 +58,7 @@ M.fold_levels = {
         { plus_start = 12, plus_count = 1, minus_start = -1, minus_count = -1 },
         { plus_start = 17, plus_count = 1, minus_start = -1, minus_count = -1 },
         { plus_start = 23, plus_count = 1, minus_start = -1, minus_count = -1 },
+        { plus_start = 30, plus_count = 1, minus_start = -1, minus_count = -1 },
       },
       context = { 1, 2 },
       expected = {
@@ -70,7 +71,7 @@ M.fold_levels = {
         0, --  7| 1
         0, --  8| +
         0, --  9| 1
-        1, -- 10|   2
+        0, -- 10| 2  <-- special case, no use folding this
         0, -- 11| 1
         0, -- 12| +
         0, -- 13| 1
@@ -80,10 +81,39 @@ M.fold_levels = {
         0, -- 17| +
         0, -- 18| 1
         1, -- 19|   2
-        2, -- 20|
+        1, -- 20|   3  <-- special case, no use folding this
         1, -- 21|   2
         0, -- 22| 1
         0, -- 23| +
+        0, -- 24| 1
+        1, -- 25|   2
+        2, -- 26|     3
+        2, -- 27|     3
+        1, -- 28|   2
+        0, -- 29| 1
+        0, -- 30| +
+      },
+    },
+    edge_cases = {
+      hunks = {
+        { plus_start = 4, plus_count = 1, minus_start = -1, minus_count = -1 },
+        { plus_start = 10, plus_count = 1, minus_start = -1, minus_count = -1 },
+      },
+      context = { 2 },
+      expected = {
+        0, --  1|   3
+        0, --  2| 2
+        0, --  3| 1
+        0, --  4| +
+        0, --  5| 1
+        0, --  6| 2
+        0, --  7| 3
+        0, --  8| 2
+        0, --  9| 1
+        0, -- 10| +
+        0, -- 11| 1
+        0, -- 12| 2
+        0, -- 13|   3
       },
     },
   },

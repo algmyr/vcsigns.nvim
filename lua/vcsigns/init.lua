@@ -10,7 +10,8 @@ M.actions = require "vcsigns.actions"
 
 --- Decorator to wrap a function that takes no arguments.
 local function _no_args(fun)
-  local function wrap(bufnr, args)
+  local function wrap(bufnr, arg)
+    local args = vim.list_slice(arg.fargs, 2)
     if #args > 0 then
       error "This VCSigns command does not take any arguments"
     end
@@ -19,8 +20,21 @@ local function _no_args(fun)
   return wrap
 end
 
+local function _with_range(fun)
+  local function wrap(bufnr, arg)
+    local args = vim.list_slice(arg.fargs, 2)
+    if #args > 0 then
+      error "This VCSigns command does not take any arguments"
+    end
+    local range = {arg.line1, arg.line2}
+    fun(bufnr, range)
+  end
+  return wrap
+end
+
 local function _with_count(fun)
-  local function wrap(bufnr, args)
+  local function wrap(bufnr, arg)
+    local args = vim.list_slice(arg.fargs, 2)
     if #args > 1 then
       error "This VCSigns command takes at most one argument"
     end
@@ -39,21 +53,19 @@ local command_map = {
   fold = _no_args(M.fold.toggle),
   next_hunk = _with_count(M.actions.next_hunk),
   prev_hunk = _with_count(M.actions.prev_hunk),
-  hunk_undo = _no_args(M.actions.hunk_undo),
-  show_diff = _no_args(M.actions.show_diff),
+  hunk_undo = _with_range(M.actions.hunk_undo),
+  show_diff = _with_range(M.actions.show_diff),
 }
 
 local function _command(arg)
   local bufnr = vim.api.nvim_get_current_buf()
   local cmd = arg.fargs[1]
-  local args = vim.list_slice(arg.fargs, 2)
-
   local fun = command_map[cmd]
   if not fun then
     error("Unknown VCSigns command: " .. cmd)
     return
   end
-  fun(bufnr, args)
+  fun(bufnr, arg)
 end
 
 local default_config = {
@@ -130,6 +142,7 @@ function M.setup(user_config)
     desc = "VCSigns command",
     nargs = "*",
     bar = true,
+    range = true,
     complete = function(_, line)
       if line:match "^%s*VCSigns %w+ " then
         return {}

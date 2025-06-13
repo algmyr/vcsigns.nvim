@@ -45,10 +45,12 @@ local function put_virtual_hunk(bufnr, ns, hunk)
   end
 end
 
-function M.highlight_hunk(bufnr, hunk)
+---@param bufnr integer The buffer number.
+---@param hunks Hunk[] A list of hunks to highlight.
+function M.highlight_hunks(bufnr, hunks)
   local ns = _highlights_namespace()
   vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-  if hunk then
+  for _, hunk in ipairs(hunks) do
     put_virtual_hunk(bufnr, ns, hunk)
   end
 end

@@ -196,40 +196,84 @@ function M.prev_hunk(bufnr, count)
 end
 
 ---@param bufnr integer The buffer number.
-function M.hunk_undo(bufnr)
-  local lnum = vim.fn.line "."
+---@param range integer[] The range of lines to consider for the hunks.
+---@return Hunk[] Hunks in the specified range.
+local function _hunks_in_range(bufnr, range)
   local hunks = vim.b[bufnr].vcsigns_hunks
-  local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
-  if not hunk then
+  ---@type Hunk[]
+  local hunks_in_range = {}
+  for lnum = range[1], range[2] do
+    local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+    if hunk then
+      table.insert(hunks_in_range, hunk)
+    end
+  end
+  if #hunks_in_range == 0 then
+    return {}
+  end
+
+  -- Reverse sort hunks by their start line.
+  table.sort(hunks_in_range, function(a, b)
+    return a.plus_start > b.plus_start
+  end)
+
+  -- Remove duplicates.
+  local num = 1
+  for i = 2, #hunks_in_range do
+    if hunks_in_range[num].plus_start ~= hunks_in_range[i].plus_start then
+      hunks_in_range[num + 1] = hunks_in_range[i]
+      num = num + 1
+    end
+    hunks_in_range[i] = nil
+  end
+
+  return hunks_in_range
+end
+
+---@param bufnr integer The buffer number.
+---@param range integer[] The range of lines to undo hunks in.
+function M.hunk_undo(bufnr, range)
+  if not range then
+    local lnum = vim.fn.line "."
+    range = { lnum, lnum }
+  end
+  local hunks_in_range = _hunks_in_range(bufnr, range)
+
+  if #hunks_in_range == 0 then
     vim.notify(
-      "No hunk under cursor",
+      "No hunks found in range " .. range[1] .. "-" .. range[2],
       vim.log.levels.WARN,
       { title = "VCSigns" }
     )
     return
   end
-  local start = hunk.plus_start - 1
-  if hunk.plus_count == 0 then
-    -- Special case of undoing a pure deletion.
-    -- To append after `start` we insert before `start + 1`.
-    start = start + 1
+
+  for _, hunk in ipairs(hunks_in_range) do
+    local start = hunk.plus_start - 1
+    if hunk.plus_count == 0 then
+      -- Special case of undoing a pure deletion.
+      -- To append after `start` we insert before `start + 1`.
+      start = start + 1
+    end
+    vim.api.nvim_buf_set_lines(
+      bufnr,
+      start,
+      start + hunk.plus_count,
+      true,
+      hunk.minus_lines
+    )
   end
-  vim.api.nvim_buf_set_lines(
-    bufnr,
-    start,
-    start + hunk.plus_count,
-    true,
-    hunk.minus_lines
-  )
   M.update_signs(bufnr)
 end
 
 ---@param bufnr integer The buffer number.
-function M.show_diff(bufnr)
-  local lnum = vim.fn.line "."
-  local hunks = vim.b.vcsigns_hunks
-  local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
-  require("vcsigns").high.highlight_hunk(bufnr, hunk)
+function M.show_diff(bufnr, range)
+  if not range then
+    local lnum = vim.fn.line "."
+    range = { lnum, lnum }
+  end
+  local hunks_in_range = _hunks_in_range(bufnr, range)
+  require("vcsigns").high.highlight_hunks(bufnr, hunks_in_range)
 end
 
 return M

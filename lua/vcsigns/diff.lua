@@ -74,15 +74,17 @@ local function _partition_hunks(lnum, hunks)
   for _, hunk in ipairs(hunks) do
     -- Allow to actually be on a deletion hunk, which has count 0.
     local count = math.max(1, hunk.plus_count)
+    -- Allow to actually be on a deletion hunk at the start of the file.
+    local start = math.max(1, hunk.plus_start)
     -- Special case the current hunk, do not include it in before/after.
-    if hunk.plus_start <= lnum and lnum < hunk.plus_start + count then
+    if start <= lnum and lnum < start + count then
       on = hunk
       goto continue
     end
-    if hunk.plus_start < lnum then
+    if start < lnum then
       table.insert(before, hunk)
     end
-    if hunk.plus_start > lnum then
+    if start > lnum then
       table.insert(after, hunk)
     end
     ::continue::

@@ -126,4 +126,36 @@ M.cur_hunk = {
   end,
 }
 
+local deletion_test_hunks = {
+  { plus_start = 0, plus_count = 0, minus_start = -1, minus_count = -1 },
+  { plus_start = 4, plus_count = 0, minus_start = -1, minus_count = -1 },
+}
+
+M.cur_hunk_deletions = {
+  test_cases = {
+    { lnum = 1, expected_target = 0 },
+    { lnum = 2, expected_target = nil },
+    { lnum = 3, expected_target = nil },
+    { lnum = 4, expected_target = 4 },
+    { lnum = 5, expected_target = nil },
+  },
+  test = function(case)
+    local hunk = diff.cur_hunk(case.lnum, deletion_test_hunks)
+    if not hunk then
+      if case.expected_target == nil then
+        return -- This is expected, no hunk found.
+      end
+      error "No hunk found"
+    end
+    assert(
+      hunk.plus_start == case.expected_target,
+      string.format(
+        "Expected hunk at %d, got %d",
+        case.expected_target,
+        hunk.plus_start
+      )
+    )
+  end,
+}
+
 return M

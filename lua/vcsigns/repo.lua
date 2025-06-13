@@ -258,7 +258,6 @@ end
 ---@param bufnr integer The buffer number.
 ---@return Vcs|nil The detected VCS or nil if no VCS was detected.
 function M.detect_vcs(bufnr)
-  -- TODO(algmyr): Take into account the current working directory?
   local file_dir = util.file_dir(bufnr)
   -- If the file dir does not exist, things will end poorly.
   if vim.fn.isdirectory(file_dir) == 0 then

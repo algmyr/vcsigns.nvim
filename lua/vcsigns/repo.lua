@@ -12,10 +12,16 @@ local Detector = {}
 ---@field check fun(cmd_out: vim.SystemCompleted): boolean
 local FileShower = {}
 
+---@class RenameResolver
+---@field cmd fun(target: Target): string[]
+---@field extract fun(cmd_out: vim.SystemCompleted): string|nil
+local RenameResolver = {}
+
 ---@class Vcs
 ---@field name string Human-readable name of the VCS.
 ---@field detect Detector
 ---@field show FileShower
+---@field resolve_rename RenameResolver|nil
 local Vcs = {}
 
 ---@class Target
@@ -37,6 +43,10 @@ local function _successful_command(out)
   return out.code == 0
 end
 
+local function _jj_target(target)
+  return string.format("roots(ancestors(@, %d))", target + 2)
+end
+
 ---@type table<string, Vcs>
 M.vcs = {
   jj = {
@@ -54,13 +64,41 @@ M.vcs = {
           "file",
           "show",
           "-r",
-          string.format("roots(ancestors(@, %d))", target.commit + 2),
+          _jj_target(target.commit),
           "--",
           target.file,
         }
       end,
       check = _accept_any,
     },
+    resolve_rename = {
+      cmd = function(target)
+        return {
+          'jj',
+          'diff',
+          '-r',
+          _jj_target(target.commit-1) .. "::@",
+          '-s',
+          target.file,
+        }
+      end,
+      extract = function(out)
+        if out.code ~= 0 then
+          return nil
+        end
+        if not out.stdout then
+          return nil
+        end
+        local lines = vim.split(vim.trim(out.stdout), "\n")
+        local move_spec = lines[#lines]:sub(3)
+        local res, replacements = move_spec:gsub('{(.*) => (.*)}', '%1')
+        if replacements == 0 then
+          -- Not a rename.
+          return nil
+        end
+        return res
+      end,
+    }
   },
   git = {
     name = "Git",
@@ -160,13 +198,12 @@ function M.get_vcs(vcs_name)
   return vcs
 end
 
---- Get the relevant file contents of the file according to the VCS.
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The version control system to use.
+---@param target Target The target for the VCS command.
 ---@param cb fun(content: string|nil) Callback function to handle the output.
-function M.show_file(bufnr, vcs, cb)
+local function _show_file_impl(bufnr, vcs, target, cb)
   local file_dir = util.file_dir(bufnr)
-  local target = _get_target(bufnr)
   util.run_with_timeout(vcs.show.cmd(target), { cwd = file_dir }, function(out)
     -- If the buffer was deleted, bail.
     if not vim.api.nvim_buf_is_valid(bufnr) then
@@ -187,6 +224,34 @@ function M.show_file(bufnr, vcs, cb)
     end
     cb(old_contents)
   end)
+end
+
+--- Get the relevant file contents of the file according to the VCS.
+---@param bufnr integer The buffer number.
+---@param vcs Vcs The version control system to use.
+---@param cb fun(content: string|nil) Callback function to handle the output.
+function M.show_file(bufnr, vcs, cb)
+  local target = _get_target(bufnr)
+  if vcs.resolve_rename then
+    util.verbose(
+      "Resolving rename for " .. target.file,
+      "show_file"
+    )
+    local file_dir = util.file_dir(bufnr)
+    util.run_with_timeout(vcs.resolve_rename.cmd(target), { cwd = file_dir }, function(out)
+      local resolved_file = vcs.resolve_rename.extract(out)
+      if resolved_file then
+        util.verbose(
+          "Rename found: " .. target.file .. " -> " .. resolved_file,
+          "show_file"
+        )
+        target.file = resolved_file
+      end
+      _show_file_impl(bufnr, vcs, target, cb)
+    end)
+  else
+    _show_file_impl(bufnr, vcs, target, cb)
+  end
 end
 
 --- Detect the VCS for the current buffer.

@@ -5,6 +5,8 @@ local function _highlights_namespace()
 end
 
 local function put_virtual_hunk(bufnr, ns, hunk)
+  local deletion_at_top = hunk.plus_start == 0 and hunk.plus_count == 0
+
   local line = hunk.plus_start - 1
   local virt_lines = {}
   -- Long string with spaces to get virt_lines highlights to eol.
@@ -17,13 +19,24 @@ local function put_virtual_hunk(bufnr, ns, hunk)
     })
   end
 
-  vim.api.nvim_buf_set_extmark(
-    bufnr,
-    ns,
-    line + math.max(1, hunk.plus_count) - 1,
-    0,
-    { virt_lines = virt_lines }
-  )
+  if deletion_at_top then
+    -- We can't put virtual lines below non-existent line -1.
+    vim.api.nvim_buf_set_extmark(
+      bufnr,
+      ns,
+      0,
+      0,
+      { virt_lines = virt_lines, virt_lines_above = true }
+    )
+  else
+    vim.api.nvim_buf_set_extmark(
+      bufnr,
+      ns,
+      line + math.max(1, hunk.plus_count) - 1,
+      0,
+      { virt_lines = virt_lines }
+    )
+  end
   if hunk.plus_count > 0 then
     vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
       line_hl_group = "VcsignsDiffAdd",

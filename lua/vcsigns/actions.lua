@@ -127,25 +127,17 @@ function M.update_signs(bufnr)
     return
   end
 
-  local file_dir = util.file_dir(bufnr)
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local new_contents = table.concat(buffer_lines, "\n") .. "\n"
 
   local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
 
-  util.run_with_timeout(vcs.show_cmd(bufnr), { cwd = file_dir }, function(out)
-    -- If the buffer was deleted, bail.
-    if not vim.api.nvim_buf_is_valid(bufnr) then
-      util.verbose("Buffer no longer valid, skipping diff", "update_signs")
-      return
-    end
-    -- TODO(algmyr): Handle unexpected error codes?
-    --               Or just assume error means file doesn't exist?
-    local old_contents = out.stdout
+  repo.show_file(bufnr, vcs, function(old_contents)
     if not old_contents then
-      util.verbose("No output from command, skipping diff", "update_signs")
+      -- Some kind of failure, skip the diff.
       return
     end
+
     if old_contents == "" and new_contents == "\n" then
       -- Special case of a newly created but empty file.
       -- This is just to avoid showing an "empty" buffer as a line added.

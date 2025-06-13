@@ -1,65 +1,109 @@
 local M = {}
 
+local util = require "vcsigns.util"
+
+---@class Detector
+---@field cmd fun(): string[]
+---@field check fun(cmd_out: vim.SystemCompleted): boolean
+local Detector = {}
+
+---@class FileShower
+---@field cmd fun(target: Target): string[]
+---@field check fun(cmd_out: vim.SystemCompleted): boolean
+local FileShower = {}
+
 ---@class Vcs
----@field name string
----@field show_cmd fun(bufnr: integer): string[]
----@field detect_cmd fun(): string[]
+---@field name string Human-readable name of the VCS.
+---@field detect Detector
+---@field show FileShower
 local Vcs = {}
 
---- The expression to get the commit `target` steps back.
----@param target integer The target to check.
-local function jj_target(target)
-  return string.format("roots(ancestors(@, %d))", target + 2)
+---@class Target
+---@field commit integer Target commit.
+---@field file string The file name.
+---@field path string The absolute path to the file.
+local Target = {}
+
+---@param out vim.SystemCompleted
+---@return boolean
+---@diagnostic disable-next-line: unused-local
+local function _accept_any(out)
+  return true
 end
 
-local function git_target(target)
-  return string.format("HEAD~%d", target)
-end
-local function hg_target(target)
-  return string.format(".~%d", target)
+---@param out vim.SystemCompleted
+---@return boolean
+local function _successful_command(out)
+  return out.code == 0
 end
 
+---@type table<string, Vcs>
 M.vcs = {
   jj = {
-    detect_cmd = function()
-      return { "jj", "root" }
-    end,
-    show_cmd = function(target)
-      return {
-        "jj",
-        "file",
-        "show",
-        "-r",
-        jj_target(target.commit),
-        "--",
-        target.file,
-      }
-    end,
+    name = "Jujutsu",
+    detect = {
+      cmd = function()
+        return { "jj", "root" }
+      end,
+      check = _successful_command,
+    },
+    show = {
+      cmd = function(target)
+        return {
+          "jj",
+          "file",
+          "show",
+          "-r",
+          string.format("roots(ancestors(@, %d))", target.commit + 2),
+          "--",
+          target.file,
+        }
+      end,
+      check = _accept_any,
+    },
   },
   git = {
-    detect_cmd = function()
-      return { "git", "rev-parse", "--is-inside-work-tree" }
-    end,
-    show_cmd = function(target)
-      return { "git", "show", git_target(target.commit) .. ":./" .. target.file }
-    end,
+    name = "Git",
+    detect = {
+      cmd = function()
+        return { "git", "rev-parse", "--is-inside-work-tree" }
+      end,
+      check = _successful_command,
+    },
+    show = {
+      cmd = function(target)
+        return {
+          "git",
+          "show",
+          string.format("HEAD~%d", target.commit) .. ":./" .. target.file,
+        }
+      end,
+      check = _accept_any,
+    },
   },
   hg = {
-    detect_cmd = function()
-      return { "hg", "root" }
-    end,
-    show_cmd = function(target)
-      return {
-        "hg",
-        "cat",
-        "--config",
-        "extensions.color=!",
-        "--rev",
-        hg_target(target.commit),
-        "--",
-        target.file,
-      }
-    end,
+    name = "Mercurial",
+    detect = {
+      cmd = function()
+        return { "hg", "root" }
+      end,
+      check = _successful_command,
+    },
+    show = {
+      cmd = function(target)
+        return {
+          "hg",
+          "cat",
+          "--config",
+          "extensions.color=!",
+          "--rev",
+          string.format(".~%d", target.commit),
+          "--",
+          target.file,
+        }
+      end,
+      check = _accept_any,
+    },
   },
 }
 
@@ -76,6 +120,9 @@ local function _target_commit()
   return vim.g.vcsigns_target_commit or 0
 end
 
+--- Get the target for the current buffer.
+---@param bufnr integer The buffer number.
+---@return Target
 local function _get_target(bufnr)
   local path = _get_path(bufnr)
   local file = vim.fn.fnamemodify(path, ":t")
@@ -88,14 +135,11 @@ end
 
 local function _is_available(vcs)
   local programs = {
-    vcs.detect_cmd()[1],
+    vcs.detect.cmd()[1],
   }
   for _, program in ipairs(programs) do
     if vim.fn.executable(program) == 0 then
-      require("vcsigns").util.verbose(
-        "VCS command not executable: " .. program,
-        "is_available"
-      )
+      util.verbose("VCS command not executable: " .. program, "is_available")
       return false
     end
   end
@@ -105,27 +149,44 @@ end
 ---@param vcs_name string The version control system to use.
 ---@return Vcs|nil The VCS object or nil if the VCS is not available.
 function M.get_vcs(vcs_name)
-  local vcs_base = M.vcs[vcs_name]
-  if not vcs_base then
+  local vcs = M.vcs[vcs_name]
+  if not vcs then
     error("Unknown VCS: " .. vcs_name)
   end
-  if not _is_available(vcs_base) then
-    require("vcsigns").util.verbose(
-      "VCS " .. vcs_name .. " is not available",
-      "get_vcs"
-    )
+  if not _is_available(vcs) then
+    util.verbose("VCS " .. vcs_name .. " is not available", "get_vcs")
     return nil
   end
-  local vcs = {}
-  vcs._base = vcs_base
-  vcs.name = vcs_name
-  vcs.show_cmd = function(bufnr)
-    return vcs._base.show_cmd(_get_target(bufnr))
-  end
-  vcs.detect_cmd = function()
-    return vcs._base.detect_cmd()
-  end
   return vcs
+end
+
+--- Get the relevant file contents of the file according to the VCS.
+---@param bufnr integer The buffer number.
+---@param vcs Vcs The version control system to use.
+---@param cb fun(content: string|nil) Callback function to handle the output.
+function M.show_file(bufnr, vcs, cb)
+  local file_dir = util.file_dir(bufnr)
+  local target = _get_target(bufnr)
+  util.run_with_timeout(vcs.show.cmd(target), { cwd = file_dir }, function(out)
+    -- If the buffer was deleted, bail.
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      util.verbose("Buffer no longer valid, skipping diff", "update_signs")
+      return nil
+    end
+    local old_contents = out.stdout
+    if not old_contents then
+      util.verbose("No output from command, skipping diff", "update_signs")
+      return nil
+    end
+    if not vcs.show.check(out) then
+      util.verbose(
+        "VCS decided to not produce a file, skipping diff",
+        "update_signs"
+      )
+      return nil
+    end
+    cb(old_contents)
+  end)
 end
 
 --- Detect the VCS for the current buffer.
@@ -133,33 +194,22 @@ end
 ---@return Vcs|nil The detected VCS or nil if no VCS was detected.
 function M.detect_vcs(bufnr)
   -- TODO(algmyr): Take into account the current working directory?
-  local file_dir = require("vcsigns").util.file_dir(bufnr)
+  local file_dir = util.file_dir(bufnr)
   -- If the file dir does not exist, things will end poorly.
   if vim.fn.isdirectory(file_dir) == 0 then
-    require("vcsigns").util.verbose(
-      "File directory does not exist: " .. file_dir,
-      "detect_vcs"
-    )
+    util.verbose("File directory does not exist: " .. file_dir, "detect_vcs")
     return nil
   end
   for name, _ in pairs(M.vcs) do
-    require("vcsigns").util.verbose(
-      "Trying to detect VCS " .. name,
-      "detect_vcs"
-    )
+    util.verbose("Trying to detect VCS " .. name, "detect_vcs")
     local vcs = M.get_vcs(name)
     if not vcs then
-      require("vcsigns").util.verbose(
-        "VCS " .. name .. " is not available",
-        "detect_vcs"
-      )
+      util.verbose("VCS " .. name .. " is not available", "detect_vcs")
       goto continue
     end
-    local detect_cmd = vcs.detect_cmd()
-    local res = require("vcsigns").util
-      .run_with_timeout(detect_cmd, { cwd = file_dir })
-      :wait()
-    if res.code == 0 then
+    local detect_cmd = vcs.detect.cmd()
+    local res = util.run_with_timeout(detect_cmd, { cwd = file_dir }):wait()
+    if vcs.detect.check(res) then
       return vcs
     end
     ::continue::

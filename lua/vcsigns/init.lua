@@ -51,10 +51,10 @@ local command_map = {
   newer = _with_count(M.actions.target_newer_commit),
   older = _with_count(M.actions.target_older_commit),
   fold = _no_args(M.actions.toggle_fold),
-  next_hunk = _with_count(M.actions.next_hunk),
-  prev_hunk = _with_count(M.actions.prev_hunk),
+  hunk_next = _with_count(M.actions.hunk_next),
+  hunk_prev = _with_count(M.actions.hunk_prev),
   hunk_undo = _with_range(M.actions.hunk_undo),
-  show_diff = _with_range(M.actions.show_diff),
+  hunk_diff = _with_range(M.actions.hunk_diff),
 }
 
 local function _command(arg)

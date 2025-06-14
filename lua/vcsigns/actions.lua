@@ -166,7 +166,7 @@ end
 
 ---@param bufnr integer The buffer number.
 ---@param count integer The number of hunks ahead.
-function M.next_hunk(bufnr, count)
+function M.hunk_next(bufnr, count)
   if vim.o.diff then
     vim.cmd "normal! ]c"
     return
@@ -182,7 +182,7 @@ end
 
 ---@param bufnr integer The buffer number.
 ---@param count integer The number of hunks ahead.
-function M.prev_hunk(bufnr, count)
+function M.hunk_prev(bufnr, count)
   if vim.o.diff then
     vim.cmd "normal! [c"
     return
@@ -268,7 +268,7 @@ function M.hunk_undo(bufnr, range)
 end
 
 ---@param bufnr integer The buffer number.
-function M.show_diff(bufnr, range)
+function M.hunk_diff(bufnr, range)
   if not range then
     local lnum = vim.fn.line "."
     range = { lnum, lnum }

@@ -2,147 +2,12 @@ local M = {}
 
 local util = require "vcsigns.util"
 
----@class Detector
----@field cmd fun(): string[]
----@field check fun(cmd_out: vim.SystemCompleted): boolean
-local Detector = {}
-
----@class FileShower
----@field cmd fun(target: Target): string[]
----@field check fun(cmd_out: vim.SystemCompleted): boolean
-local FileShower = {}
-
----@class RenameResolver
----@field cmd fun(target: Target): string[]
----@field extract fun(cmd_out: vim.SystemCompleted): string|nil
-local RenameResolver = {}
-
----@class Vcs
----@field name string Human-readable name of the VCS.
----@field detect Detector
----@field show FileShower
----@field resolve_rename RenameResolver|nil
-local Vcs = {}
-
----@class Target
----@field commit integer Target commit.
----@field file string The file name.
----@field path string The absolute path to the file.
-local Target = {}
-
----@param out vim.SystemCompleted
----@return boolean
----@diagnostic disable-next-line: unused-local
-local function _accept_any(out)
-  return true
-end
-
----@param out vim.SystemCompleted
----@return boolean
-local function _successful_command(out)
-  return out.code == 0
-end
-
-local function _jj_target(target)
-  return string.format("roots(ancestors(@, %d))", target + 2)
-end
-
----@type table<string, Vcs>
+--- List of VCSs, in priority order.
+---@type Vcs[]
 M.vcs = {
-  jj = {
-    name = "Jujutsu",
-    detect = {
-      cmd = function()
-        return { "jj", "root" }
-      end,
-      check = _successful_command,
-    },
-    show = {
-      cmd = function(target)
-        return {
-          "jj",
-          "file",
-          "show",
-          "-r",
-          _jj_target(target.commit),
-          "--",
-          target.file,
-        }
-      end,
-      check = _accept_any,
-    },
-    resolve_rename = {
-      cmd = function(target)
-        return {
-          'jj',
-          'diff',
-          '-r',
-          _jj_target(target.commit-1) .. "::@",
-          '-s',
-          target.file,
-        }
-      end,
-      extract = function(out)
-        if out.code ~= 0 then
-          return nil
-        end
-        if not out.stdout then
-          return nil
-        end
-        local lines = vim.split(vim.trim(out.stdout), "\n")
-        local move_spec = lines[#lines]:sub(3)
-        local res, replacements = move_spec:gsub('{(.*) => (.*)}', '%1')
-        if replacements == 0 then
-          -- Not a rename.
-          return nil
-        end
-        return res
-      end,
-    }
-  },
-  git = {
-    name = "Git",
-    detect = {
-      cmd = function()
-        return { "git", "rev-parse", "--is-inside-work-tree" }
-      end,
-      check = _successful_command,
-    },
-    show = {
-      cmd = function(target)
-        return {
-          "git",
-          "show",
-          string.format("HEAD~%d", target.commit) .. ":./" .. target.file,
-        }
-      end,
-      check = _accept_any,
-    },
-  },
-  hg = {
-    name = "Mercurial",
-    detect = {
-      cmd = function()
-        return { "hg", "root" }
-      end,
-      check = _successful_command,
-    },
-    show = {
-      cmd = function(target)
-        return {
-          "hg",
-          "cat",
-          "--config",
-          "extensions.color=!",
-          "--rev",
-          string.format(".~%d", target.commit),
-          "--",
-          target.file,
-        }
-      end,
-      check = _accept_any,
-    },
-  },
+  require "vcsigns.repo_def.jj",
+  require "vcsigns.repo_def.git",
+  require "vcsigns.repo_def.hg",
 }
 
 --- Get the absolute path of the file in the buffer.
@@ -182,20 +47,6 @@ local function _is_available(vcs)
     end
   end
   return true
-end
-
----@param vcs_name string The version control system to use.
----@return Vcs|nil The VCS object or nil if the VCS is not available.
-function M.get_vcs(vcs_name)
-  local vcs = M.vcs[vcs_name]
-  if not vcs then
-    error("Unknown VCS: " .. vcs_name)
-  end
-  if not _is_available(vcs) then
-    util.verbose("VCS " .. vcs_name .. " is not available", "get_vcs")
-    return nil
-  end
-  return vcs
 end
 
 ---@param bufnr integer The buffer number.
@@ -264,11 +115,10 @@ function M.detect_vcs(bufnr)
     util.verbose("File directory does not exist: " .. file_dir, "detect_vcs")
     return nil
   end
-  for name, _ in pairs(M.vcs) do
-    util.verbose("Trying to detect VCS " .. name, "detect_vcs")
-    local vcs = M.get_vcs(name)
-    if not vcs then
-      util.verbose("VCS " .. name .. " is not available", "detect_vcs")
+  for _, vcs in ipairs(M.vcs) do
+    util.verbose("Trying to detect VCS " .. vcs.name, "detect_vcs")
+    if not _is_available(vcs) then
+      util.verbose("VCS " .. vcs.name .. " is not available", "detect_vcs")
       goto continue
     end
     local detect_cmd = vcs.detect.cmd()

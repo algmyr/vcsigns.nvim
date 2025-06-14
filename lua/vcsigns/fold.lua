@@ -79,15 +79,15 @@ local function _disable()
   vim.cmd "normal! zv"
 end
 
-function M.toggle()
-  if vim.b.vcsigns_folded then
+function M.toggle(bufnr)
+  if vim.b[bufnr].vcsigns_folded then
     _disable()
-    if vim.b.vcsigns_folded.method == "manual" then
+    if vim.b[bufnr].vcsigns_folded.method == "manual" then
       vim.cmd "loadview"
     end
-    vim.b.vcsigns_folded = nil
+    vim.b[bufnr].vcsigns_folded = nil
   else
-    vim.b.vcsigns_folded =
+    vim.b[bufnr].vcsigns_folded =
       { method = vim.wo.foldmethod, text = vim.wo.foldtext }
     if vim.wo.foldmethod == "manual" then
       local old_vop = vim.o.viewoptions

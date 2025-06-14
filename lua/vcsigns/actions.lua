@@ -1,6 +1,7 @@
 local M = {}
 
 local diff = require "vcsigns.diff"
+local fold = require "vcsigns.fold"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
@@ -274,6 +275,11 @@ function M.show_diff(bufnr, range)
   end
   local hunks_in_range = _hunks_in_range(bufnr, range)
   require("vcsigns").high.highlight_hunks(bufnr, hunks_in_range)
+end
+
+---@param bufnr integer The buffer number.
+function M.toggle_fold(bufnr)
+  fold.toggle(bufnr)
 end
 
 return M

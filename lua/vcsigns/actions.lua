@@ -2,6 +2,7 @@ local M = {}
 
 local diff = require "vcsigns.diff"
 local fold = require "vcsigns.fold"
+local high = require "vcsigns.high"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
@@ -173,7 +174,7 @@ function M.hunk_next(bufnr, count)
   end
   local lnum = vim.fn.line "."
   local hunks = vim.b[bufnr].vcsigns_hunks
-  local hunk = require("vcsigns").diff.next_hunk(lnum, hunks, count)
+  local hunk = diff.next_hunk(lnum, hunks, count)
   if hunk then
     vim.cmd "normal! m`"
     vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
@@ -189,7 +190,7 @@ function M.hunk_prev(bufnr, count)
   end
   local lnum = vim.fn.line "."
   local hunks = vim.b[bufnr].vcsigns_hunks
-  local hunk = require("vcsigns").diff.prev_hunk(lnum, hunks, count)
+  local hunk = diff.prev_hunk(lnum, hunks, count)
   if hunk then
     vim.cmd "normal! m`"
     vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
@@ -204,7 +205,7 @@ local function _hunks_in_range(bufnr, range)
   ---@type Hunk[]
   local hunks_in_range = {}
   for lnum = range[1], range[2] do
-    local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+    local hunk = diff.cur_hunk(lnum, hunks)
     if hunk then
       table.insert(hunks_in_range, hunk)
     end
@@ -275,7 +276,7 @@ function M.hunk_diff(bufnr, range)
     range = { lnum, lnum }
   end
   local hunks_in_range = _hunks_in_range(bufnr, range)
-  require("vcsigns").high.highlight_hunks(bufnr, hunks_in_range)
+  high.highlight_hunks(bufnr, hunks_in_range)
 end
 
 ---@param bufnr integer The buffer number.

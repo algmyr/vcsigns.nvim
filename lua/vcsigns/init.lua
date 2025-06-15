@@ -1,12 +1,13 @@
 local M = {}
 
-M.repo = require "vcsigns.repo"
-M.util = require "vcsigns.util"
+M.actions = require "vcsigns.actions"
 M.diff = require "vcsigns.diff"
-M.sign = require "vcsigns.sign"
 M.fold = require "vcsigns.fold"
 M.high = require "vcsigns.high"
-M.actions = require "vcsigns.actions"
+M.repo = require "vcsigns.repo"
+M.sign = require "vcsigns.sign"
+M.textobj = require "vcsigns.textobj"
+M.util = require "vcsigns.util"
 
 --- Decorator to wrap a function that takes no arguments.
 local function _no_args(fun)

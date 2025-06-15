@@ -1,5 +1,7 @@
 local M = {}
 
+local diff = require "vcsigns.diff"
+
 local function _highlights_namespace()
   return vim.api.nvim_create_namespace "vcsigns_highlights"
 end
@@ -32,7 +34,7 @@ local function put_virtual_hunk(bufnr, ns, hunk)
     vim.api.nvim_buf_set_extmark(
       bufnr,
       ns,
-      line + math.max(1, hunk.plus_count) - 1,
+      line + diff.hunk_visual_size(hunk) - 1,
       0,
       { virt_lines = virt_lines }
     )

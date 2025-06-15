@@ -1,5 +1,7 @@
 local M = {}
 
+local diff = require "vcsigns.diff"
+
 function M.get_levels_impl(hunks, context, last_line)
   local max_level = #context
 
@@ -11,7 +13,7 @@ function M.get_levels_impl(hunks, context, last_line)
   local function f(margin, value)
     for _, hunk in ipairs(hunks) do
       local start = hunk.plus_start
-      local count = hunk.plus_count
+      local count = diff.hunk_visual_size(hunk)
       for i = start - margin, start + count - 1 + margin do
         if i >= 1 and i <= last_line then
           levels[i] = value

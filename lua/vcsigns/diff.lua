@@ -23,6 +23,18 @@ local function slice(tbl, start, count)
   return result
 end
 
+---@param hunk Hunk
+---@return integer The visual size of the hunk in lines.
+function M.hunk_visual_start(hunk)
+  return math.max(1, hunk.plus_start)
+end
+
+---@param hunk Hunk
+---@return integer The visual size of the hunk in lines.
+function M.hunk_visual_size(hunk)
+  return math.max(1, hunk.plus_count)
+end
+
 --- Convert a hunk quad to a Hunk.
 ---@param hunk_quad integer[]
 ---@param old_lines string[] The old lines of the file.
@@ -73,10 +85,11 @@ local function _partition_hunks(lnum, hunks)
 
   for _, hunk in ipairs(hunks) do
     -- Allow to actually be on a deletion hunk, which has count 0.
-    local count = math.max(1, hunk.plus_count)
+    local count = M.hunk_visual_size(hunk)
     -- Allow to actually be on a deletion hunk at the start of the file.
-    local start = math.max(1, hunk.plus_start)
+    local start = M.hunk_visual_start(hunk)
     -- Special case the current hunk, do not include it in before/after.
+    print("Start: ", start, " Count: ", count, " Lnum: ", lnum)
     if start <= lnum and lnum < start + count then
       on = hunk
       goto continue

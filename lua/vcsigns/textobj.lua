@@ -12,6 +12,14 @@ function M.select_hunk(bufnr)
     )
     return
   end
+  if hunk.plus_count == 0 then
+    vim.notify(
+      "No lines in this hunk",
+      vim.log.levels.WARN,
+      { title = "VCSigns" }
+    )
+    return
+  end
   local start = hunk.plus_start
   local finish = start + hunk.plus_count - 1
   vim.cmd(string.format("normal! %dG%d|V%dG", start, start, finish))

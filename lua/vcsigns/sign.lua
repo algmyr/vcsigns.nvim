@@ -124,7 +124,13 @@ function M.add_signs(bufnr, hunks)
     end
   end
 
-  -- TODO(algmyr): Record stats, or remove added/modified/deleted.
+  -- Record stats for use in statuslines and similar.
+  -- The table format is compatible with the "diff" section of lualine.
+  vim.b[bufnr].vcsigns_stats = {
+    added = added,
+    modified = modified,
+    removed = deleted,
+  }
 end
 
 --- Clear all signs in the buffer.

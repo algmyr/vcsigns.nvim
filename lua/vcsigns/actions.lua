@@ -220,14 +220,9 @@ local function _hunks_in_range(bufnr, range)
   end)
 
   -- Remove duplicates.
-  local num = 1
-  for i = 2, #hunks_in_range do
-    if hunks_in_range[num].plus_start ~= hunks_in_range[i].plus_start then
-      hunks_in_range[num + 1] = hunks_in_range[i]
-      num = num + 1
-    end
-    hunks_in_range[i] = nil
-  end
+  vim.fn.uniq(hunks_in_range, function(a, b)
+    return a.plus_start - b.plus_start
+  end)
 
   return hunks_in_range
 end

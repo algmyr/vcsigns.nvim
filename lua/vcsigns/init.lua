@@ -26,7 +26,7 @@ local function _with_range(fun)
     if #args > 0 then
       error "This VCSigns command does not take any arguments"
     end
-    local range = {arg.line1, arg.line2}
+    local range = { arg.line1, arg.line2 }
     fun(bufnr, range)
   end
   return wrap

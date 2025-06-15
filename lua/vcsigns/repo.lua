@@ -84,22 +84,23 @@ end
 function M.show_file(bufnr, vcs, cb)
   local target = _get_target(bufnr)
   if vcs.resolve_rename then
-    util.verbose(
-      "Resolving rename for " .. target.file,
-      "show_file"
-    )
+    util.verbose("Resolving rename for " .. target.file, "show_file")
     local file_dir = util.file_dir(bufnr)
-    util.run_with_timeout(vcs.resolve_rename.cmd(target), { cwd = file_dir }, function(out)
-      local resolved_file = vcs.resolve_rename.extract(out)
-      if resolved_file then
-        util.verbose(
-          "Rename found: " .. target.file .. " -> " .. resolved_file,
-          "show_file"
-        )
-        target.file = resolved_file
+    util.run_with_timeout(
+      vcs.resolve_rename.cmd(target),
+      { cwd = file_dir },
+      function(out)
+        local resolved_file = vcs.resolve_rename.extract(out)
+        if resolved_file then
+          util.verbose(
+            "Rename found: " .. target.file .. " -> " .. resolved_file,
+            "show_file"
+          )
+          target.file = resolved_file
+        end
+        _show_file_impl(bufnr, vcs, target, cb)
       end
-      _show_file_impl(bufnr, vcs, target, cb)
-    end)
+    )
   else
     _show_file_impl(bufnr, vcs, target, cb)
   end

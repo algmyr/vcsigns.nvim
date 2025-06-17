@@ -89,7 +89,6 @@ local function _partition_hunks(lnum, hunks)
     -- Allow to actually be on a deletion hunk at the start of the file.
     local start = M.hunk_visual_start(hunk)
     -- Special case the current hunk, do not include it in before/after.
-    print("Start: ", start, " Count: ", count, " Lnum: ", lnum)
     if start <= lnum and lnum < start + count then
       on = hunk
       goto continue

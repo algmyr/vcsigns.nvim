@@ -9,7 +9,7 @@ return {
   name = "Jujutsu",
   detect = {
     cmd = function()
-      return { "jj", "root" }
+      return { "jj", "--ignore-working-copy", "root" }
     end,
     check = common.check_successful_command,
   },
@@ -17,6 +17,7 @@ return {
     cmd = function(target)
       return {
         "jj",
+        "--ignore-working-copy",
         "file",
         "show",
         "-r",
@@ -31,6 +32,7 @@ return {
     cmd = function(target)
       return {
         "jj",
+        "--ignore-working-copy",
         "diff",
         "-r",
         _jj_target(target.commit - 1) .. "::@",

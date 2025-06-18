@@ -38,6 +38,7 @@ function M.add_signs(bufnr, hunks)
     local config = {
       sign_text = sign.text,
       sign_hl_group = sign.hl,
+      priority = 5, -- Low priority, default is 10.
     }
     if vim.g.vcsigns_highlight_number then
       config.number_hl_group = sign.hl

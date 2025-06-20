@@ -171,8 +171,10 @@ function M.setup(user_config)
   -- The default diff colors are pretty terrible, but they exist.
   vim.cmd [[
     " Diff lines.
-    highlight default link VcsignsDiffAdd      DiffAdd
-    highlight default link VcsignsDiffDelete   DiffDelete
+    highlight default link VcsignsDiffAdd        DiffAdd
+    highlight default link VcsignsDiffDelete     DiffDelete
+    highlight default link VcsignsDiffTextAdd    DiffText
+    highlight default link VcsignsDiffTextDelete DiffText
     " Sign colors.
     highlight default link SignAdd             DiffAdd
     highlight default link SignDelete          DiffDelete

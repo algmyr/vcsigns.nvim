@@ -1,14 +1,5 @@
 local M = {}
 
----@class Hunk
----@field minus_start integer Start of the minus side
----@field minus_count integer Count of the minus side
----@field minus_lines string[] Lines in the minus side
----@field plus_start integer Start of the plus side
----@field plus_count integer Count of the plus side
----@field plus_lines string[] Lines in the plus side
-local Hunk = {}
-
 ---@param hunk Hunk
 ---@return integer The visual size of the hunk in lines.
 function M.hunk_visual_start(hunk)

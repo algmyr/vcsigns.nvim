@@ -14,11 +14,29 @@ local function put_virtual_hunk(bufnr, ns, hunk)
   -- Long string with spaces to get virt_lines highlights to eol.
   -- Surely there is a better way...
   local spacer = string.rep(" ", 1000)
-  for _, l in ipairs(hunk.minus_lines) do
-    table.insert(virt_lines, {
-      { l, { "VcsignsDiffDelete" } },
-      { spacer, { "VcsignsDiffDelete" } },
-    })
+
+  for i, l in ipairs(hunk.minus_lines) do
+    local chunks = {}
+    local intervals = hunk.intra_diff.minus_intervals[i] or {}
+    local start = 0
+    for _, interval in ipairs(intervals) do
+      if start < interval[1] then
+        -- Add a chunk for the text before the interval.
+        chunks[#chunks + 1] =
+          { l:sub(start + 1, interval[1]), { "VcsignsDiffDelete" } }
+      end
+      -- Add a chunk for the interval.
+      chunks[#chunks + 1] = {
+        l:sub(interval[1] + 1, interval[2]),
+        { "VcsignsDiffDelete", "VcsignsDiffTextDelete" },
+      }
+      start = interval[2]
+    end
+    -- Add a chunk for the text after the last interval.
+    chunks[#chunks + 1] = { l:sub(start + 1), { "VcsignsDiffDelete" } }
+
+    chunks[#chunks + 1] = { spacer, { "VcsignsDiffDelete" } }
+    virt_lines[#virt_lines + 1] = chunks
   end
 
   if deletion_at_top then
@@ -40,10 +58,35 @@ local function put_virtual_hunk(bufnr, ns, hunk)
     )
   end
   if hunk.plus_count > 0 then
+    -- Working around issue with line_hl_group not working with hl_group.
+    -- Workaround from:
+    -- https://github.com/lewis6991/gitsigns.nvim/issues/1115#issuecomment-2319497559
+    --
+    -- vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
+    --   line_hl_group = "VcsignsDiffAdd",
+    --   end_row = line + hunk.plus_count - 1,
+    -- })
     vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
-      line_hl_group = "VcsignsDiffAdd",
-      end_row = line + hunk.plus_count - 1,
+      end_line = line + hunk.plus_count,
+      hl_group = "VcsignsDiffAdd",
+      priority = 3,
+      end_col = 0,
+      hl_eol = true,
+      strict = false,
     })
+  end
+
+  -- Fine grained diff.
+  local plus_intervals = hunk.intra_diff.plus_intervals
+  for offset, intervals in pairs(plus_intervals) do
+    for _, interval in ipairs(intervals) do
+      local interval_line = line + offset - 1
+      vim.api.nvim_buf_set_extmark(bufnr, ns, interval_line, interval[1], {
+        end_col = interval[2],
+        hl_group = "VcsignsDiffTextAdd",
+        strict = false,
+      })
+    end
   end
 end
 

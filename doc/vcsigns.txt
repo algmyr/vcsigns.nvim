@@ -60,6 +60,10 @@ This plugin uses a handful of highlight groups.
   Highlight for added lines in inline diffs.
 - `VcsignsDiffDelete`  (default: `DiffDelete`)
   Highlight for deleted lines in inline diffs.
+- `VcsignsDiffTextAdd`  (default: `DiffText`)
+  Highlight for intra-line additions in inline diffs.
+- `VcsignsDiffTextDelete`  (default: `DiffText`)
+  Highlight for intra-line deletions in inline diffs.
 
 ===============================================================================
 3. Lua API

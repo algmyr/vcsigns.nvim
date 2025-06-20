@@ -220,11 +220,13 @@ local function _hunks_in_range(bufnr, range)
   end)
 
   -- Remove duplicates.
-  vim.fn.uniq(hunks_in_range, function(a, b)
-    return a.plus_start - b.plus_start
-  end)
-
-  return hunks_in_range
+  local res = {}
+  for _, hunk in ipairs(hunks_in_range) do
+    if #res == 0 or res[#res].plus_start ~= hunk.plus_start then
+      table.insert(res, hunk)
+    end
+  end
+  return res
 end
 
 ---@param bufnr integer The buffer number.

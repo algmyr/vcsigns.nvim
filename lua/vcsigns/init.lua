@@ -160,7 +160,7 @@ function M.setup(user_config)
       pattern = "*",
       callback = function(args)
         local bufnr = args.buf
-        M.actions.update_signs(bufnr)
+        M.actions.start_if_needed(bufnr)
       end,
       desc = "Auto-enable VCSigns on buffer read",
     })

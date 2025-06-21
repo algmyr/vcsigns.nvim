@@ -239,8 +239,7 @@ function M.hunk_undo(bufnr, range)
 end
 
 ---@param bufnr integer The buffer number.
----@param range integer[]|nil The range of lines to diff hunks in.
-function M.toggle_hunk_diff(bufnr, range)
+function M.toggle_hunk_diff(bufnr)
   if not range then
     local lnum = vim.fn.line "."
     range = { lnum, lnum }

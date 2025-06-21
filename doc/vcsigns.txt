@@ -38,11 +38,6 @@ FOLDING
 
 :VCSigns fold    Toggle folding of non-diff lines.
 
-
-DEBUG
-
-:VCSigns trigger    Debug command for manually triggering a sign update.
-
 ===============================================================================
 2. Configuration
 

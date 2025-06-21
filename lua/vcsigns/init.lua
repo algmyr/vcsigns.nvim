@@ -46,7 +46,6 @@ local function _with_count(fun)
 end
 
 local command_map = {
-  trigger = _no_args(M.actions.update_signs),
   start = _no_args(M.actions.start),
   stop = _no_args(M.actions.stop),
   newer = _with_count(M.actions.target_newer_commit),

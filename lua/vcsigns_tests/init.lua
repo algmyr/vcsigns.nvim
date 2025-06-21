@@ -45,7 +45,7 @@ end
 
 function M.run()
   local test_modules = {
-    "vcsigns_tests.diff",
+    "vcsigns_tests.hunkops",
     "vcsigns_tests.fold",
   }
   local failed = 0

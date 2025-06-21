@@ -57,6 +57,7 @@ local function _set_buflocal_autocmds(bufnr)
   -- Clear existing autocommands in this buffer only.
   vim.api.nvim_clear_autocmds { buffer = bufnr, group = group }
 
+  -- Expensive update on certain events.
   local events = {
     "BufEnter",
     "WinEnter",
@@ -75,7 +76,25 @@ local function _set_buflocal_autocmds(bufnr)
         M.update_signs(bufnr)
       end
     end,
-    desc = "Update VCSigns",
+    desc = "VCSigns refresh and update hunks",
+  })
+
+  -- Cheaper update on some frequent events.
+  local frequent_events = {
+    "TextChanged",
+    "TextChangedI",
+    "BufModifiedSet",
+    "InsertLeave",
+  }
+  vim.api.nvim_create_autocmd(frequent_events, {
+    group = group,
+    buffer = bufnr,
+    callback = function()
+      if not vim.b[bufnr].vcsigns_detecting then
+        _recompute_hunks_and_update(bufnr)
+      end
+    end,
+    desc = "VCSigns refresh and update hunks",
   })
 end
 

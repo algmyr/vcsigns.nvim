@@ -1,6 +1,7 @@
 local M = {}
 
 local diff = require "vcsigns.diff"
+local high = require "vcsigns.high"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
@@ -27,6 +28,12 @@ function M.shallow_update(bufnr)
   local hunks = diff.compute_diff(old_contents, new_contents)
   vim.b[bufnr].vcsigns_hunks = hunks
   sign.add_signs(bufnr, hunks)
+
+  if vim.b[bufnr].vcsigns_show_hunk_diffs then
+    high.highlight_hunks(bufnr, hunks)
+  else
+    high.highlight_hunks(bufnr, {})
+  end
 end
 
 ---@param bufnr integer The buffer number.

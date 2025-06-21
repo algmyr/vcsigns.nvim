@@ -2,7 +2,6 @@ local M = {}
 
 local diff = require "vcsigns.diff"
 local fold = require "vcsigns.fold"
-local high = require "vcsigns.high"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
@@ -245,16 +244,9 @@ function M.toggle_hunk_diff(bufnr, range)
     local lnum = vim.fn.line "."
     range = { lnum, lnum }
   end
-
-  local is_enabled = not vim.b[bufnr].vcsigns_show_hunk_diffs
-  vim.b[bufnr].vcsigns_show_hunk_diffs = is_enabled
-
-  if is_enabled then
-    local hunks = vim.b[bufnr].vcsigns_hunks
-    high.highlight_hunks(bufnr, hunks)
-  else
-    high.highlight_hunks(bufnr, {})
-  end
+  vim.b[bufnr].vcsigns_show_hunk_diffs =
+    not vim.b[bufnr].vcsigns_show_hunk_diffs
+  updates.shallow_update(bufnr)
 end
 
 ---@param bufnr integer The buffer number.

@@ -19,21 +19,17 @@ is depended on the core machinery should be robust across all of them.
 ## Features
 
 * Showing diff signs in your sign gutter.
+  * Shows diffs compared to your current buffer, instant feedback.
 * Easy switching of the target commit for the diff.
 * Folding of non-diff areas.
 * Navigating between hunks.
 * Undoing the hunk under the cursor.
-* Showing the diff (plus lines and minus lines) for the hunk under the cursor.
+* Showing inline diffs (plus lines and minus lines) for hunks,
+  with fine grained diffs within hunks.
 
 ### Not yet implemented
 
-* Hunk text objects.
-* Expose diff stats (add/removed/modified) for use in status line or similar.
 * Custom fold text.
-* Documentation.
-
-## Flashy screenshots or recordings?
-TBD, maybe.
 
 ## Example config
 For a documented default config, have a look inside `init.lua`.
@@ -64,3 +60,17 @@ For a documented default config, have a look inside `init.lua`.
   end,
 }
 ```
+
+## Screenshots
+Screenshots are with my own theme
+[vim-wombat-lua](https://github.com/algmyr/vim-wombat-lua)\
+which has highlight groups overridden.
+
+### Gutter signs and lualine stats
+![Gutter signs and lualine stats](https://github.com/user-attachments/assets/0182fb39-134c-46da-a794-30fb5cfb6ac8)
+
+### Fold around diffs
+![Fold around diffs](https://github.com/user-attachments/assets/92d37755-078e-4702-9177-7a00dc1fc755)
+
+### Inline diff view
+![Inline diff view](https://github.com/user-attachments/assets/1bcc093d-eed2-4be6-80b2-68c83f68805e)

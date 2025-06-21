@@ -42,7 +42,7 @@ local function _is_available(vcs)
   }
   for _, program in ipairs(programs) do
     if vim.fn.executable(program) == 0 then
-      util.verbose("VCS command not executable: " .. program, "is_available")
+      util.verbose("VCS command not executable: " .. program)
       return false
     end
   end
@@ -58,19 +58,16 @@ local function _show_file_impl(bufnr, vcs, target, cb)
   util.run_with_timeout(vcs.show.cmd(target), { cwd = file_dir }, function(out)
     -- If the buffer was deleted, bail.
     if not vim.api.nvim_buf_is_valid(bufnr) then
-      util.verbose("Buffer no longer valid, skipping diff", "update_signs")
+      util.verbose "Buffer no longer valid, skipping diff"
       return nil
     end
     local old_contents = out.stdout
     if not old_contents then
-      util.verbose("No output from command, skipping diff", "update_signs")
+      util.verbose "No output from command, skipping diff"
       return nil
     end
     if not vcs.show.check(out) then
-      util.verbose(
-        "VCS decided to not produce a file, skipping diff",
-        "update_signs"
-      )
+      util.verbose "VCS decided to not produce a file, skipping diff"
       return nil
     end
     cb(old_contents)
@@ -84,7 +81,7 @@ end
 function M.show_file(bufnr, vcs, cb)
   local target = _get_target(bufnr)
   if vcs.resolve_rename then
-    util.verbose("Resolving rename for " .. target.file, "show_file")
+    util.verbose("Resolving rename for " .. target.file)
     local file_dir = util.file_dir(bufnr)
     util.run_with_timeout(
       vcs.resolve_rename.cmd(target),
@@ -93,8 +90,7 @@ function M.show_file(bufnr, vcs, cb)
         local resolved_file = vcs.resolve_rename.extract(out)
         if resolved_file then
           util.verbose(
-            "Rename found: " .. target.file .. " -> " .. resolved_file,
-            "show_file"
+            "Rename found: " .. target.file .. " -> " .. resolved_file
           )
           target.file = resolved_file
         end
@@ -113,13 +109,13 @@ function M.detect_vcs(bufnr)
   local file_dir = util.file_dir(bufnr)
   -- If the file dir does not exist, things will end poorly.
   if vim.fn.isdirectory(file_dir) == 0 then
-    util.verbose("File directory does not exist: " .. file_dir, "detect_vcs")
+    util.verbose("File directory does not exist: " .. file_dir)
     return nil
   end
   for _, vcs in ipairs(M.vcs) do
-    util.verbose("Trying to detect VCS " .. vcs.name, "detect_vcs")
+    util.verbose("Trying to detect VCS " .. vcs.name)
     if not _is_available(vcs) then
-      util.verbose("VCS " .. vcs.name .. " is not available", "detect_vcs")
+      util.verbose("VCS " .. vcs.name .. " is not available")
       goto continue
     end
     local detect_cmd = vcs.detect.cmd()

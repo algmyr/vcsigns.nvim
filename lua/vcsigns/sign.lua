@@ -30,8 +30,7 @@ function M.add_signs(bufnr, hunks)
           "Tried to add sign on line %d for a buffer with %d lines.",
           line,
           line_count
-        ),
-        "add_signs"
+        )
       )
       return
     end

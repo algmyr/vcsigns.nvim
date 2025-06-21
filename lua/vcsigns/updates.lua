@@ -13,10 +13,7 @@ function M.shallow_update(bufnr)
   local old_contents = vim.b[bufnr].vcsigns_old_contents
 
   if not old_contents then
-    util.verbose(
-      "No old contents available, skipping diff.",
-      "recompute_hunks_and_update"
-    )
+    util.verbose "No old contents available, skipping diff."
     return
   end
 
@@ -45,10 +42,7 @@ local function _refresh_old_file_contents(bufnr, vcs, cb)
     end
     local last = vim.b[bufnr].vcsigns_last_update or 0
     if start_time <= last then
-      util.verbose(
-        "Skipping updating old file, we already have a newer update.",
-        "refresh_old_file_contents"
-      )
+      util.verbose "Skipping updating old file, we already have a newer update."
       return
     end
     vim.b[bufnr].vcsigns_old_contents = old_contents
@@ -63,10 +57,10 @@ end
 local function _get_vcs_if_ready(bufnr)
   local detecting = vim.b[bufnr].vcsigns_detecting
   if detecting == nil then
-    util.verbose("Buffer not initialized yet.", "_get_vcs_if_ready")
+    util.verbose "Buffer not initialized yet."
   end
   if detecting then
-    util.verbose("Busy detecting, skipping.", "_get_vcs_if_ready")
+    util.verbose "Busy detecting, skipping."
     return
   end
   return vim.b[bufnr].vcsigns_vcs
@@ -77,12 +71,12 @@ end
 function M.deep_update(bufnr)
   if vim.bo[bufnr].buftype ~= "" then
     -- Not a normal file buffer, don't do anything.
-    util.verbose("Not a normal file buffer, skipping.", "deep_update")
+    util.verbose "Not a normal file buffer, skipping."
     return
   end
   local vcs = _get_vcs_if_ready(bufnr)
   if not vcs then
-    util.verbose("No VCS detected for buffer, skipping.", "deep_update")
+    util.verbose "No VCS detected for buffer, skipping."
     return
   end
 

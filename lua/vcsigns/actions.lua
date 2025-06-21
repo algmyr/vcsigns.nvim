@@ -65,10 +65,10 @@ function M.start(bufnr)
   local vcs = repo.detect_vcs(bufnr)
   vim.b[bufnr].vcsigns_detecting = false
   if not vcs then
-    util.verbose("No VCS detected", "start")
+    util.verbose "No VCS detected"
     return
   end
-  util.verbose("Detected VCS " .. vcs.name, "start")
+  util.verbose("Detected VCS " .. vcs.name)
   vim.b[bufnr].vcsigns_vcs = vcs
 
   _set_buflocal_autocmds(bufnr)

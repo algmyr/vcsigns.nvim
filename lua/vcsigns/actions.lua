@@ -7,6 +7,50 @@ local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
 
+---@param bufnr integer The buffer number.
+local function _recompute_hunks_and_update(bufnr)
+  local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local new_contents = table.concat(buffer_lines, "\n") .. "\n"
+  local old_contents = vim.b[bufnr].vcsigns_old_contents
+
+  if old_contents == "" and new_contents == "\n" then
+    -- Special case of a newly created but empty file.
+    -- This is just to avoid showing an "empty" buffer as a line added.
+    -- Just a cosmetic thing.
+    old_contents = "\n"
+  end
+
+  local hunks = diff.compute_diff(old_contents, new_contents)
+  vim.b[bufnr].vcsigns_hunks = hunks
+  sign.add_signs(bufnr, hunks)
+end
+
+---@param bufnr integer The buffer number.
+---@param vcs Vcs The VCS object for the buffer.
+---@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
+local function _refresh_old_file_contents(bufnr, vcs, cb)
+  local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
+
+  repo.show_file(bufnr, vcs, function(old_contents)
+    if not old_contents then
+      -- Some kind of failure, skip the diff.
+      return
+    end
+    local last = vim.b[bufnr].vcsigns_last_update or 0
+    if start_time <= last then
+      util.verbose(
+        "Skipping updating old file, we already have a newer update.",
+        "update_signs"
+      )
+      return
+    end
+    vim.b[bufnr].vcsigns_old_contents = old_contents
+    vim.b[bufnr].vcsigns_last_update = start_time
+    vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
+    cb(bufnr)
+  end)
+end
+
 local function _set_buflocal_autocmds(bufnr)
   local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
 
@@ -129,40 +173,7 @@ function M.update_signs(bufnr)
     return
   end
 
-  local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local new_contents = table.concat(buffer_lines, "\n") .. "\n"
-
-  local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
-
-  repo.show_file(bufnr, vcs, function(old_contents)
-    if not old_contents then
-      -- Some kind of failure, skip the diff.
-      return
-    end
-
-    if old_contents == "" and new_contents == "\n" then
-      -- Special case of a newly created but empty file.
-      -- This is just to avoid showing an "empty" buffer as a line added.
-      -- Just a cosmetic thing.
-      old_contents = "\n"
-    end
-    local hunks = diff.compute_diff(old_contents, new_contents)
-    -- TODO(algmyr): Think about when the hunks should be computed.
-    --               Having it bundled with the sign update is kinda awkward.
-    local last = vim.b[bufnr].vcsigns_last_update or 0
-    if start_time <= last then
-      util.verbose(
-        "Skipping update, we already have a newer update.",
-        "update_signs"
-      )
-      return
-    end
-
-    vim.b[bufnr].vcsigns_last_update = start_time
-    vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
-    vim.b[bufnr].vcsigns_hunks = hunks
-    sign.add_signs(bufnr, hunks)
-  end)
+  _refresh_old_file_contents(bufnr, vcs, _recompute_hunks_and_update)
 end
 
 ---@param bufnr integer The buffer number.

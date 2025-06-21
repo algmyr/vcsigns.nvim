@@ -1,6 +1,6 @@
 local M = {}
 
-local diff = require "vcsigns.diff"
+local hunkops = require "vcsigns.hunkops"
 
 -- Minus part doesn't matter for the hunk navigation tests.
 --  1
@@ -39,7 +39,7 @@ M.next_hunk = {
   },
   test = function(case)
     local hunk =
-      diff.next_hunk(case.lnum, navigation_test_hunks, case.count or 1)
+      hunkops.next_hunk(case.lnum, navigation_test_hunks, case.count or 1)
     if not hunk then
       if case.expected_target == nil then
         return -- This is expected, no hunk found.
@@ -76,7 +76,7 @@ M.prev_hunk = {
   },
   test = function(case)
     local hunk =
-      diff.prev_hunk(case.lnum, navigation_test_hunks, case.count or 1)
+      hunkops.prev_hunk(case.lnum, navigation_test_hunks, case.count or 1)
     if not hunk then
       if case.expected_target == nil then
         return -- This is expected, no hunk found.
@@ -108,7 +108,7 @@ M.cur_hunk = {
     { lnum = 11, expected_target = nil },
   },
   test = function(case)
-    local hunk = diff.cur_hunk(case.lnum, navigation_test_hunks)
+    local hunk = hunkops.cur_hunk(case.lnum, navigation_test_hunks)
     if not hunk then
       if case.expected_target == nil then
         return -- This is expected, no hunk found.
@@ -140,7 +140,7 @@ M.cur_hunk_deletions = {
     { lnum = 5, expected_target = nil },
   },
   test = function(case)
-    local hunk = diff.cur_hunk(case.lnum, deletion_test_hunks)
+    local hunk = hunkops.cur_hunk(case.lnum, deletion_test_hunks)
     if not hunk then
       if case.expected_target == nil then
         return -- This is expected, no hunk found.

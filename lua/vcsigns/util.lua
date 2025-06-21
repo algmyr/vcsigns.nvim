@@ -37,4 +37,19 @@ function M.file_dir(bufnr)
   return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":p:h")
 end
 
+--- Slice a table to get a subtable.
+---@param tbl table The table to slice.
+---@param start integer The starting index (1-based).
+---@param count integer The number of elements to take.
+---@return table A new table containing the sliced elements.
+function M.slice(tbl, start, count)
+  local result = {}
+  for i = start, start + count - 1 do
+    if i >= 1 and i <= #tbl then
+      table.insert(result, tbl[i])
+    end
+  end
+  return result
+end
+
 return M

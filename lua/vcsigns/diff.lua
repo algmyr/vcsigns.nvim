@@ -1,5 +1,7 @@
 local M = {}
 
+local util = require "vcsigns.util"
+
 ---@class Hunk
 ---@field minus_start integer Start of the minus side
 ---@field minus_count integer Count of the minus side
@@ -8,20 +10,6 @@ local M = {}
 ---@field plus_count integer Count of the plus side
 ---@field plus_lines string[] Lines in the plus side
 local Hunk = {}
-
----@param tbl table The table to slice.
----@param start integer The starting index (1-based).
----@param count integer The number of elements to take.
----@return table A new table containing the sliced elements.
-local function slice(tbl, start, count)
-  local result = {}
-  for i = start, start + count - 1 do
-    if i >= 1 and i <= #tbl then
-      table.insert(result, tbl[i])
-    end
-  end
-  return result
-end
 
 ---@param hunk Hunk
 ---@return integer The visual size of the hunk in lines.
@@ -44,10 +32,10 @@ local function _quad_to_hunk(hunk_quad, old_lines, new_lines)
   return {
     minus_start = hunk_quad[1],
     minus_count = hunk_quad[2],
-    minus_lines = slice(old_lines, hunk_quad[1], hunk_quad[2]),
+    minus_lines = util.slice(old_lines, hunk_quad[1], hunk_quad[2]),
     plus_start = hunk_quad[3],
     plus_count = hunk_quad[4],
-    plus_lines = slice(new_lines, hunk_quad[3], hunk_quad[4]),
+    plus_lines = util.slice(new_lines, hunk_quad[3], hunk_quad[4]),
   }
 end
 

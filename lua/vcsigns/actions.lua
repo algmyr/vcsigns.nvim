@@ -297,13 +297,21 @@ end
 
 ---@param bufnr integer The buffer number.
 ---@param range integer[]|nil The range of lines to diff hunks in.
-function M.hunk_diff(bufnr, range)
+function M.toggle_hunk_diff(bufnr, range)
   if not range then
     local lnum = vim.fn.line "."
     range = { lnum, lnum }
   end
-  local hunks_in_range = _hunks_in_range(bufnr, range)
-  high.highlight_hunks(bufnr, hunks_in_range)
+
+  local is_enabled = not vim.b[bufnr].vcsigns_show_hunk_diffs
+  vim.b[bufnr].vcsigns_show_hunk_diffs = is_enabled
+
+  if is_enabled then
+    local hunks = vim.b[bufnr].vcsigns_hunks
+    high.highlight_hunks(bufnr, hunks)
+  else
+    high.highlight_hunks(bufnr, {})
+  end
 end
 
 ---@param bufnr integer The buffer number.

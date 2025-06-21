@@ -55,7 +55,7 @@ local command_map = {
   hunk_next = _with_count(M.actions.hunk_next),
   hunk_prev = _with_count(M.actions.hunk_prev),
   hunk_undo = _with_range(M.actions.hunk_undo),
-  hunk_diff = _with_range(M.actions.hunk_diff),
+  hunk_diff = _no_args(M.actions.toggle_hunk_diff),
 }
 
 local function _command(arg)

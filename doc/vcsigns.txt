@@ -23,8 +23,7 @@ HUNK OPERATIONS
 :VCSigns hunk_undo    Undo hunk.
                       Accepts a range to undo all hunks in the range.
                       
-:VCSigns hunk_diff    Show hunk diff inline in the current buffer.
-                      Accepts a range to show diffs for all hunks in the range.
+:VCSigns hunk_diff    Show hunk diffs inline in the current buffer.
                      
 
 DIFFBASE SELECTION

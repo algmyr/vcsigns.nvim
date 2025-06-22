@@ -16,7 +16,7 @@ end
 
 ---@param hunk Hunk
 ---@return Interval
-local function _to_interval(hunk)
+function M.to_interval(hunk)
   return {
     l = M.hunk_visual_start(hunk),
     r = M.hunk_visual_start(hunk) + M.hunk_visual_size(hunk),
@@ -30,7 +30,7 @@ end
 ---@param count integer
 ---@return Hunk?
 function M.prev_hunk(lnum, hunks, count)
-  return intervals.from_list(hunks, _to_interval):find(lnum, -count)
+  return intervals.from_list(hunks, M.to_interval):find(lnum, -count)
 end
 
 --- Get the `count`th next hunk.
@@ -39,7 +39,7 @@ end
 ---@param count integer
 ---@return Hunk?
 function M.next_hunk(lnum, hunks, count)
-  return intervals.from_list(hunks, _to_interval):find(lnum, count)
+  return intervals.from_list(hunks, M.to_interval):find(lnum, count)
 end
 
 --- Get the current hunk for a given line number, if any.
@@ -47,7 +47,7 @@ end
 ---@param hunks Hunk[]
 ---@return Hunk?
 function M.cur_hunk(lnum, hunks)
-  return intervals.from_list(hunks, _to_interval):find(lnum, 0)
+  return intervals.from_list(hunks, M.to_interval):find(lnum, 0)
 end
 
 return M

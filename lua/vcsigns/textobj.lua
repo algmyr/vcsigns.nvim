@@ -1,9 +1,11 @@
 local M = {}
 
+local hunkops = require("vcsigns.hunkops")
+
 function M.select_hunk(bufnr)
   local lnum = vim.fn.line "."
   local hunks = vim.b[bufnr].vcsigns_hunks
-  local hunk = require("vcsigns").diff.cur_hunk(lnum, hunks)
+  local hunk = hunkops.cur_hunk(lnum, hunks)
   if not hunk then
     vim.notify(
       "No hunk under cursor",

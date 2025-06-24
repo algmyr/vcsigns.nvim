@@ -38,7 +38,6 @@ For a documented default config, have a look inside `init.lua`.
 ```
 {
   'algmyr/vcsigns.nvim',
-  dependencies = { 'algmyr/vclib.nvim' },
   config = function()
     require('vcsigns').setup {
       target_commit = 1,  -- Nice default for jj with new+squash flow.
@@ -61,6 +60,8 @@ For a documented default config, have a look inside `init.lua`.
   end,
 }
 ```
+
+As per https://lazy.folke.io/packages dependencies are specified in `lazy.lua`.
 
 ## Screenshots
 Screenshots are with my own theme

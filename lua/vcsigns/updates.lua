@@ -5,6 +5,7 @@ local high = require "vcsigns.high"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
+local ignore = require "vclib.ignore"
 
 --- Cheap update assuming the old file contents are still fresh.
 ---@param bufnr integer The buffer number.
@@ -15,6 +16,17 @@ function M.shallow_update(bufnr)
 
   if not old_contents then
     util.verbose "No old contents available, skipping diff."
+    return
+  end
+
+  local path = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":f")
+  if
+    vim.g.vcsigns_respect_gitignore
+    and old_contents == ""
+    and ignore.is_ignored(path)
+  then
+    -- Rough proxy for checking if file is ignored and not tracked.
+    util.verbose "File ignored and had no previous contents, skipping diff."
     return
   end
 
@@ -75,7 +87,10 @@ end
 
 --- Expensive update including vcs querying for file contents.
 ---@param bufnr integer The buffer number.
-function M.deep_update(bufnr)
+function M.deep_update(bufnr, clear_ignore_cache)
+  if clear_ignore_cache then
+    ignore.clear_ignored_cache()
+  end
   if vim.bo[bufnr].buftype ~= "" then
     -- Not a normal file buffer, don't do anything.
     util.verbose "Not a normal file buffer, skipping."

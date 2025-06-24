@@ -122,6 +122,10 @@ local default_config = {
   -- Diff algorithm to use.
   -- See `:help vim.diff()` for available algorithms.
   diff_algorithm = "histogram",
+  -- Whether to try respecting .gitignore files.
+  -- This relies on the `git` command being available.
+  -- Works for git repos and git backed jj repos.
+  respect_gitignore = true,
 }
 
 function M.setup(user_config)
@@ -137,6 +141,7 @@ function M.setup(user_config)
   vim.g.vcsigns_diff_algorithm = config.diff_algorithm
   vim.g.vcsigns_highlight_number = config.highlight_number
   vim.g.vcsigns_target_commit = config.target_commit
+  vim.g.vcsigns_respect_gitignore = config.respect_gitignore
   M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {

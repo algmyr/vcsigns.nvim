@@ -114,7 +114,7 @@ function M.target_older_commit(bufnr, steps)
   vim.g.vcsigns_target_commit = vim.g.vcsigns_target_commit + steps
   _target_change_message()
   -- Target has changed, trigger a full update.
-  updates.deep_update(bufnr)
+  updates.deep_update(bufnr, true)
 end
 
 ---@param bufnr integer The buffer number.
@@ -125,7 +125,7 @@ function M.target_newer_commit(bufnr, steps)
     vim.g.vcsigns_target_commit = new_target
     _target_change_message()
     -- Target has changed, trigger a full update.
-    updates.deep_update(bufnr)
+    updates.deep_update(bufnr, true)
   else
     last_target_notification = vim.notify(
       "No timetravel! Cannot diff against HEAD~" .. new_target,

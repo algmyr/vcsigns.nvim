@@ -75,7 +75,7 @@ local default_config = {
   -- Initial target commit to show.
   -- 0 means the current commit, 1 is one commit before that, etc.
   target_commit = 0,
-  -- Shot the number of deleted lines in the sign column.
+  -- Show the number of deleted lines in the sign column.
   show_delete_count = true,
   -- Highlight the number in the sign column.
   highlight_number = false,
@@ -98,7 +98,7 @@ local default_config = {
       hl = "SignDeleteFirstLine",
     },
     change_delete = {
-      text = "▏▔",
+      text = "~",
       hl = "SignChangeDelete",
     },
   },

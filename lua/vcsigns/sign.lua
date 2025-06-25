@@ -104,17 +104,7 @@ function M.add_signs(bufnr, hunks)
         local diff = hunk.minus_count - hunk.plus_count
         modified = modified + hunk.plus_count
         deleted = deleted + diff
-
-        local prev_line_available = hunk.plus_start > 1
-          and not sign_lines[hunk.plus_start - 1]
-
-        if prev_line_available then
-          local sign = _delete_with_count(diff)
-          _add_sign(hunk.plus_start, sign)
-        else
-          _add_sign(hunk.plus_start, M.signs.change_delete)
-        end
-
+        _add_sign(hunk.plus_start, M.signs.change_delete)
         _add_sign_range(
           hunk.plus_start + 1,
           hunk.plus_count - 1,

@@ -206,8 +206,9 @@ end
 ---@param range integer[]|nil The range of lines to undo hunks in.
 function M.hunk_undo(bufnr, range)
   if not range then
-    range = vim.fn.sort { vim.fn.line ".", vim.fn.line "v" }
+    range = { vim.fn.line ".", vim.fn.line "v" }
   end
+  table.sort(range)
   local hunks_in_range = _hunks_in_range(bufnr, range)
 
   if #hunks_in_range == 0 then

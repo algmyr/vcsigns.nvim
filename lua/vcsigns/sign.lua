@@ -13,8 +13,6 @@ end
 ---@param hunks Hunk[]
 ---@return nil
 function M.add_signs(bufnr, hunks)
-  local show_delete_count = vim.g.vcsigns_show_delete_count
-
   local added = 0
   local modified = 0
   local deleted = 0
@@ -52,7 +50,10 @@ function M.add_signs(bufnr, hunks)
     end
   end
 
-  local function _delete_with_count(delete_count)
+  local function _delete_symbol(delete_count)
+    if not vim.g.vcsigns_show_delete_count then
+      return M.signs.delete
+    end
     local sign = vim.deepcopy(M.signs.delete)
     if delete_count == 1 then
       -- Keep the sign as is.
@@ -80,12 +81,8 @@ function M.add_signs(bufnr, hunks)
       if hunk.plus_start == 0 then
         -- First line delete.
         _add_sign(1, M.signs.delete_first_line)
-      elseif show_delete_count then
-        local sign = _delete_with_count(hunk.minus_count)
-        _add_sign(hunk.plus_start, sign)
       else
-        -- Delete without count.
-        _add_sign(hunk.plus_start, M.signs.delete)
+        _add_sign(hunk.plus_start, _delete_symbol(hunk.minus_count))
       end
     elseif hunk.minus_count > 0 and hunk.plus_count > 0 then
       if hunk.minus_count == hunk.plus_count then
@@ -109,8 +106,7 @@ function M.add_signs(bufnr, hunks)
           and not sign_lines[hunk.plus_start - 1]
 
         if prev_line_available then
-          local sign = _delete_with_count(diff)
-          _add_sign(hunk.plus_start, sign)
+          _add_sign(hunk.plus_start, _delete_symbol(diff))
         else
           _add_sign(hunk.plus_start, M.signs.change_delete)
         end

@@ -87,6 +87,11 @@ function M.show_file(bufnr, vcs, cb)
       vcs.resolve_rename.cmd(target),
       { cwd = file_dir },
       function(out)
+        -- If the buffer was deleted, bail.
+        if not vim.api.nvim_buf_is_valid(bufnr) then
+          util.verbose "Buffer no longer valid, skipping"
+          return
+        end
         local resolved_file = vcs.resolve_rename.extract(out)
         if resolved_file then
           util.verbose(

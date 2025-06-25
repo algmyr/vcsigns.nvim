@@ -172,21 +172,50 @@ function M.setup(user_config)
     })
   end
 
-  -- Set default highlights.
-  -- The default diff colors are pretty terrible, but they exist.
-  vim.cmd [[
-    " Diff lines.
-    highlight default link VcsignsDiffAdd        DiffAdd
-    highlight default link VcsignsDiffDelete     DiffDelete
-    highlight default link VcsignsDiffTextAdd    DiffText
-    highlight default link VcsignsDiffTextDelete DiffText
-    " Sign colors.
-    highlight default link SignAdd             DiffAdd
-    highlight default link SignDelete          DiffDelete
-    highlight default link SignDeleteFirstLine SignDelete
-    highlight default link SignChange          DiffChange
-    highlight default link SignChangeDelete    SignChange
-  ]]
+  -- Set default highlights with fallbacks to common groups for signs.
+  local function hl_fallbacks(hl_group, fallbacks)
+    for _, fallback in ipairs(fallbacks) do
+      vim.api.nvim_set_hl(0, hl_group, { link = fallback, default = true })
+    end
+  end
+
+  hl_fallbacks("SignAdd", {
+    "GitSignsAdd",
+    "GitGutterAdd",
+    "SignifySignAdd",
+    "DiffAddedGutter",
+    "Added",
+    "DiffAdd",
+  })
+  hl_fallbacks("SignDelete", {
+    "GitSignsDelete",
+    "GitGutterDelete",
+    "SignifySignDelete",
+    "DiffRemovedGutter",
+    "Removed",
+    "DiffDelete",
+  })
+  hl_fallbacks("SignChange", {
+    "GitSignsChange",
+    "GitGutterChange",
+    "SignifySignChange",
+    "DiffModifiedGutter",
+    "Changed",
+    "DiffChange",
+  })
+  hl_fallbacks("SignChangeDelete", {
+    "GitSignsChangeDelete",
+    "SignChange",
+  })
+  hl_fallbacks("SignDeleteFirstLine", {
+    "GitSignsTopdelete",
+    "SignDelete",
+  })
+
+  hl_fallbacks("VcsignsDiffAdd", { "DiffAdd" })
+  hl_fallbacks("VcsignsDiffDelete", { "DiffDelete" })
+  hl_fallbacks("VcsignsDiffTextAdd", { "DiffText" })
+  hl_fallbacks("VcsignsDiffTextDelete", { "DiffText" })
 end
 
 return M

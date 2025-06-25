@@ -174,19 +174,17 @@ function M.setup(user_config)
 
   -- Set default highlights.
   -- The default diff colors are pretty terrible, but they exist.
-  vim.cmd [[
-    " Diff lines.
-    highlight default link VcsignsDiffAdd        DiffAdd
-    highlight default link VcsignsDiffDelete     DiffDelete
-    highlight default link VcsignsDiffTextAdd    DiffText
-    highlight default link VcsignsDiffTextDelete DiffText
-    " Sign colors.
-    highlight default link SignAdd             DiffAdd
-    highlight default link SignDelete          DiffDelete
-    highlight default link SignDeleteFirstLine SignDelete
-    highlight default link SignChange          DiffChange
-    highlight default link SignChangeDelete    SignChange
-  ]]
+  -- Diff lines.
+  vim.api.nvim_set_hl(0, "VcsignsDiffAdd", { link = "DiffAdd" })
+  vim.api.nvim_set_hl(0, "VcsignsDiffDelete", { link = "DiffDelete" })
+  vim.api.nvim_set_hl(0, "VcsignsDiffTextAdd", { link = "DiffText" })
+  vim.api.nvim_set_hl(0, "VcsignsDiffTextDelete", { link = "DiffText" })
+  -- Sign colors.
+  vim.api.nvim_set_hl(0, "SignAdd", { link = "DiffAdd" })
+  vim.api.nvim_set_hl(0, "SignDelete", { link = "DiffDelete" })
+  vim.api.nvim_set_hl(0, "SignDeleteFirstLine", { link = "SignDelete" })
+  vim.api.nvim_set_hl(0, "SignChange", { link = "DiffChange" })
+  vim.api.nvim_set_hl(0, "SignChangeDelete", { link = "SignChange" })
 end
 
 return M

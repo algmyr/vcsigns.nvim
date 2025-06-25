@@ -1,14 +1,15 @@
 local M = {}
 
-function M.assert_list_eq(a, b)
+function M.assert_list_eq(actual, expected)
   assert(
-    #a == #b,
-    string.format("Lists have different lengths: %d vs %d", #a, #b)
+    #actual == #expected,
+    string.format("Lists have different lengths: %d vs %d", #actual, #expected)
   )
   local diff = ""
-  for i = 1, #a do
-    if a[i] ~= b[i] then
-      diff = diff .. string.format("\n[%d]: %s ~= %s", i, a[i], b[i])
+  for i = 1, #expected do
+    if actual[i] ~= expected[i] then
+      diff = diff
+        .. string.format("\n[%d]: %s ~= %s", i, actual[i], expected[i])
     end
   end
   if diff ~= "" then

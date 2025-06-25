@@ -9,39 +9,16 @@ local function _sign_namespace()
   return vim.api.nvim_create_namespace "vcsigns"
 end
 
----@param bufnr integer
----@param hunks Hunk[]
----@return nil
-function M.add_signs(bufnr, hunks)
+function M.add_signs_impl(hunks, add_sign)
   local added = 0
   local modified = 0
   local deleted = 0
 
-  local ns = _sign_namespace()
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-
   local sign_lines = {}
   local function _add_sign(line, sign)
-    if line < 1 or line > line_count then
-      util.verbose(
-        string.format(
-          "Tried to add sign on line %d for a buffer with %d lines.",
-          line,
-          line_count
-        )
-      )
-      return
+    if add_sign(line, sign) then
+      sign_lines[line] = true
     end
-    local config = {
-      sign_text = sign.text,
-      sign_hl_group = sign.hl,
-      priority = 5, -- Low priority, default is 10.
-    }
-    if vim.g.vcsigns_highlight_number then
-      config.number_hl_group = sign.hl
-    end
-    vim.api.nvim_buf_set_extmark(bufnr, ns, line - 1, 0, config)
-    sign_lines[line] = true
   end
 
   local function _add_sign_range(start, count, sign)
@@ -66,9 +43,6 @@ function M.add_signs(bufnr, hunks)
     end
     return sign
   end
-
-  -- Clear previous extmarks.
-  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
 
   for _, hunk in ipairs(hunks) do
     if hunk.minus_count == 0 and hunk.plus_count > 0 then
@@ -120,13 +94,50 @@ function M.add_signs(bufnr, hunks)
     end
   end
 
-  -- Record stats for use in statuslines and similar.
-  -- The table format is compatible with the "diff" section of lualine.
-  vim.b[bufnr].vcsigns_stats = {
+  return {
     added = added,
     modified = modified,
     removed = deleted,
   }
+end
+
+---@param bufnr integer
+---@param hunks Hunk[]
+---@return nil
+function M.add_signs(bufnr, hunks)
+  local ns = _sign_namespace()
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+  local function _add_sign(line, sign)
+    if line < 1 or line > line_count then
+      util.verbose(
+        string.format(
+          "Tried to add sign on line %d for a buffer with %d lines.",
+          line,
+          line_count
+        )
+      )
+      return false
+    end
+    local config = {
+      sign_text = sign.text,
+      sign_hl_group = sign.hl,
+      priority = 5, -- Low priority, default is 10.
+    }
+    if vim.g.vcsigns_highlight_number then
+      config.number_hl_group = sign.hl
+    end
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line - 1, 0, config)
+    return true
+  end
+
+  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+  local stats = M.add_signs_impl(hunks, _add_sign)
+  if stats then
+    -- Record stats for use in statuslines and similar.
+    -- The table format is compatible with the "diff" section of lualine.
+    vim.b[bufnr].vcsigns_stats = stats
+  end
 end
 
 --- Clear all signs in the buffer.

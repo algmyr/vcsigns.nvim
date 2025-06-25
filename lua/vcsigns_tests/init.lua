@@ -47,6 +47,7 @@ function M.run()
   local test_modules = {
     "vcsigns_tests.hunkops",
     "vcsigns_tests.fold",
+    "vcsigns_tests.sign",
   }
   local failed = 0
   local total = 0

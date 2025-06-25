@@ -78,7 +78,7 @@ local default_config = {
   -- Shot the number of deleted lines in the sign column.
   show_delete_count = true,
   -- Highlight the number in the sign column.
-  highlight_number = true,
+  highlight_number = false,
   -- Signs to use for different types of changes.
   signs = {
     add = {

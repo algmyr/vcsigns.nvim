@@ -1,7 +1,7 @@
 local M = {}
 
 local sign = require "vcsigns.sign"
-local testing = require "vcsigns_tests.testing"
+local testing = require "vclib.testing"
 
 ---@param s1 integer
 ---@param c1 integer

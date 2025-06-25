@@ -106,16 +106,16 @@ function M.add_signs(bufnr, hunks)
           and not sign_lines[hunk.plus_start - 1]
 
         if prev_line_available then
-          _add_sign(hunk.plus_start, _delete_symbol(diff))
+          _add_sign(hunk.plus_start - 1, _delete_symbol(hunk.minus_count))
+          _add_sign_range(hunk.plus_start, hunk.plus_count, M.signs.change)
         else
           _add_sign(hunk.plus_start, M.signs.change_delete)
+          _add_sign_range(
+            hunk.plus_start + 1,
+            hunk.plus_count - 1,
+            M.signs.change
+          )
         end
-
-        _add_sign_range(
-          hunk.plus_start + 1,
-          hunk.plus_count - 1,
-          M.signs.change
-        )
       end
     end
   end

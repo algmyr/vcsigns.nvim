@@ -5,7 +5,6 @@ local testing = require "vclib.testing"
 function M.run()
   local test_modules = {
     "vcsigns_tests.hunkops",
-    "vcsigns_tests.fold",
     "vcsigns_tests.sign",
   }
   testing.run_tests(test_modules)

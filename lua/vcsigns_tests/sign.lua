@@ -1,5 +1,6 @@
 local M = {}
 
+local bit = require "bit"
 local sign = require "vcsigns.sign"
 local testing = require "vclib.testing"
 
@@ -17,12 +18,22 @@ local function _make_hunk(s1, c1, s2, c2)
   }
 end
 
-local NONE = "none"
-local ADD = "SignAdd"
-local CHANGE = "SignChange"
-local DELETE = "SignDelete"
-local CHANGE_DELETE = "SignChangeDelete"
-local DELETE_FIRST_LINE = "SignDeleteFirstLine"
+local ADD = { type = sign.SignType.ADD, count = 0 }
+local CHANGE = { type = sign.SignType.CHANGE, count = 0 }
+local function DELETE_BELOW(count)
+  return { type = sign.SignType.DELETE_BELOW, count = count }
+end
+local function DELETE_ABOVE(count)
+  return { type = sign.SignType.DELETE_ABOVE, count = count }
+end
+
+local function _union(a, b)
+  assert(a.count == 0 or b.count == 0, "Cannot union two signs with counts")
+  local res = {}
+  res.type = bit.bor(a.type, b.type)
+  res.count = a.count + b.count
+  return res
+end
 
 M.fold_levels = {
   test_cases = {
@@ -30,65 +41,99 @@ M.fold_levels = {
       hunks = {
         _make_hunk(3, 2, 3, 2),
       },
-      expected = { NONE, NONE, CHANGE, CHANGE, NONE },
+      expected = { nil, nil, CHANGE, CHANGE, nil },
+      line_count = 5,
     },
     addition = {
       hunks = {
         _make_hunk(2, 0, 3, 2),
       },
-      expected = { NONE, NONE, ADD, ADD, NONE },
+      expected = { nil, nil, ADD, ADD, nil },
+      line_count = 5,
     },
     deletion = {
       hunks = {
         _make_hunk(3, 2, 4, 0),
       },
-      expected = { NONE, NONE, NONE, DELETE, NONE },
+      expected = { nil, nil, nil, DELETE_BELOW(2), nil },
+      line_count = 5,
     },
     deletion_at_start = {
       hunks = {
         _make_hunk(1, 3, 0, 0),
       },
-      expected = { DELETE_FIRST_LINE, NONE, NONE, NONE },
+      expected = { DELETE_ABOVE(3), nil, nil, nil },
+      line_count = 4,
     },
-    changedelete_at_start = {
+    change_delete_at_start = {
       hunks = {
         _make_hunk(1, 3, 1, 1),
       },
-      expected = { CHANGE_DELETE, NONE, NONE, NONE },
+      expected = { _union(DELETE_ABOVE(3), CHANGE), nil, nil, nil },
+      line_count = 4,
     },
-    delete3_add2 = {
+    split_complicated_cases = {
       hunks = {
-        _make_hunk(2, 4, 2, 2),
+        _make_hunk(1, 3, 0, 0),
+        _make_hunk(4, 1, 1, 1),
+        _make_hunk(7, 1, 4, 1),
+        _make_hunk(8, 3, 4, 0),
+        _make_hunk(14, 3, 7, 0),
+        _make_hunk(17, 1, 8, 1),
+        _make_hunk(20, 1, 11, 1),
+        _make_hunk(21, 10, 11, 0),
       },
-      expected = { DELETE, CHANGE, CHANGE, NONE },
-    },
-    add1_delete3 = {
-      hunks = {
-        _make_hunk(2, 4, 2, 2),
+      expected = {
+        _union(DELETE_ABOVE(3), CHANGE),
+        nil,
+        nil,
+        CHANGE,
+        DELETE_ABOVE(3),
+        nil,
+        DELETE_BELOW(3),
+        CHANGE,
+        nil,
+        nil,
+        _union(DELETE_BELOW(10), CHANGE),
       },
-      expected = { DELETE, CHANGE, CHANGE, NONE },
+      line_count = 11,
     },
   },
   test = function(case)
-    local highlighs = {}
-    for i = 1, #case.expected do
-      highlighs[i] = NONE
+    local result = sign.compute_signs(case.hunks, #case.expected)
+    for i = 1, case.line_count do
+      local actual = result.signs[i]
+      local expected = case.expected[i]
+      if actual and expected then
+        assert(
+          expected.type == actual.type,
+          "Sign type mismatch at line "
+            .. i
+            .. ": expected "
+            .. expected.type
+            .. ", got "
+            .. actual.type
+        )
+        assert(
+          expected.count == actual.count,
+          "Sign count mismatch at line "
+            .. i
+            .. ": expected "
+            .. expected.count
+            .. ", got "
+            .. actual.count
+        )
+      elseif actual or expected then
+        error(
+          "Sign mismatch at line "
+            .. i
+            .. ": expected "
+            .. (expected and expected.type or "nil")
+            .. ", got "
+            .. (actual and actual.type or "nil")
+        )
+      end
     end
-    local function add_sign(line, sign)
-      assert(
-        highlighs[line] == NONE,
-        "Tried to add multiple signs to the same line"
-      )
-      assert(
-        line >= 1 and line <= #case.expected,
-        "Tried to add sign to line outside of expected range"
-      )
-      highlighs[line] = sign.hl
-    end
-
-    sign.add_signs_impl(case.hunks, add_sign)
-
-    testing.assert_list_eq(highlighs, case.expected)
   end,
 }
 

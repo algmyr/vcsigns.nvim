@@ -81,25 +81,18 @@ local default_config = {
   highlight_number = false,
   -- Signs to use for different types of changes.
   signs = {
-    add = {
-      text = "▏",
-      hl = "SignAdd",
+    text = {
+      add = "▏",
+      change = "▏",
+      delete_below = "▁",
+      delete_above = "▔",
+      change_delete = nil, -- Use combined sign.
     },
-    change = {
-      text = "▏",
-      hl = "SignChange",
-    },
-    delete = {
-      text = "▁",
-      hl = "SignDelete",
-    },
-    delete_first_line = {
-      text = "▔",
-      hl = "SignDeleteFirstLine",
-    },
-    change_delete = {
-      text = "▏▔",
-      hl = "SignChangeDelete",
+    hl = {
+      add = "SignAdd",
+      change = "SignChange",
+      delete = "SignDelete",
+      change_delete = "SignChangeDelete",
     },
   },
   -- Sizes of context to add fold levels for (order doesn't matter).

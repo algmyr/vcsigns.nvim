@@ -240,10 +240,6 @@ end
 
 ---@param bufnr integer The buffer number.
 function M.toggle_hunk_diff(bufnr)
-  if not range then
-    local lnum = vim.fn.line "."
-    range = { lnum, lnum }
-  end
   vim.b[bufnr].vcsigns_show_hunk_diffs =
     not vim.b[bufnr].vcsigns_show_hunk_diffs
   updates.shallow_update(bufnr)

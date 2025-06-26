@@ -90,12 +90,15 @@ end
 --- Note: The strings in the lists must not contain newlines!
 ---@param old_tokens string[] The old tokens.
 ---@param new_tokens string[] The new tokens.
+---@param diff_opts table Options for the diff algorithm.
 ---@return integer[][] The diff as a list of quads.
-local function _vim_diff(old_tokens, new_tokens, algorithm)
+local function _vim_diff(old_tokens, new_tokens, diff_opts)
+  local opts = vim.deepcopy(diff_opts) or {}
+  opts.result_type = "indices"
   local result = vim.diff(
     table.concat(old_tokens, "\n"),
     table.concat(new_tokens, "\n"),
-    { result_type = "indices", algorithm = algorithm }
+    opts
   )
   ---@cast result integer[][]?
   if not result then
@@ -107,12 +110,12 @@ end
 --- Compute finer grained diffs within a hunk.
 ---@param minus_lines string[] The lines in the minus side of the hunk.
 ---@param plus_lines string[] The lines in the plus side of the hunk.
----@param algorithm string The diff algorithm to use.
+---@param diff_opts table Options for the diff algorithm.
 ---@return IntraHunkDiff The fine grained diffs.
-local function _compute_intra_hunk_diff(minus_lines, plus_lines, algorithm)
+local function _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
   local minus_parts = _tokenize(table.concat(minus_lines, "\n"))
   local plus_parts = _tokenize(table.concat(plus_lines, "\n"))
-  local hunk_quads = _vim_diff(minus_parts, plus_parts, algorithm)
+  local hunk_quads = _vim_diff(minus_parts, plus_parts, diff_opts)
 
   local minus_intervals = _extract_intervals(
     minus_parts,
@@ -139,11 +142,11 @@ end
 ---@param new_lines string[] The new lines of the file.
 ---@return Hunk
 local function _quad_to_hunk(hunk_quad, old_lines, new_lines)
-  local algorithm = vim.g.vcsigns_diff_algorithm
   local minus_lines = util.slice(old_lines, hunk_quad[1], hunk_quad[2])
   local plus_lines = util.slice(new_lines, hunk_quad[3], hunk_quad[4])
+  local diff_opts = vim.g.vcsigns_diff_opts
   local intra_diff =
-    _compute_intra_hunk_diff(minus_lines, plus_lines, algorithm)
+    _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
 
   return {
     minus_start = hunk_quad[1],
@@ -161,11 +164,11 @@ end
 ---@param new_contents string The new contents.
 ---@return Hunk[] The computed hunks.
 function M.compute_diff(old_contents, new_contents)
-  local algorithm = vim.g.vcsigns_diff_algorithm
+  local diff_opts = vim.g.vcsigns_diff_opts
   local old_lines = vim.split(old_contents, "\n", { plain = true })
   local new_lines = vim.split(new_contents, "\n", { plain = true })
 
-  local hunk_quads = _vim_diff(old_lines, new_lines, algorithm)
+  local hunk_quads = _vim_diff(old_lines, new_lines, diff_opts)
   local hunks = {}
   for _, quad in ipairs(hunk_quads) do
     table.insert(hunks, _quad_to_hunk(quad, old_lines, new_lines))

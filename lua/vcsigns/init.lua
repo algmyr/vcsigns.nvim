@@ -112,9 +112,12 @@ local default_config = {
   -- |   13 | Context       2
   -- |   14 | Context       2
   fold_context_sizes = { 1 },
-  -- Diff algorithm to use.
+  -- Diff options to use.
   -- See `:help vim.diff()` for available algorithms.
-  diff_algorithm = "histogram",
+  diff_opts = {
+    algorithm = "histogram",
+    linematch = true,
+  },
   -- Whether to try respecting .gitignore files.
   -- This relies on the `git` command being available.
   -- Works for git repos and git backed jj repos.
@@ -131,7 +134,7 @@ function M.setup(user_config)
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
-  vim.g.vcsigns_diff_algorithm = config.diff_algorithm
+  vim.g.vcsigns_diff_opts = config.diff_opts
   vim.g.vcsigns_highlight_number = config.highlight_number
   vim.g.vcsigns_target_commit = config.target_commit
   vim.g.vcsigns_respect_gitignore = config.respect_gitignore

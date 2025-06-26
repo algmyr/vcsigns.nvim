@@ -50,8 +50,6 @@ This plugin uses a handful of highlight groups.
   Sign color for added lines.
 - `SignDelete`  (default: `DiffDelete`)
   Sign color for deleted lines.
-- `SignDeleteFirstLine`  (default: `DiffDelete`)
-  Sign color for deleted lines at the start of a file.
 - `SignChange`  (default: `DiffChange`)
   Sign color for changed lines.
 - `SignChangeDelete`  (default: `SignChange`)

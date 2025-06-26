@@ -177,29 +177,14 @@ local function _hunks_in_range(bufnr, range)
   local hunks = vim.b[bufnr].vcsigns_hunks
   ---@type Hunk[]
   local hunks_in_range = {}
-  for lnum = range[1], range[2] do
-    local hunk = hunkops.cur_hunk(lnum, hunks)
-    if hunk then
+  for _, hunk in ipairs(hunks) do
+    local l = hunkops.hunk_visual_start(hunk)
+    local r = l + hunkops.hunk_visual_size(hunk) - 1
+    if l <= range[2] and r >= range[1] then
       table.insert(hunks_in_range, hunk)
     end
   end
-  if #hunks_in_range == 0 then
-    return {}
-  end
-
-  -- Reverse sort hunks by their start line.
-  table.sort(hunks_in_range, function(a, b)
-    return a.plus_start > b.plus_start
-  end)
-
-  -- Remove duplicates.
-  local res = {}
-  for _, hunk in ipairs(hunks_in_range) do
-    if #res == 0 or res[#res].plus_start ~= hunk.plus_start then
-      table.insert(res, hunk)
-    end
-  end
-  return res
+  return hunks_in_range
 end
 
 ---@param bufnr integer The buffer number.
@@ -220,6 +205,10 @@ function M.hunk_undo(bufnr, range)
     return
   end
 
+  -- Undo the hunks in reverse order to make sure numbering is correct.
+  table.sort(hunks_in_range, function(a, b)
+    return a.plus_start > b.plus_start
+  end)
   for _, hunk in ipairs(hunks_in_range) do
     local start = hunk.plus_start - 1
     if hunk.plus_count == 0 then

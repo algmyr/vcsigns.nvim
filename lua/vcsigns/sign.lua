@@ -115,6 +115,37 @@ local function _adjust_signs(signs, line_count)
     signs[1] = one
     signs[0] = nil
   end
+
+  local function flip(i)
+    signs[i + 1] = {
+      type = SignType.DELETE_ABOVE,
+      count = signs[i].count,
+    }
+    signs[i].type = bit.bxor(signs[i].type, SignType.DELETE_BELOW)
+    signs[i].count = 0
+  end
+
+  local function try_flip(i)
+    if i > line_count then
+      -- Ran into eof.
+      return false
+    end
+    if not signs[i] then
+      -- Space is free.
+      return true
+    end
+    if signs[i].type == SignType.DELETE_BELOW then
+      if try_flip(i + 1) then
+        flip(i)
+        return true
+      else
+        return false
+      end
+    end
+    -- Couldn't make space.
+    return false
+  end
+
   -- See if congested deletion below can be flipped into a deletion above.
   for i = 1, line_count - 1 do
     local sign = signs[i]
@@ -123,14 +154,8 @@ local function _adjust_signs(signs, line_count)
       and _popcount(sign.type) > 1
       and band(sign.type, SignType.DELETE_BELOW) ~= 0
     then
-      if not signs[i + 1] then
-        -- No sign below, so we can flip it.
-        signs[i + 1] = {
-          type = SignType.DELETE_ABOVE,
-          count = sign.count,
-        }
-        signs[i].type = bit.bxor(sign.type, SignType.DELETE_BELOW)
-        signs[i].count = 0
+      if try_flip(i+1) then
+        flip(i)
       end
     end
   end

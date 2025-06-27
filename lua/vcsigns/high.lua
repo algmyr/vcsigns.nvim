@@ -95,7 +95,8 @@ end
 function M.highlight_hunks(bufnr, hunks)
   local ns = _highlights_namespace()
   vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-  for _, hunk in ipairs(hunks) do
+  -- Reverse order, this seems to create the right order for same line hunks.
+  for hunk in vim.iter(hunks):rev() do
     put_virtual_hunk(bufnr, ns, hunk)
   end
 end

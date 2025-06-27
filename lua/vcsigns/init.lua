@@ -176,7 +176,11 @@ function M.setup(user_config)
   -- Set default highlights with fallbacks to common groups for signs.
   local function hl_fallbacks(hl_group, fallbacks)
     for _, fallback in ipairs(fallbacks) do
-      vim.api.nvim_set_hl(0, hl_group, { link = fallback, default = true })
+      local hl = vim.api.nvim_get_hl(0, { name = fallback })
+      if next(hl) then
+        vim.api.nvim_set_hl(0, hl_group, { link = fallback, default = true })
+        return
+      end
     end
   end
 

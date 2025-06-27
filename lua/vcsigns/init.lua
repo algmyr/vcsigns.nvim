@@ -95,6 +95,10 @@ local default_config = {
       change_delete = "SignChangeDelete",
     },
   },
+  -- By default multiple signs on one line are avoided by shifting
+  -- delete_below into a delete_above on the next line.
+  -- This can optionally be skipped.
+  skip_sign_decongestion = false,
   -- Sizes of context to add fold levels for (order doesn't matter).
   -- E.g. { 1, 3 } would mean one fold level with a context of 1 line,
   -- and one fold level with a context of 3 lines:
@@ -136,6 +140,7 @@ function M.setup(user_config)
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
   vim.g.vcsigns_diff_opts = config.diff_opts
   vim.g.vcsigns_highlight_number = config.highlight_number
+  vim.g.vcsigns_skip_sign_decongestion = config.skip_sign_decongestion
   vim.g.vcsigns_target_commit = config.target_commit
   vim.g.vcsigns_respect_gitignore = config.respect_gitignore
   M.sign.signs = config.signs

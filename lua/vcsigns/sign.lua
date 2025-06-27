@@ -116,6 +116,10 @@ local function _adjust_signs(signs, line_count)
     signs[0] = nil
   end
 
+  if vim.g.vcsigns_skip_sign_decongestion then
+    return signs
+  end
+
   local function flip(i)
     signs[i + 1] = {
       type = SignType.DELETE_ABOVE,

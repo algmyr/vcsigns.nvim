@@ -1,19 +1,9 @@
 local M = {}
 
+local logging = require("vclib.logging")
+
 --- Print a message to the user if verbose mode is enabled.
----@param msg string|table The message to print.
----@param label string|nil An optional label to include in the message.
-function M.verbose(msg, label)
-  label = label or debug.getinfo(2, "n").name
-  if vim.o.verbose ~= 0 then
-    local l = label and ":" .. label or ""
-    if type(msg) == "string" then
-      print("[vcsigns" .. l .. "] " .. msg)
-    else
-      print("[vcsigns" .. l .. "] " .. vim.inspect(msg))
-    end
-  end
-end
+M.verbose = logging.verbose_logger('vcsigns')
 
 function M.run_with_timeout(cmd, opts, callback)
   M.verbose("Running command: " .. table.concat(cmd, " "))

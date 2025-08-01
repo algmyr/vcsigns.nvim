@@ -122,6 +122,7 @@ local default_config = {
     algorithm = "histogram",
     linematch = true,
   },
+  fine_diff_opts = {},
   -- Whether to try respecting .gitignore files.
   -- This relies on the `git` command being available.
   -- Works for git repos and git backed jj repos.
@@ -139,6 +140,7 @@ function M.setup(user_config)
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
   vim.g.vcsigns_diff_opts = config.diff_opts
+  vim.g.vcsigns_fine_diff_opts = config.fine_diff_opts
   vim.g.vcsigns_highlight_number = config.highlight_number
   vim.g.vcsigns_skip_sign_decongestion = config.skip_sign_decongestion
   vim.g.vcsigns_target_commit = config.target_commit

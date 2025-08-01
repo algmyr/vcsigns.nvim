@@ -145,7 +145,7 @@ end
 local function _quad_to_hunk(hunk_quad, old_lines, new_lines, compute_fine_diff)
   local minus_lines = util.slice(old_lines, hunk_quad[1], hunk_quad[2])
   local plus_lines = util.slice(new_lines, hunk_quad[3], hunk_quad[4])
-  local diff_opts = vim.g.vcsigns_diff_opts
+  local diff_opts = vim.g.vcsigns_fine_diff_opts
   local intra_diff = {}
   if compute_fine_diff then
     intra_diff =

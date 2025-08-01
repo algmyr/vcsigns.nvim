@@ -140,13 +140,17 @@ end
 ---@param hunk_quad integer[]
 ---@param old_lines string[] The old lines of the file.
 ---@param new_lines string[] The new lines of the file.
+---@param compute_fine_diff boolean Whether to compute fine grained diffs within the hunk.
 ---@return Hunk
-local function _quad_to_hunk(hunk_quad, old_lines, new_lines)
+local function _quad_to_hunk(hunk_quad, old_lines, new_lines, compute_fine_diff)
   local minus_lines = util.slice(old_lines, hunk_quad[1], hunk_quad[2])
   local plus_lines = util.slice(new_lines, hunk_quad[3], hunk_quad[4])
   local diff_opts = vim.g.vcsigns_diff_opts
-  local intra_diff =
-    _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
+  local intra_diff = {}
+  if compute_fine_diff then
+    intra_diff =
+      _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
+  end
 
   return {
     minus_start = hunk_quad[1],
@@ -162,8 +166,9 @@ end
 ---Compute the diff between two contents.
 ---@param old_contents string The old contents.
 ---@param new_contents string The new contents.
+---@param compute_fine_diff boolean Whether to compute fine grained diffs within the hunks.
 ---@return Hunk[] The computed hunks.
-function M.compute_diff(old_contents, new_contents)
+function M.compute_diff(old_contents, new_contents, compute_fine_diff)
   local diff_opts = vim.g.vcsigns_diff_opts
   local old_lines = vim.split(old_contents, "\n", { plain = true })
   local new_lines = vim.split(new_contents, "\n", { plain = true })
@@ -171,7 +176,10 @@ function M.compute_diff(old_contents, new_contents)
   local hunk_quads = _vim_diff(old_lines, new_lines, diff_opts)
   local hunks = {}
   for _, quad in ipairs(hunk_quads) do
-    table.insert(hunks, _quad_to_hunk(quad, old_lines, new_lines))
+    table.insert(
+      hunks,
+      _quad_to_hunk(quad, old_lines, new_lines, compute_fine_diff)
+    )
   end
   return hunks
 end

@@ -37,7 +37,8 @@ function M.shallow_update(bufnr)
     old_contents = "\n"
   end
 
-  local hunks = diff.compute_diff(old_contents, new_contents)
+  local compute_fine_diff = vim.b[bufnr].vcsigns_show_hunk_diffs
+  local hunks = diff.compute_diff(old_contents, new_contents, compute_fine_diff)
   vim.b[bufnr].vcsigns_hunks = hunks
   sign.add_signs(bufnr, hunks)
 

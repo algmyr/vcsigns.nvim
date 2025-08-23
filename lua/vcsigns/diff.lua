@@ -148,8 +148,7 @@ local function _quad_to_hunk(hunk_quad, old_lines, new_lines, compute_fine_diff)
   local diff_opts = vim.g.vcsigns_fine_diff_opts
   local intra_diff = {}
   if compute_fine_diff then
-    intra_diff =
-      _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
+    intra_diff = _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
   end
 
   return {
@@ -172,6 +171,15 @@ function M.compute_diff(old_contents, new_contents, compute_fine_diff)
   local diff_opts = vim.g.vcsigns_diff_opts
   local old_lines = vim.split(old_contents, "\n", { plain = true })
   local new_lines = vim.split(new_contents, "\n", { plain = true })
+
+  -- If file is too large, skip diffing.
+  if
+    #old_lines > vim.g.vcsigns_diff_max_lines
+    or #new_lines > vim.g.vcsigns_diff_max_lines
+  then
+    util.verbose "Too many lines, skipping diff."
+    return {}
+  end
 
   local hunk_quads = _vim_diff(old_lines, new_lines, diff_opts)
   local hunks = {}

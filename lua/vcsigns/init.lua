@@ -124,6 +124,9 @@ local default_config = {
     linematch = 60,
   },
   fine_diff_opts = {},
+
+  -- Skip diffing files with more than this many lines.
+  diff_max_lines = 10000,
   -- Whether to try respecting .gitignore files.
   -- This relies on the `git` command being available.
   -- Works for git repos and git backed jj repos.
@@ -146,6 +149,7 @@ function M.setup(user_config)
   vim.g.vcsigns_skip_sign_decongestion = config.skip_sign_decongestion
   vim.g.vcsigns_target_commit = config.target_commit
   vim.g.vcsigns_respect_gitignore = config.respect_gitignore
+  vim.g.vcsigns_diff_max_lines = config.diff_max_lines
   M.sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {

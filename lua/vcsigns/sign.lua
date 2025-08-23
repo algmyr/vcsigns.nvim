@@ -79,6 +79,13 @@ local function _to_vim_sign(sign)
     return { text = text, hl = hl }
   end
   if count == 2 then
+    -- Delete above and below.
+    if SignType.DELETE_BELOW + SignType.DELETE_ABOVE == sign.type then
+      return {
+        text = M.signs.text.delete_above_below,
+        hl = M.signs.hl.delete, -- Could use an underline?
+      }
+    end
     -- Change-delete.
     if M.signs.text.change_delete then
       -- User provided a change-delete sign.
@@ -158,7 +165,7 @@ local function _adjust_signs(signs, line_count)
       and _popcount(sign.type) > 1
       and band(sign.type, SignType.DELETE_BELOW) ~= 0
     then
-      if try_flip(i+1) then
+      if try_flip(i + 1) then
         flip(i)
       end
     end

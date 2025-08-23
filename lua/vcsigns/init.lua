@@ -86,6 +86,7 @@ local default_config = {
       change = "▏",
       delete_below = "▁",
       delete_above = "▔",
+      delete_above_below = "🮀", -- Reconsider this symbol.
       change_delete = nil, -- Use combined sign.
     },
     hl = {

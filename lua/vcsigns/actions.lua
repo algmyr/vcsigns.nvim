@@ -239,4 +239,51 @@ function M.toggle_fold(bufnr)
   fold.toggle(bufnr)
 end
 
+function M.diffthis(bufnr)
+  local diff_win = vim.b[bufnr].vcsigns_diff_win
+  if diff_win then
+    vim.api.nvim_win_close(diff_win, true)
+    vim.b[bufnr].vcsigns_diff_win = nil
+    vim.cmd "diffoff"
+    return
+  end
+  local base_text = vim.b[bufnr].vcsigns_old_contents
+
+  -- Open a diff buffer with the base text.
+  if not base_text then
+    vim.notify(
+      "Could not get base text from VCS",
+      vim.log.levels.ERROR,
+      { title = "VCSigns" }
+    )
+    return
+  end
+  local diff_buf = vim.api.nvim_create_buf(false, true)
+  local lines = vim.split(base_text, "\n", { plain = true })
+  vim.api.nvim_buf_set_lines(diff_buf, 0, -1, false, lines)
+
+  -- Open the diff buffer in a new window.
+  local win = vim.api.nvim_open_win(diff_buf, false, {
+    split = "right",
+    win = 0,
+  })
+  vim.b[bufnr].vcsigns_diff_win = win
+
+  -- Sync the filetype and syntax.
+  vim.bo[diff_buf].filetype = vim.bo[bufnr].filetype
+
+  vim.bo[diff_buf].buftype = "nofile"
+  vim.bo[diff_buf].bufhidden = "wipe"
+  vim.bo[diff_buf].swapfile = false
+  vim.bo[diff_buf].modifiable = false
+  vim.wo[win].foldcolumn = "0"
+
+  -- Run diffthis in both windows.
+  local current = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(win)
+  vim.cmd "diffthis"
+  vim.api.nvim_set_current_win(current)
+  vim.cmd "diffthis"
+end
+
 return M

@@ -1,6 +1,7 @@
 local M = {}
 
 local diff = require "vcsigns.diff"
+local diffview = require "vcsigns.diffview"
 local fold = require "vcsigns.fold"
 local hunkops = require "vcsigns.hunkops"
 local repo = require "vcsigns.repo"
@@ -35,6 +36,7 @@ local function _set_buflocal_autocmds(bufnr)
     callback = function()
       if not state.get(bufnr).vcs.detecting then
         updates.deep_update(bufnr)
+        diffview.update_diffview(bufnr)
       end
     end,
     desc = "VCSigns deep refresh and update hunks",
@@ -292,6 +294,13 @@ end
 ---@param bufnr integer The buffer number.
 function M.toggle_fold(bufnr)
   fold.toggle(bufnr)
+end
+
+--- Open a diff view for changed files.
+--- Relies on the current buffer having a detected VCS.
+---@param bufnr integer The buffer number.
+function M.diffview(bufnr)
+  return diffview.diffview(bufnr)
 end
 
 return M

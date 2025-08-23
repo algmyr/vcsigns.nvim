@@ -58,6 +58,7 @@ local command_map = {
   hunk_prev = _with_count(M.actions.hunk_prev),
   hunk_undo = _with_range(M.actions.hunk_undo),
   hunk_diff = _no_args(M.actions.toggle_hunk_diff),
+  diffview = _no_args(M.actions.diffview),
 }
 
 --- Handler for the VCSigns user command.
@@ -87,6 +88,7 @@ end
 ---@field fine_diff_opts vim.text.diff.Opts Diff options to use for "fine" diffs.
 ---@field diff_max_lines integer Skip diffing files longer than this.
 ---@field respect_gitignore boolean Respect .gitignore?
+---@field diffview_editable_side "left"|"right" Position of editable buffer in diffview.
 local VCSignsConfig = {}
 
 --- User configuration for VCSigns.
@@ -102,6 +104,7 @@ local VCSignsConfig = {}
 ---@field fine_diff_opts vim.text.diff.Opts? Diff options to use for "fine" diffs.
 ---@field diff_max_lines integer? Skip diffing files longer than this.
 ---@field respect_gitignore boolean? Respect .gitignore?
+---@field diffview_editable_side ("left"|"right")? Position of editable buffer in diffview.
 local UserVCSignsConfig = {}
 
 --- Default configuration for VCSigns.
@@ -169,6 +172,8 @@ local default_config = {
   -- This relies on the `git` command being available.
   -- Works for git repos and git backed jj repos.
   respect_gitignore = true,
+  -- Position of the editable buffer in diffview ("left" or "right").
+  diffview_editable_side = "left",
 }
 
 --- Migrate a deprecated config key to a new key.
@@ -256,6 +261,7 @@ function M.setup(user_config)
   vim.g.vcsigns_target_commit = config.target_commit
   vim.g.vcsigns_respect_gitignore = config.respect_gitignore
   vim.g.vcsigns_diff_max_lines = config.diff_max_lines
+  vim.g.vcsigns_diffview_editable_side = config.diffview_editable_side
 
   sign.signs = config.signs
 

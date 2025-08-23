@@ -25,6 +25,7 @@ is depended on the core machinery should be robust across all of them.
 * Undoing the hunk under the cursor.
 * Showing inline diffs (plus lines and minus lines) for hunks,
   with fine grained diffs within hunks.
+* Side-by-side diff view in a new tabpage with quickfix navigation.
 
 ### Not yet implemented
 
@@ -61,6 +62,7 @@ For a documented default config, have a look inside `init.lua`.
     map('n', '<leader>su', function() require('vcsigns.actions').hunk_undo(0) end, 'Undo hunks under cursor')
     map('v', '<leader>su', function() require('vcsigns.actions').hunk_undo(0) end, 'Undo hunks in range')
     map('n', '<leader>sd', function() require('vcsigns.actions').toggle_hunk_diff(0) end, 'Show hunk diffs inline in the current buffer')
+    map('n', '<leader>sv', function() require('vcsigns.actions').diffview(0) end, 'Open native side-by-side diff view')
     map('n', '<leader>sf', function() require('vcsigns.actions').toggle_fold(0) end, 'Fold outside hunks')
   end,
 }

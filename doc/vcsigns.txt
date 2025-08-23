@@ -38,6 +38,14 @@ FOLDING
 
 :VCSigns fold    Toggle folding of non-diff lines.
 
+DIFF VIEW
+
+:VCSigns diffview    Open a native side-by-side diff view in a new tabpage.
+                     Shows the VCS base version on one side and the working
+                     copy on the other, with a quickfix list of changed files
+                     for navigation. Closing any of the diff windows will
+                     close the entire diff tabpage.
+
 ===============================================================================
 2. Configuration
 

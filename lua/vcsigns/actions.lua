@@ -274,4 +274,57 @@ function M.toggle_fold(bufnr)
   fold.toggle(bufnr)
 end
 
+--- Open a diff view comparing current buffer with VCS base version.
+--- Opens a split window showing the base version from VCS and enables diff mode.
+--- If already open, closes the diff window and disables diff mode.
+---@param bufnr integer The buffer number.
+function M.diffthis(bufnr)
+  local diff_win = vim.b[bufnr].vcsigns_diff_win
+  if diff_win then
+    vim.api.nvim_win_close(diff_win, true)
+    vim.b[bufnr].vcsigns_diff_win = nil
+    vim.cmd "diffoff"
+    return
+  end
+
+  local s = state.get(bufnr)
+  local base_lines = s.diff.old_lines
+
+  -- Open a diff buffer with the base text.
+  if not base_lines or #base_lines == 0 then
+    vim.notify(
+      "Could not get base text from VCS",
+      vim.log.levels.ERROR,
+      { title = "VCSigns" }
+    )
+    return
+  end
+  local diff_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(diff_buf, 0, -1, false, base_lines)
+
+  -- Open the diff buffer in a new window.
+  local win = vim.api.nvim_open_win(diff_buf, false, {
+    split = "right",
+    win = 0,
+  })
+  -- TODO(algmyr): Store this in the state module.
+  vim.b[bufnr].vcsigns_diff_win = win
+
+  -- Sync the filetype and syntax.
+  vim.bo[diff_buf].filetype = vim.bo[bufnr].filetype
+
+  vim.bo[diff_buf].buftype = "nofile"
+  vim.bo[diff_buf].bufhidden = "wipe"
+  vim.bo[diff_buf].swapfile = false
+  vim.bo[diff_buf].modifiable = false
+  vim.wo[win].foldcolumn = "0"
+
+  -- Run diffthis in both windows.
+  local current = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(win)
+  vim.cmd "diffthis"
+  vim.api.nvim_set_current_win(current)
+  vim.cmd "diffthis"
+end
+
 return M

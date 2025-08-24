@@ -85,7 +85,7 @@ local function _extract_intervals(parts, hunk_side)
 end
 
 --- Compute the diff between two sets of tokens.
---- This is hacking around the fact that vim.diff
+--- This is hacking around the fact that vim.text.diff
 --- takes a string rather than a list of strings.
 --- Note: The strings in the lists must not contain newlines!
 ---@param old_tokens string[] The old tokens.
@@ -95,7 +95,7 @@ end
 local function _vim_diff(old_tokens, new_tokens, diff_opts)
   local opts = vim.deepcopy(diff_opts) or {}
   opts.result_type = "indices"
-  local result = vim.diff(
+  local result = vim.text.diff(
     table.concat(old_tokens, "\n"),
     table.concat(new_tokens, "\n"),
     opts

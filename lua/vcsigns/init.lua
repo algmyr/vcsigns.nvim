@@ -117,7 +117,7 @@ local default_config = {
   -- |   14 | Context       2
   fold_context_sizes = { 1 },
   -- Diff options to use.
-  -- See `:help vim.diff()` for available algorithms.
+  -- See `:help vim.text.diff()` for available algorithms.
   diff_opts = {
     algorithm = "histogram",
     linematch = true,

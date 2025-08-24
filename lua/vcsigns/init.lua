@@ -120,7 +120,7 @@ local default_config = {
   -- See `:help vim.text.diff()` for available algorithms.
   diff_opts = {
     algorithm = "histogram",
-    linematch = true,
+    linematch = 60,
   },
   fine_diff_opts = {},
   -- Whether to try respecting .gitignore files.

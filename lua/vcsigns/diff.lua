@@ -95,7 +95,8 @@ end
 local function _vim_diff(old_tokens, new_tokens, diff_opts)
   local opts = vim.deepcopy(diff_opts) or {}
   opts.result_type = "indices"
-  local result = vim.text.diff(
+  local vim_diff_impl = vim.text.diff or vim.diff -- Fallback for older Neovim versions
+  local result = vim_diff_impl(
     table.concat(old_tokens, "\n"),
     table.concat(new_tokens, "\n"),
     opts

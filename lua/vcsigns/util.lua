@@ -7,7 +7,11 @@ M.verbose = logging.verbose_logger "vcsigns"
 
 function M.run_with_timeout(cmd, opts, callback)
   M.verbose("Running command: " .. table.concat(cmd, " "))
-  local merged_opts = vim.tbl_deep_extend("force", { timeout = 2000 }, opts)
+  local merged_opts = vim.tbl_deep_extend(
+    "force",
+    { timeout = 2000, env = { COLUMNS = 10000 } },
+    opts
+  )
   if callback == nil then
     return vim.system(cmd, merged_opts)
   end

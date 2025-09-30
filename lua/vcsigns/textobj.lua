@@ -1,6 +1,6 @@
 local M = {}
 
-local hunkops = require("vcsigns.hunkops")
+local hunkops = require "vcsigns.hunkops"
 
 function M.select_hunk(bufnr)
   local lnum = vim.fn.line "."

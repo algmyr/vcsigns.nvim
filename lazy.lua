@@ -1,4 +1,4 @@
 return {
-  { 'algmyr/vcsigns.nvim', opts = {} },
-  'algmyr/vclib.nvim'
+  { "algmyr/vcsigns.nvim", opts = {} },
+  "algmyr/vclib.nvim",
 }

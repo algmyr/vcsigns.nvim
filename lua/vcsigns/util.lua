@@ -1,9 +1,9 @@
 local M = {}
 
-local logging = require("vclib.logging")
+local logging = require "vclib.logging"
 
 --- Print a message to the user if verbose mode is enabled.
-M.verbose = logging.verbose_logger('vcsigns')
+M.verbose = logging.verbose_logger "vcsigns"
 
 function M.run_with_timeout(cmd, opts, callback)
   M.verbose("Running command: " .. table.concat(cmd, " "))

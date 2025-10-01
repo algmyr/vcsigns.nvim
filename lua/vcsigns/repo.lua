@@ -97,6 +97,8 @@ function M.show_file(bufnr, vcs, cb)
           util.verbose(
             "Rename found: " .. target.file .. " -> " .. resolved_file
           )
+          vim.b[bufnr].vcsigns_resolved_rename =
+            { to = target.file, from = resolved_file }
           target.file = resolved_file
         end
         _show_file_impl(bufnr, vcs, target, cb)

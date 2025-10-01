@@ -23,7 +23,7 @@ local FileShower = {}
 --- Logic for resolving a rename in a VCS.
 ---@class RenameResolver
 ---@field cmd fun(target: Target): string[]
----@field extract fun(cmd_out: vim.SystemCompleted): string|nil
+---@field extract fun(cmd_out: vim.SystemCompleted, target: Target): string|nil
 local RenameResolver = {}
 
 ---@class Vcs

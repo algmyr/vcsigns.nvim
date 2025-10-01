@@ -92,7 +92,7 @@ function M.show_file(bufnr, vcs, cb)
           util.verbose "Buffer no longer valid, skipping"
           return
         end
-        local resolved_file = vcs.resolve_rename.extract(out)
+        local resolved_file = vcs.resolve_rename.extract(out, target)
         if resolved_file then
           util.verbose(
             "Rename found: " .. target.file .. " -> " .. resolved_file

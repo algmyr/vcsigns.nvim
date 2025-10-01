@@ -40,7 +40,7 @@ return {
         target.file,
       }
     end,
-    extract = function(out)
+    extract = function(out, _)
       if out.code ~= 0 then
         return nil
       end

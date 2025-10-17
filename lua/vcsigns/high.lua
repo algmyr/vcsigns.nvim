@@ -1,5 +1,6 @@
 local M = {}
 
+local diff = require "vcsigns.diff"
 local hunkops = require "vcsigns.hunkops"
 
 local function _highlights_namespace()
@@ -7,6 +8,7 @@ local function _highlights_namespace()
 end
 
 local function put_virtual_hunk(bufnr, ns, hunk)
+  local intra_diff = diff.intra_diff(hunk)
   local deletion_at_top = hunk.plus_start == 0 and hunk.plus_count == 0
 
   local line = hunk.plus_start - 1
@@ -17,7 +19,7 @@ local function put_virtual_hunk(bufnr, ns, hunk)
 
   for i, l in ipairs(hunk.minus_lines) do
     local chunks = {}
-    local intervals = hunk.intra_diff.minus_intervals[i] or {}
+    local intervals = intra_diff.minus_intervals[i] or {}
     local start = 0
     for _, interval in ipairs(intervals) do
       if start < interval[1] then
@@ -77,7 +79,7 @@ local function put_virtual_hunk(bufnr, ns, hunk)
   end
 
   -- Fine grained diff.
-  local plus_intervals = hunk.intra_diff.plus_intervals
+  local plus_intervals = intra_diff.plus_intervals
   for offset, intervals in pairs(plus_intervals) do
     for _, interval in ipairs(intervals) do
       local interval_line = line + offset - 1

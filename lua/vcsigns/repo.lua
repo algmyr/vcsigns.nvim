@@ -10,6 +10,13 @@ M.vcs = {
   require "vcsigns.repo_def.hg",
 }
 
+--- Register a custom VCS implementation.
+--- The VCS will be added at the beginning of the detection priority list.
+---@param vcs Vcs The VCS implementation to register.
+function M.register_vcs(vcs)
+  table.insert(M.vcs, 1, vcs)
+end
+
 --- Get the absolute path of the file in the buffer.
 --- @param bufnr integer The buffer number.
 --- @return string The absolute path of the file.

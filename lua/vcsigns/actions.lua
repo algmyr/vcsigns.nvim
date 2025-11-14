@@ -138,16 +138,15 @@ function M.target_newer_commit(bufnr, steps)
   end
 end
 
----@param bufnr integer The buffer number.
----@param count integer The number of hunks ahead.
-function M.hunk_next(bufnr, count)
+local function _hunk_navigation(bufnr, count, forward)
   if vim.o.diff then
-    vim.cmd "normal! ]c"
+    vim.cmd("normal! " .. (forward and "]c" or "[c"))
     return
   end
   local lnum = vim.fn.line "."
   local hunks = vim.b[bufnr].vcsigns_hunks
-  local hunk = hunkops.next_hunk(lnum, hunks, count)
+  local hunk = forward and hunkops.next_hunk(lnum, hunks, count)
+    or hunkops.prev_hunk(lnum, hunks, count)
   if hunk then
     vim.cmd "normal! m`"
     vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
@@ -156,18 +155,14 @@ end
 
 ---@param bufnr integer The buffer number.
 ---@param count integer The number of hunks ahead.
+function M.hunk_next(bufnr, count)
+  return _hunk_navigation(bufnr, count, true)
+end
+
+---@param bufnr integer The buffer number.
+---@param count integer The number of hunks ahead.
 function M.hunk_prev(bufnr, count)
-  if vim.o.diff then
-    vim.cmd "normal! [c"
-    return
-  end
-  local lnum = vim.fn.line "."
-  local hunks = vim.b[bufnr].vcsigns_hunks
-  local hunk = hunkops.prev_hunk(lnum, hunks, count)
-  if hunk then
-    vim.cmd "normal! m`"
-    vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })
-  end
+  return _hunk_navigation(bufnr, count, false)
 end
 
 ---@param bufnr integer The buffer number.

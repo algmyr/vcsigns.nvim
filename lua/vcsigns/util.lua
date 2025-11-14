@@ -2,6 +2,9 @@ local M = {}
 
 local logging = require "vclib.logging"
 
+local DEFAULT_TIMEOUT_MS = 2000
+local TERMINAL_WIDTH = 10000
+
 --- Print a message to the user if verbose mode is enabled.
 M.verbose = logging.verbose_logger "vcsigns"
 
@@ -9,7 +12,7 @@ function M.run_with_timeout(cmd, opts, callback)
   M.verbose("Running command: " .. table.concat(cmd, " "))
   local merged_opts = vim.tbl_deep_extend(
     "force",
-    { timeout = 2000, env = { COLUMNS = 10000 } },
+    { timeout = DEFAULT_TIMEOUT_MS, env = { COLUMNS = TERMINAL_WIDTH } },
     opts
   )
   if callback == nil then

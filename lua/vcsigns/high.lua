@@ -3,6 +3,8 @@ local M = {}
 local diff = require "vcsigns.diff"
 local hunkops = require "vcsigns.hunkops"
 
+local HIGHLIGHT_PRIORITY = 3
+
 local function _highlights_namespace()
   return vim.api.nvim_create_namespace "vcsigns_highlights"
 end
@@ -71,7 +73,7 @@ local function put_virtual_hunk(bufnr, ns, hunk)
     vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
       end_line = line + hunk.plus_count,
       hl_group = "VcsignsDiffAdd",
-      priority = 3,
+      priority = HIGHLIGHT_PRIORITY,
       end_col = 0,
       hl_eol = true,
       strict = false,

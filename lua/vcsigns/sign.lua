@@ -6,6 +6,8 @@ local util = require "vcsigns.util"
 local band = bit.band
 local bor = bit.bor
 
+local SIGN_PRIORITY = 5
+
 local function _popcount(x)
   -- Count the number of bits set in x.
   local count = 0
@@ -266,7 +268,7 @@ function M.add_signs(bufnr, hunks)
     local config = {
       sign_text = sign.text,
       sign_hl_group = sign.hl,
-      priority = 5, -- Low priority, default is 10.
+      priority = SIGN_PRIORITY,
     }
     if vim.g.vcsigns_highlight_number then
       config.number_hl_group = sign.hl

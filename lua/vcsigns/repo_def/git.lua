@@ -19,4 +19,6 @@ return {
     end,
     check = common.check_accept_any,
   },
+  -- Rename resolution not implemented for git.
+  resolve_rename = nil,
 }

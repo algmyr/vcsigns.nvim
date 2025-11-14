@@ -8,7 +8,7 @@ local state = require "vcsigns.state"
 ---@param lnum integer
 function M.fold_expression(lnum)
   local bufnr = vim.api.nvim_get_current_buf()
-  local hunks = state.get(bufnr).hunks
+  local hunks = state.get(bufnr).diff.hunks
   if hunks == nil then
     return 0
   end

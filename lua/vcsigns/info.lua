@@ -1,5 +1,7 @@
 local M = {}
 
+local state = require "vcsigns.state"
+
 function M.lualine_module()
   return {
     "diff",
@@ -7,9 +9,10 @@ function M.lualine_module()
       return vim.b.vcsigns_stats
     end,
     on_click = function()
+      local bufnr = vim.api.nvim_get_current_buf()
       local lines = {}
-      lines[#lines + 1] = vim.b.vcsigns_vcs and vim.b.vcsigns_vcs.name
-        or "No vcs detected"
+      local vcs = state.get(bufnr).vcs.vcs
+      lines[#lines + 1] = vcs and vcs.name or "No vcs detected"
       if vim.b.vcsigns_resolved_rename then
         lines[#lines + 1] = "File rename detected:"
         lines[#lines + 1] = string.format(

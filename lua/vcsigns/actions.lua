@@ -30,7 +30,7 @@ local function _set_buflocal_autocmds(bufnr)
     group = group,
     buffer = bufnr,
     callback = function()
-      if not vim.b[bufnr].vcsigns_detecting then
+      if not state.get(bufnr).vcs.detecting then
         updates.deep_update(bufnr)
       end
     end,
@@ -48,7 +48,7 @@ local function _set_buflocal_autocmds(bufnr)
     group = group,
     buffer = bufnr,
     callback = function()
-      if not vim.b[bufnr].vcsigns_detecting then
+      if not state.get(bufnr).vcs.detecting then
         updates.shallow_update(bufnr)
       end
     end,
@@ -60,17 +60,18 @@ end
 ---@param bufnr integer The buffer number.
 function M.start(bufnr)
   -- Clear existing state.
-  vim.b[bufnr].vcsigns_detecting = nil
-  vim.b[bufnr].vcsigns_vcs = nil
+  local s = state.get(bufnr)
+  s.vcs.detecting = nil
+  s.vcs.vcs = nil
 
   local vcs = repo.detect_vcs(bufnr)
-  vim.b[bufnr].vcsigns_detecting = false
+  s.vcs.detecting = false
   if not vcs then
     util.verbose "No VCS detected"
     return
   end
   util.verbose("Detected VCS " .. vcs.name)
-  vim.b[bufnr].vcsigns_vcs = vcs
+  s.vcs.vcs = vcs
 
   _set_buflocal_autocmds(bufnr)
 end
@@ -78,7 +79,7 @@ end
 --- Start VCSigns for the given buffer, but skip if detection was already done.
 ---@param bufnr integer The buffer number.
 function M.start_if_needed(bufnr)
-  if vim.b[bufnr].vcsigns_vcs == nil then
+  if state.get(bufnr).vcs.vcs == nil then
     M.start(bufnr)
   end
 end
@@ -94,10 +95,6 @@ function M.stop(bufnr)
 
   -- Clear state.
   state.clear(bufnr)
-
-  -- Clear buffer-local variables.
-  vim.b[bufnr].vcsigns_detecting = nil
-  vim.b[bufnr].vcsigns_vcs = nil
 end
 
 local last_target_notification = nil
@@ -148,7 +145,7 @@ local function _hunk_navigation(bufnr, count, forward)
     return
   end
   local lnum = vim.fn.line "."
-  local hunks = state.get(bufnr).hunks
+  local hunks = state.get(bufnr).diff.hunks
   local hunk = forward and hunkops.next_hunk(lnum, hunks, count)
     or hunkops.prev_hunk(lnum, hunks, count)
   if hunk then
@@ -173,7 +170,7 @@ end
 ---@param range integer[] The range of lines to consider for the hunks.
 ---@return Hunk[] Hunks in the specified range.
 local function _hunks_in_range(bufnr, range)
-  local hunks = state.get(bufnr).hunks
+  local hunks = state.get(bufnr).diff.hunks
   ---@type Hunk[]
   local hunks_in_range = {}
   for _, hunk in ipairs(hunks) do

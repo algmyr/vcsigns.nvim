@@ -1,26 +1,40 @@
 local M = {}
 
+---@class BufferState
+---@field diff DiffState
+---@field vcs VcsState
+
 ---@class DiffState
 ---@field hunks Hunk[]
 ---@field old_contents string
 ---@field last_update integer
 ---@field hunks_changedtick integer
 
----@type table<integer, DiffState>
+---@class VcsState
+---@field vcs Vcs|nil
+---@field detecting boolean|nil
+
+---@type table<integer, BufferState>
 local buffers = {}
 
 ---@param bufnr integer
----@return DiffState
+---@return BufferState
 function M.get(bufnr)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
   end
   if not buffers[bufnr] then
     buffers[bufnr] = {
-      hunks = {},
-      old_contents = "",
-      last_update = 0,
-      hunks_changedtick = 0,
+      diff = {
+        hunks = {},
+        old_contents = "",
+        last_update = 0,
+        hunks_changedtick = 0,
+      },
+      vcs = {
+        vcs = nil,
+        detecting = nil,
+      },
     }
   end
   return buffers[bufnr]

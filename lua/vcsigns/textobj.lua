@@ -5,7 +5,7 @@ local state = require "vcsigns.state"
 
 function M.select_hunk(bufnr)
   local lnum = vim.fn.line "."
-  local hunks = state.get(bufnr).hunks
+  local hunks = state.get(bufnr).diff.hunks
   local hunk = hunkops.cur_hunk(lnum, hunks)
   if not hunk then
     vim.notify(

@@ -14,7 +14,7 @@ function M.shallow_update(bufnr)
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local new_contents = table.concat(buffer_lines, "\n") .. "\n"
   local s = state.get(bufnr)
-  local old_contents = s.old_contents
+  local old_contents = s.diff.old_contents
 
   if not old_contents then
     util.verbose "No old contents available, skipping diff."
@@ -40,7 +40,7 @@ function M.shallow_update(bufnr)
   end
 
   local hunks = diff.compute_diff(old_contents, new_contents)
-  s.hunks = hunks
+  s.diff.hunks = hunks
   sign.add_signs(bufnr, hunks)
 
   if vim.b[bufnr].vcsigns_show_hunk_diffs then
@@ -62,14 +62,14 @@ local function _refresh_old_file_contents(bufnr, vcs, cb)
       return
     end
     local s = state.get(bufnr)
-    local last = s.last_update
+    local last = s.diff.last_update
     if start_time <= last then
       util.verbose "Skipping updating old file, we already have a newer update."
       return
     end
-    s.old_contents = old_contents
-    s.last_update = start_time
-    s.hunks_changedtick = vim.b[bufnr].changedtick
+    s.diff.old_contents = old_contents
+    s.diff.last_update = start_time
+    s.diff.hunks_changedtick = vim.b[bufnr].changedtick
     cb(bufnr)
   end)
 end
@@ -77,7 +77,8 @@ end
 ---@param bufnr integer The buffer number.
 ---@return Vcs|nil The VCS object if ready, nil otherwise.
 local function _get_vcs_if_ready(bufnr)
-  local detecting = vim.b[bufnr].vcsigns_detecting
+  local vcs_state = state.get(bufnr).vcs
+  local detecting = vcs_state.detecting
   if detecting == nil then
     util.verbose "Buffer not initialized yet."
   end
@@ -85,7 +86,7 @@ local function _get_vcs_if_ready(bufnr)
     util.verbose "Busy detecting, skipping."
     return
   end
-  return vim.b[bufnr].vcsigns_vcs
+  return vcs_state.vcs
 end
 
 --- Expensive update including vcs querying for file contents.

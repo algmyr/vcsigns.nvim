@@ -134,12 +134,6 @@ local default_config = {
 }
 
 function M.setup(user_config)
-  -- Disabled at least for debugging.
-  -- if vim.g.vcsigns_loaded then
-  --   return
-  -- end
-  -- vim.g.vcsigns_loaded = true
-
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes

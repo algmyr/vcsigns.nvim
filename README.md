@@ -1,8 +1,7 @@
 # VCSigns.nvim
 
 > [!WARNING]
-> This is very much a WIP and bugs are likely.
-> It's at a state where I use it for my personal use and at work,
+> While I use this heavily for personal and work use,
 > but notably that only involves linux systems, so behavior on other
 > systems could have issues. Fixes for such issues are welcome!
 

@@ -4,6 +4,7 @@ local diff = require "vcsigns.diff"
 local high = require "vcsigns.high"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
+local state = require "vcsigns.state"
 local util = require "vcsigns.util"
 local ignore = require "vclib.ignore"
 
@@ -12,7 +13,8 @@ local ignore = require "vclib.ignore"
 function M.shallow_update(bufnr)
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local new_contents = table.concat(buffer_lines, "\n") .. "\n"
-  local old_contents = vim.b[bufnr].vcsigns_old_contents
+  local s = state.get(bufnr)
+  local old_contents = s.old_contents
 
   if not old_contents then
     util.verbose "No old contents available, skipping diff."
@@ -38,7 +40,7 @@ function M.shallow_update(bufnr)
   end
 
   local hunks = diff.compute_diff(old_contents, new_contents)
-  vim.b[bufnr].vcsigns_hunks = hunks
+  s.hunks = hunks
   sign.add_signs(bufnr, hunks)
 
   if vim.b[bufnr].vcsigns_show_hunk_diffs then
@@ -59,14 +61,15 @@ local function _refresh_old_file_contents(bufnr, vcs, cb)
       -- Some kind of failure, skip the diff.
       return
     end
-    local last = vim.b[bufnr].vcsigns_last_update or 0
+    local s = state.get(bufnr)
+    local last = s.last_update
     if start_time <= last then
       util.verbose "Skipping updating old file, we already have a newer update."
       return
     end
-    vim.b[bufnr].vcsigns_old_contents = old_contents
-    vim.b[bufnr].vcsigns_last_update = start_time
-    vim.b[bufnr].vcsigns_hunks_changedtick = vim.b[bufnr].changedtick
+    s.old_contents = old_contents
+    s.last_update = start_time
+    s.hunks_changedtick = vim.b[bufnr].changedtick
     cb(bufnr)
   end)
 end

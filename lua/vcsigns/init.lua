@@ -7,6 +7,7 @@ M.high = require "vcsigns.high"
 M.hunkops = require "vcsigns.hunkops"
 M.repo = require "vcsigns.repo"
 M.sign = require "vcsigns.sign"
+M.state = require "vcsigns.state"
 M.textobj = require "vcsigns.textobj"
 M.util = require "vcsigns.util"
 

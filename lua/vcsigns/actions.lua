@@ -5,6 +5,7 @@ local fold = require "vcsigns.fold"
 local hunkops = require "vcsigns.hunkops"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
+local state = require "vcsigns.state"
 local util = require "vcsigns.util"
 local updates = require "vcsigns.updates"
 
@@ -91,6 +92,9 @@ function M.stop(bufnr)
   -- Clear signs.
   sign.clear_signs(bufnr)
 
+  -- Clear state.
+  state.clear(bufnr)
+
   -- Clear buffer-local variables.
   vim.b[bufnr].vcsigns_detecting = nil
   vim.b[bufnr].vcsigns_vcs = nil
@@ -144,7 +148,7 @@ local function _hunk_navigation(bufnr, count, forward)
     return
   end
   local lnum = vim.fn.line "."
-  local hunks = vim.b[bufnr].vcsigns_hunks
+  local hunks = state.get(bufnr).hunks
   local hunk = forward and hunkops.next_hunk(lnum, hunks, count)
     or hunkops.prev_hunk(lnum, hunks, count)
   if hunk then
@@ -169,7 +173,7 @@ end
 ---@param range integer[] The range of lines to consider for the hunks.
 ---@return Hunk[] Hunks in the specified range.
 local function _hunks_in_range(bufnr, range)
-  local hunks = vim.b[bufnr].vcsigns_hunks
+  local hunks = state.get(bufnr).hunks
   ---@type Hunk[]
   local hunks_in_range = {}
   for _, hunk in ipairs(hunks) do

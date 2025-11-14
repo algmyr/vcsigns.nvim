@@ -1,15 +1,7 @@
 local M = {}
 
 M.actions = require "vcsigns.actions"
-M.diff = require "vcsigns.diff"
-M.fold = require "vcsigns.fold"
-M.high = require "vcsigns.high"
-M.hunkops = require "vcsigns.hunkops"
-M.repo = require "vcsigns.repo"
-M.sign = require "vcsigns.sign"
-M.state = require "vcsigns.state"
-M.textobj = require "vcsigns.textobj"
-M.util = require "vcsigns.util"
+local sign = require "vcsigns.sign"
 
 --- Decorator to wrap a function that takes no arguments.
 local function _no_args(fun)
@@ -145,7 +137,7 @@ function M.setup(user_config)
   vim.g.vcsigns_target_commit = config.target_commit
   vim.g.vcsigns_respect_gitignore = config.respect_gitignore
   vim.g.vcsigns_diff_max_lines = config.diff_max_lines
-  M.sign.signs = config.signs
+  sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {
     desc = "VCSigns command",

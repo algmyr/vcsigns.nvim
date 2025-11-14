@@ -48,14 +48,14 @@ For a documented default config, have a look inside `init.lua`.
       vim.keymap.set(mode, lhs, rhs, options)
     end
 
-    map('n', '[r', function() require('vcsigns').actions.target_older_commit(0, vim.v.count1) end, 'Move diff target back')
-    map('n', ']r', function() require('vcsigns').actions.target_newer_commit(0, vim.v.count1) end, 'Move diff target forward')
-    map('n', '[c', function() require('vcsigns').actions.hunk_prev(0, vim.v.count1) end, 'Go to previous hunk')
-    map('n', ']c', function() require('vcsigns').actions.hunk_next(0, vim.v.count1) end, 'Go to next hunk')
-    map('n', '[C', function() require('vcsigns').actions.hunk_prev(0, 9999) end, 'Go to first hunk')
-    map('n', ']C', function() require('vcsigns').actions.hunk_next(0, 9999) end, 'Go to last hunk')
-    map('n', '<leader>su', function() require('vcsigns').actions.hunk_undo(0) end, 'Undo hunks in range')
-    map('n', '<leader>sd', function() require('vcsigns').actions.toggle_hunk_diff(0) end, 'Show hunk diffs inline in the current buffer')
+    map('n', '[r', function() require('vcsigns.actions').target_older_commit(0, vim.v.count1) end, 'Move diff target back')
+    map('n', ']r', function() require('vcsigns.actions').target_newer_commit(0, vim.v.count1) end, 'Move diff target forward')
+    map('n', '[c', function() require('vcsigns.actions').hunk_prev(0, vim.v.count1) end, 'Go to previous hunk')
+    map('n', ']c', function() require('vcsigns.actions').hunk_next(0, vim.v.count1) end, 'Go to next hunk')
+    map('n', '[C', function() require('vcsigns.actions').hunk_prev(0, 9999) end, 'Go to first hunk')
+    map('n', ']C', function() require('vcsigns.actions').hunk_next(0, 9999) end, 'Go to last hunk')
+    map('n', '<leader>su', function() require('vcsigns.actions').hunk_undo(0) end, 'Undo hunks in range')
+    map('n', '<leader>sd', function() require('vcsigns.actions').toggle_hunk_diff(0) end, 'Show hunk diffs inline in the current buffer')
   end,
 }
 ```

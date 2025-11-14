@@ -17,7 +17,7 @@ function M.fold_expression(lnum)
   return vim.b.levels[lnum] or 0
 end
 
-local foldexpr = 'v:lua.require("vcsigns").fold.fold_expression(v:lnum)'
+local foldexpr = 'v:lua.require("vcsigns.fold").fold_expression(v:lnum)'
 
 function M.toggle(bufnr)
   fold.toggle(bufnr, foldexpr)

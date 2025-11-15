@@ -84,6 +84,13 @@ local function _extract_intervals(parts, hunk_side)
   return line_intervals
 end
 
+local function join_lines(lines)
+  if #lines == 0 then
+    return ""
+  end
+  return table.concat(lines, "\n") .. "\n"
+end
+
 --- Compute the diff between two sets of tokens.
 --- This is hacking around the fact that vim.text.diff
 --- takes a string rather than a list of strings.
@@ -93,12 +100,16 @@ end
 ---@param diff_opts table Options for the diff algorithm.
 ---@return integer[][] The diff as a list of quads.
 local function _vim_diff(old_tokens, new_tokens, diff_opts)
+  if #old_tokens == 0 and #new_tokens == 1 and new_tokens[1] == "" then
+    -- Special case for non-existent old file with empty new file.
+    return {}
+  end
   local opts = vim.deepcopy(diff_opts) or {}
   opts.result_type = "indices"
   local vim_diff_impl = vim.text.diff or vim.diff -- Fallback for older Neovim versions
   local result = vim_diff_impl(
-    table.concat(old_tokens, "\n"),
-    table.concat(new_tokens, "\n"),
+    join_lines(old_tokens),
+    join_lines(new_tokens),
     opts
   )
   ---@cast result integer[][]?
@@ -169,13 +180,11 @@ local function _quad_to_hunk(hunk_quad, old_lines, new_lines)
 end
 
 ---Compute the diff between two contents.
----@param old_contents string The old contents.
----@param new_contents string The new contents.
+---@param old_lines string[] The old lines.
+---@param new_lines string[] The new lines.
 ---@return Hunk[] The computed hunks.
-function M.compute_diff(old_contents, new_contents)
+function M.compute_diff(old_lines, new_lines)
   local diff_opts = vim.g.vcsigns_diff_opts
-  local old_lines = vim.split(old_contents, "\n", { plain = true })
-  local new_lines = vim.split(new_contents, "\n", { plain = true })
 
   -- If file is too large, skip diffing.
   if

@@ -59,7 +59,7 @@ end
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The version control system to use.
 ---@param target Target The target for the VCS command.
----@param cb fun(content: string|nil) Callback function to handle the output.
+---@param cb fun(lines: string[]|nil) Callback function to handle the output.
 local function _show_file_impl(bufnr, vcs, target, cb)
   local file_dir = util.file_dir(bufnr)
   util.run_with_timeout(vcs.show.cmd(target), { cwd = file_dir }, function(out)
@@ -77,14 +77,25 @@ local function _show_file_impl(bufnr, vcs, target, cb)
       util.verbose "VCS decided to not produce a file, skipping diff"
       return nil
     end
-    cb(old_contents)
+
+    -- Convert to lines as early as possible.
+    if old_contents == "" then
+      -- Non-existent file.
+      cb({})
+    end
+    if old_contents:sub(-1) == "\n" then
+      -- Trim trailing newline if present.
+      old_contents = old_contents:sub(1, -2)
+    end
+    local old_lines = vim.split(old_contents, "\n", { plain = true })
+    cb(old_lines)
   end)
 end
 
 --- Get the relevant file contents of the file according to the VCS.
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The version control system to use.
----@param cb fun(content: string|nil) Callback function to handle the output.
+---@param cb fun(lines: string[]|nil) Callback function to handle the output.
 function M.show_file(bufnr, vcs, cb)
   local target = _get_target(bufnr)
   if vcs.resolve_rename then

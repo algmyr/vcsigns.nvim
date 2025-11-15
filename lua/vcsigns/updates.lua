@@ -12,11 +12,10 @@ local ignore = require "vclib.ignore"
 ---@param bufnr integer The buffer number.
 function M.shallow_update(bufnr)
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local new_contents = table.concat(buffer_lines, "\n") .. "\n"
   local s = state.get(bufnr)
-  local old_contents = s.diff.old_contents
+  local old_lines = s.diff.old_lines
 
-  if not old_contents then
+  if not old_lines then
     util.verbose "No old contents available, skipping diff."
     return
   end
@@ -24,7 +23,7 @@ function M.shallow_update(bufnr)
   local path = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":f")
   if
     vim.g.vcsigns_respect_gitignore
-    and old_contents == ""
+    and #old_lines == 0
     and ignore.is_ignored(path)
   then
     -- Rough proxy for checking if file is ignored and not tracked.
@@ -32,14 +31,7 @@ function M.shallow_update(bufnr)
     return
   end
 
-  if old_contents == "" and new_contents == "\n" then
-    -- Special case of a newly created but empty file.
-    -- This is just to avoid showing an "empty" buffer as a line added.
-    -- Just a cosmetic thing.
-    old_contents = "\n"
-  end
-
-  local hunks = diff.compute_diff(old_contents, new_contents)
+  local hunks = diff.compute_diff(old_lines, buffer_lines)
   s.diff.hunks = hunks
   sign.add_signs(bufnr, hunks)
 
@@ -56,8 +48,8 @@ end
 local function _refresh_old_file_contents(bufnr, vcs, cb)
   local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
 
-  repo.show_file(bufnr, vcs, function(old_contents)
-    if not old_contents then
+  repo.show_file(bufnr, vcs, function(old_lines)
+    if not old_lines then
       -- Some kind of failure, skip the diff.
       return
     end
@@ -67,7 +59,7 @@ local function _refresh_old_file_contents(bufnr, vcs, cb)
       util.verbose "Skipping updating old file, we already have a newer update."
       return
     end
-    s.diff.old_contents = old_contents
+    s.diff.old_lines = old_lines
     s.diff.last_update = start_time
     s.diff.hunks_changedtick = vim.b[bufnr].changedtick
     cb(bufnr)

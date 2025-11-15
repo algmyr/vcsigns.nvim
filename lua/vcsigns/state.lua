@@ -6,7 +6,7 @@ local M = {}
 
 ---@class DiffState
 ---@field hunks Hunk[]
----@field old_contents string
+---@field old_lines string[]
 ---@field last_update integer
 ---@field hunks_changedtick integer
 
@@ -27,7 +27,7 @@ function M.get(bufnr)
     buffers[bufnr] = {
       diff = {
         hunks = {},
-        old_contents = "",
+        old_lines = {},
         last_update = 0,
         hunks_changedtick = 0,
       },

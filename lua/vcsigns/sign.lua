@@ -30,6 +30,23 @@ local SignType = {
 }
 M.SignType = SignType
 
+function M.sign_type_to_string(sign_type)
+  local types = {}
+  if band(sign_type, SignType.ADD) ~= 0 then
+    table.insert(types, "ADD")
+  end
+  if band(sign_type, SignType.CHANGE) ~= 0 then
+    table.insert(types, "CHANGE")
+  end
+  if band(sign_type, SignType.DELETE_BELOW) ~= 0 then
+    table.insert(types, "DELETE_BELOW")
+  end
+  if band(sign_type, SignType.DELETE_ABOVE) ~= 0 then
+    table.insert(types, "DELETE_ABOVE")
+  end
+  return table.concat(types, "|")
+end
+
 ---@class SignData
 ---@field type SignType
 ---@field count integer|nil

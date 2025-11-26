@@ -87,8 +87,8 @@ M.fold_levels = {
         _union(DELETE_ABOVE(3), CHANGE),
         nil,
         nil,
-        CHANGE,
-        DELETE_ABOVE(3),
+        _union(CHANGE, DELETE_BELOW(3)),
+        nil,
         nil,
         DELETE_BELOW(3),
         CHANGE,
@@ -110,9 +110,9 @@ M.fold_levels = {
           "Sign type mismatch at line "
             .. i
             .. ": expected "
-            .. expected.type
+            .. sign.sign_type_to_string(expected.type)
             .. ", got "
-            .. actual.type
+            .. sign.sign_type_to_string(actual.type)
         )
         assert(
           expected.count == actual.count,
@@ -128,9 +128,9 @@ M.fold_levels = {
           "Sign mismatch at line "
             .. i
             .. ": expected "
-            .. (expected and expected.type or "nil")
+            .. (expected and sign.sign_type_to_string(expected.type) or "nil")
             .. ", got "
-            .. (actual and actual.type or "nil")
+            .. (actual and sign.sign_type_to_string(actual.type) or "nil")
         )
       end
     end

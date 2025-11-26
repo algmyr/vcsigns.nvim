@@ -146,8 +146,12 @@ local function _hunk_navigation(bufnr, count, forward)
   end
   local lnum = vim.fn.line "."
   local hunks = state.get(bufnr).diff.hunks
-  local hunk = forward and hunkops.next_hunk(lnum, hunks, count)
-    or hunkops.prev_hunk(lnum, hunks, count)
+  local hunk
+  if forward then
+    hunk = hunkops.next_hunk(lnum, hunks, count)
+  else
+    hunk = hunkops.prev_hunk(lnum, hunks, count)
+  end
   if hunk then
     vim.cmd "normal! m`"
     vim.api.nvim_win_set_cursor(0, { hunk.plus_start, 0 })

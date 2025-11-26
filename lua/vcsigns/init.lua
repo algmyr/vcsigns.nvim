@@ -161,7 +161,9 @@ function M.setup(user_config)
       pattern = "*",
       callback = function(args)
         local bufnr = args.buf
-        M.actions.start_if_needed(bufnr)
+        if vim.bo.buftype == "" then
+          M.actions.start_if_needed(bufnr)
+        end
       end,
       desc = "Auto-enable VCSigns on buffer read",
     })

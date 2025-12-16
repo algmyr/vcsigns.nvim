@@ -88,6 +88,7 @@ local default_config = {
       delete = "SignDelete",
       change_delete = "SignChangeDelete",
     },
+    priority = 5
   },
   -- By default multiple signs on one line are avoided by shifting
   -- delete_below into a delete_above on the next line.

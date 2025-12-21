@@ -4,6 +4,12 @@ local function _jj_target(target)
   return string.format("roots(ancestors(@, %d))", target + 2)
 end
 
+local function _jj_exact_path(path)
+  -- Most basic thing. Will fail if path contains a quote.
+  -- If someone runs into this I will question their life choices.
+  return 'file:"' .. path .. '"'
+end
+
 ---@type Vcs
 return {
   name = "Jujutsu",
@@ -23,7 +29,7 @@ return {
         "-r",
         _jj_target(target.commit),
         "--",
-        target.file,
+        _jj_exact_path(target.file),
       }
     end,
     check = common.check_accept_any,
@@ -37,7 +43,7 @@ return {
         "-r",
         _jj_target(target.commit - 1) .. "::@",
         "-s",
-        target.file,
+        _jj_exact_path(target.file),
       }
     end,
     extract = function(out, _)

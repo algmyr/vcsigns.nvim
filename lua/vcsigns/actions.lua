@@ -74,6 +74,7 @@ function M.start(bufnr)
   s.vcs.vcs = vcs
 
   _set_buflocal_autocmds(bufnr)
+  updates.deep_update(bufnr, true)
 end
 
 --- Start VCSigns for the given buffer, but skip if detection was already done.

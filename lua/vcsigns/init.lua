@@ -165,6 +165,10 @@ function M.setup(user_config)
         -- Defer setup to work around buftype not being set yet:
         -- https://github.com/neovim/neovim/issues/29419
         vim.defer_fn(function()
+          -- Buffer might have been unloaded in the meantime.
+          if not vim.api.nvim_buf_is_valid(bufnr) then
+            return
+          end
           if vim.bo[bufnr].buftype == "" then
             M.actions.start_if_needed(bufnr)
           end

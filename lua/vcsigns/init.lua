@@ -88,7 +88,7 @@ local default_config = {
       delete = "SignDelete",
       change_delete = "SignChangeDelete",
     },
-    priority = 5
+    priority = 5,
   },
   -- By default multiple signs on one line are avoided by shifting
   -- delete_below into a delete_above on the next line.
@@ -162,9 +162,13 @@ function M.setup(user_config)
       pattern = "*",
       callback = function(args)
         local bufnr = args.buf
-        if vim.bo.buftype == "" then
-          M.actions.start_if_needed(bufnr)
-        end
+        -- Defer setup to work around buftype not being set yet:
+        -- https://github.com/neovim/neovim/issues/29419
+        vim.defer_fn(function()
+          if vim.bo[bufnr].buftype == "" then
+            M.actions.start_if_needed(bufnr)
+          end
+        end, 100)
       end,
       desc = "Auto-enable VCSigns on buffer read",
     })

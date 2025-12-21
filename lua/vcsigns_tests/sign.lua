@@ -100,7 +100,7 @@ M.fold_levels = {
     },
   },
   test = function(case)
-    local result = sign.compute_signs(case.hunks, #case.expected)
+    local result = sign.compute_signs(case.hunks, case.line_count)
     for i = 1, case.line_count do
       local actual = result.signs[i]
       local expected = case.expected[i]

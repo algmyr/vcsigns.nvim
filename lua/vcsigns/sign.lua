@@ -124,26 +124,11 @@ local function _to_vim_sign(sign)
   error(string.format("Invalid sign type %d with count %d.", sign.type, count))
 end
 
---- Adjust signs to be in range and to avoid overlaps.
+--- Try avoiding overlaps by flipping delete below into delete above.
 ---@param signs table<number, SignData> The signs to adjust.
 ---@param line_count integer The number of lines in the buffer.
 ---@return table<number, SignData> The adjusted signs.
-local function _adjust_signs(signs, line_count)
-  -- Correct deletion on the 0th line, if it exists.
-  if signs[0] then
-    assert(_popcount(signs[0].type) == 1)
-    assert(signs[0].type == SignType.DELETE_BELOW)
-    local one = signs[1] or { type = 0, count = 0 }
-    one.type = bor(one.type, SignType.DELETE_ABOVE)
-    one.count = one.count + signs[0].count
-    signs[1] = one
-    signs[0] = nil
-  end
-
-  if vim.g.vcsigns_skip_sign_decongestion then
-    return signs
-  end
-
+local function _decongest_signs(signs, line_count)
   local function flip(i)
     signs[i + 1] = {
       type = SignType.DELETE_ABOVE,
@@ -187,6 +172,29 @@ local function _adjust_signs(signs, line_count)
       end
     end
   end
+  return signs
+end
+
+--- Adjust signs to be in range and to avoid overlaps.
+---@param signs table<number, SignData> The signs to adjust.
+---@param line_count integer The number of lines in the buffer.
+---@return table<number, SignData> The adjusted signs.
+local function _adjust_signs(signs, line_count)
+  if not vim.g.vcsigns_skip_sign_decongestion then
+    signs = _decongest_signs(signs, line_count)
+  end
+
+  -- Correct deletion on the 0th line, if it exists.
+  if signs[0] then
+    assert(_popcount(signs[0].type) == 1)
+    assert(signs[0].type == SignType.DELETE_BELOW)
+    local one = signs[1] or { type = 0, count = 0 }
+    one.type = bor(one.type, SignType.DELETE_ABOVE)
+    one.count = one.count + signs[0].count
+    signs[1] = one
+    signs[0] = nil
+  end
+
   return signs
 end
 

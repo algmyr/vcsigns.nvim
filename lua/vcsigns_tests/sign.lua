@@ -98,6 +98,21 @@ M.fold_levels = {
       },
       line_count = 11,
     },
+    decongestion_at_top = {
+      hunks = {
+        _make_hunk(1, 1, 0, 0),
+        _make_hunk(3, 1, 1, 0),
+        _make_hunk(5, 3, 2, 0),
+      },
+      expected = {
+        _union(DELETE_ABOVE(0), DELETE_BELOW(2)), -- Combined count 2.
+        DELETE_BELOW(3),
+        nil,
+        nil,
+        nil,
+      },
+      line_count = 5,
+    },
   },
   test = function(case)
     local result = sign.compute_signs(case.hunks, case.line_count)

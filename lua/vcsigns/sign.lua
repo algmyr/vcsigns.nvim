@@ -121,7 +121,14 @@ local function _to_vim_sign(sign)
     end
     return { text = text, hl = M.signs.hl.change_delete }
   end
-  error(string.format("Invalid sign type %d with count %d.", sign.type, count))
+  error(
+    string.format(
+      "Invalid sign type %s (%d) with count %d.",
+      M.sign_type_to_string(sign.type),
+      sign.type,
+      count
+    )
+  )
 end
 
 --- Try avoiding overlaps by flipping delete below into delete above.

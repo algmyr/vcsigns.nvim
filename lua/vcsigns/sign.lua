@@ -187,6 +187,7 @@ end
 ---@param line_count integer The number of lines in the buffer.
 ---@return table<number, SignData> The adjusted signs.
 local function _adjust_signs(signs, line_count)
+  signs = vim.deepcopy(signs)
   if not vim.g.vcsigns_skip_sign_decongestion then
     signs = _decongest_signs(signs, line_count)
   end

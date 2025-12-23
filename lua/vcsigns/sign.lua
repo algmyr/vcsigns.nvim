@@ -56,7 +56,7 @@ local SignData = {}
 ---@field hl string The highlight group for the sign.
 local VimSign = {}
 
---- Convert the
+--- Convert the internal sign representation to a vim sign.
 ---@param sign SignData
 local function _to_vim_sign(sign)
   ---@param count integer
@@ -77,8 +77,9 @@ local function _to_vim_sign(sign)
     return text
   end
 
-  local count = _popcount(sign.type)
-  if count == 1 then
+  local bit_count = _popcount(sign.type)
+  if bit_count == 1 then
+    -- Simple happy case: Only one sign type.
     local text = ""
     local hl = nil
     if band(sign.type, SignType.ADD) ~= 0 then
@@ -96,40 +97,60 @@ local function _to_vim_sign(sign)
     end
     return { text = text, hl = hl }
   end
-  if count == 2 then
-    -- Delete above and below.
-    if SignType.DELETE_BELOW + SignType.DELETE_ABOVE == sign.type then
-      return {
-        text = M.signs.text.delete_above_below,
-        hl = M.signs.hl.delete, -- Could use an underline?
-      }
-    end
-    -- Change-delete.
-    if M.signs.text.change_delete then
-      -- User provided a change-delete sign.
-      return {
-        text = M.signs.text.change_delete,
-        hl = M.signs.hl.change_delete,
-      }
-    end
-    assert(band(sign.type, SignType.CHANGE) ~= 0)
-    assert(band(sign.type, SignType.ADD) == 0)
-    local text = M.signs.text.change
-    if band(sign.type, SignType.DELETE_BELOW) ~= 0 then
-      text = text .. M.signs.text.delete_below
-    elseif band(sign.type, SignType.DELETE_ABOVE) ~= 0 then
-      text = text .. M.signs.text.delete_above
-    end
-    return { text = text, hl = M.signs.hl.change_delete }
+
+  if M.signs.text.change_delete then
+    -- We have too many signs on one line and a combined sign is provided.
+    -- TODO(algmyr): Rename things to reflect new use.
+    return {
+      text = M.signs.text.change_delete,
+      hl = M.signs.hl.change_delete,
+    }
   end
-  error(
-    string.format(
-      "Invalid sign type %s (%d) with count %d.",
-      M.sign_type_to_string(sign.type),
-      sign.type,
-      count
-    )
+
+  local is_add = band(sign.type, SignType.ADD) ~= 0
+  local is_change = band(sign.type, SignType.CHANGE) ~= 0
+  assert(
+    not (is_add and is_change),
+    "Sign cannot have both ADD and CHANGE."
   )
+
+  -- Add/change first.
+  local text = ""
+  local hls = {}
+  if is_add then
+    text = text .. M.signs.text.add
+    hls[#hls + 1] = M.signs.hl.add
+  end
+  if is_change then
+    text = text .. M.signs.text.change
+    hls[#hls + 1] = M.signs.hl.change
+  end
+
+  -- Then deletions.
+  local is_delete_below = band(sign.type, SignType.DELETE_BELOW) ~= 0
+  local is_delete_above = band(sign.type, SignType.DELETE_ABOVE) ~= 0
+  if is_delete_below and is_delete_above then
+    -- Combined delete above and below.
+    text = text .. M.signs.text.delete_above_below
+    hls[#hls + 1] = M.signs.hl.delete
+  elseif is_delete_below then
+    text = text .. M.signs.text.delete_below
+    hls[#hls + 1] = M.signs.hl.delete
+  elseif is_delete_above then
+    text = text .. M.signs.text.delete_above
+    hls[#hls + 1] = M.signs.hl.delete
+  end
+
+  if #hls == 1 then
+    return { text = text, hl = hls[1] }
+  else
+    return {
+      text = text,
+      -- TODO(algmyr): Change this naming to be about "combined".
+      --               Or somehow figure out multi highlight signs.
+      hl = M.signs.hl.change_delete or hls[1],
+    }
+  end
 end
 
 --- Try avoiding overlaps by flipping delete below into delete above.

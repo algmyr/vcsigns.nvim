@@ -28,14 +28,13 @@ local function DELETE_ABOVE(count)
 end
 
 local function _union(a, b)
-  assert(a.count == 0 or b.count == 0, "Cannot union two signs with counts")
   local res = {}
   res.type = bit.bor(a.type, b.type)
   res.count = a.count + b.count
   return res
 end
 
-M.fold_levels = {
+M.signs = {
   test_cases = {
     change = {
       hunks = {
@@ -105,7 +104,7 @@ M.fold_levels = {
         _make_hunk(5, 3, 2, 0),
       },
       expected = {
-        _union(DELETE_ABOVE(0), DELETE_BELOW(2)), -- Combined count 2.
+        _union(DELETE_ABOVE(1), DELETE_BELOW(1)), -- Combined count 2.
         DELETE_BELOW(3),
         nil,
         nil,
@@ -113,6 +112,23 @@ M.fold_levels = {
       },
       line_count = 5,
     },
+    -- https://github.com/algmyr/vcsigns.nvim/issues/23
+    issue_23 = {
+      hunks = {
+        _make_hunk(1, 2, 0, 0),
+        _make_hunk(2, 0, 1, 1),
+        _make_hunk(3, 1, 1, 0),
+        _make_hunk(4, 1, 2, 1),
+      },
+      expected = {
+        _union(_union(DELETE_ABOVE(2), ADD), DELETE_BELOW(1)), -- Combined count 3.
+        CHANGE,
+        nil,
+        nil,
+        nil,
+      },
+      line_count = 5,
+    }
   },
   test = function(case)
     local result = sign.compute_signs(case.hunks, case.line_count)

@@ -2,6 +2,7 @@ local M = {}
 
 local bit = require "bit"
 local util = require "vcsigns.util"
+local state = require "vcsigns.state"
 
 local band = bit.band
 local bor = bit.bor
@@ -206,10 +207,9 @@ local function _adjust_signs(signs, line_count)
   return signs
 end
 
---- Compute the signs to show for a list of hunks.
 ---@param hunks Hunk[]
 ---@return { signs: table<number, SignData>, stats: { added: integer, modified: integer, removed: integer } }
-function M.compute_signs(hunks, line_count)
+local function _compute_signs_unadjusted(hunks)
   ---@type table<number, SignData>
   local sign_lines = {}
   local added = 0
@@ -265,13 +265,57 @@ function M.compute_signs(hunks, line_count)
   end
 
   return {
-    signs = _adjust_signs(sign_lines, line_count),
+    signs = sign_lines,
     stats = {
       added = added,
       modified = modified,
       removed = deleted,
     },
   }
+end
+
+---@param bufnr integer
+function M.debug_compute_signs(bufnr)
+  local hunks = state.get(bufnr).diff.hunks
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+  local raw_signs = _compute_signs_unadjusted(hunks)
+  local adjusted_signs = _adjust_signs(raw_signs.signs, line_count)
+  -- Put representation in a buffer for human inspection.
+  local function fmt(sign)
+    if sign then
+      return string.format("%s(%d)", M.sign_type_to_string(sign.type), sign.count or -1)
+    else
+      return ''
+    end
+  end
+
+  local lines = {}
+  for i = 0, line_count + 1 do
+    local raw = fmt(raw_signs.signs[i])
+    local adjusted = fmt(adjusted_signs[i])
+    local line = string.format("%4d | %40s | %40s", i, raw, adjusted)
+    lines[#lines + 1] = line
+  end
+
+  -- Open a new buffer and display the lines.
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    split = "right",
+    win = 0,
+  })
+end
+
+--- Compute the signs to show for a list of hunks.
+---@param hunks Hunk[]
+---@param line_count integer The number of lines in the buffer.
+---@return { signs: table<number, SignData>, stats: { added: integer, modified: integer, removed: integer } }
+function M.compute_signs(hunks, line_count)
+  local result = _compute_signs_unadjusted(hunks)
+  result.signs = _adjust_signs(result.signs, line_count)
+  return result
 end
 
 local function _sign_namespace()

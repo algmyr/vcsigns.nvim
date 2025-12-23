@@ -80,13 +80,13 @@ local default_config = {
       delete_below = "▁",
       delete_above = "▔",
       delete_above_below = "🮀", -- Reconsider this symbol.
-      change_delete = nil, -- Use combined sign.
+      combined = nil, -- If set, use this instead of multiple combined signs.
     },
     hl = {
       add = "SignAdd",
       change = "SignChange",
       delete = "SignDelete",
-      change_delete = "SignChangeDelete",
+      combined = "SignCombined",
     },
     priority = 5,
   },
@@ -127,7 +127,64 @@ local default_config = {
   respect_gitignore = true,
 }
 
+local function _move_deprecated(tbl, old_key, new_key)
+  local function extract_nested(t, key_path)
+    local current = t
+    local keys = {}
+    for key in string.gmatch(key_path, "[^%.]+") do
+      table.insert(keys, key)
+    end
+    for i = 1, #keys - 1 do
+      local key = keys[i]
+      if current[key] == nil then
+        return nil
+      end
+      current = current[key]
+    end
+    if current[keys[#keys]] == nil then
+      return nil
+    end
+    local result = current[keys[#keys]]
+    current[keys[#keys]] = nil
+    return result
+  end
+
+  local function set_nested(t, key_path, value)
+    local current = t
+    local keys = {}
+    for key in string.gmatch(key_path, "[^%.]+") do
+      table.insert(keys, key)
+    end
+    for i = 1, #keys - 1 do
+      local key = keys[i]
+      if current[key] == nil then
+        current[key] = {}
+      end
+      current = current[key]
+    end
+    current[keys[#keys]] = value
+  end
+
+  local value = extract_nested(tbl, old_key)
+  if value ~= nil then
+    -- Defer notification to avoid interfering with setup.
+    vim.defer_fn(function()
+      vim.notify(
+        "VCSigns config: '" .. old_key .. "' is deprecated. Use '" .. new_key .. "' instead.",
+        vim.log.levels.INFO,
+        { title = "VCSigns" }
+      )
+    end, 0)
+    set_nested(tbl, new_key, value)
+  end
+end
+
 function M.setup(user_config)
+  -- Migrate deprecated config options.
+  user_config = vim.deepcopy(user_config)
+  _move_deprecated(user_config, "signs.text.change_delete", "signs.text.combined")
+  _move_deprecated(user_config, "signs.hl.change_delete", "signs.hl.combined")
+
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes
@@ -138,6 +195,7 @@ function M.setup(user_config)
   vim.g.vcsigns_target_commit = config.target_commit
   vim.g.vcsigns_respect_gitignore = config.respect_gitignore
   vim.g.vcsigns_diff_max_lines = config.diff_max_lines
+
   sign.signs = config.signs
 
   vim.api.nvim_create_user_command("VCSigns", _command, {
@@ -213,7 +271,8 @@ function M.setup(user_config)
     "Changed",
     "DiffChange",
   })
-  hl_fallbacks("SignChangeDelete", {
+  hl_fallbacks("SignCombined", {
+    "SignChangeDelete",
     "GitSignsChangeDelete",
     "SignChange",
   })

@@ -98,12 +98,12 @@ local function _to_vim_sign(sign)
     return { text = text, hl = hl }
   end
 
-  if M.signs.text.change_delete then
+  if M.signs.text.combined then
     -- We have too many signs on one line and a combined sign is provided.
     -- TODO(algmyr): Rename things to reflect new use.
     return {
-      text = M.signs.text.change_delete,
-      hl = M.signs.hl.change_delete,
+      text = M.signs.text.combined,
+      hl = M.signs.hl.combined,
     }
   end
 
@@ -148,7 +148,7 @@ local function _to_vim_sign(sign)
       text = text,
       -- TODO(algmyr): Change this naming to be about "combined".
       --               Or somehow figure out multi highlight signs.
-      hl = M.signs.hl.change_delete or hls[1],
+      hl = M.signs.hl.combined or hls[1],
     }
   end
 end

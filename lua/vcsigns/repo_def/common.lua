@@ -26,11 +26,14 @@ local FileShower = {}
 ---@field extract fun(cmd_out: vim.SystemCompleted, target: Target): string|nil
 local RenameResolver = {}
 
----@class Vcs
+---@class VcsInterface
 ---@field name string Human-readable name of the VCS.
 ---@field detect Detector
 ---@field show FileShower
 ---@field resolve_rename RenameResolver|nil
+local VcsInterface = {}
+
+---@class Vcs: VcsInterface
 local Vcs = {}
 
 ---@param out vim.SystemCompleted

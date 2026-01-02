@@ -10,7 +10,7 @@ local function _jj_exact_path(path)
   return 'file:"' .. path .. '"'
 end
 
----@type Vcs
+---@type VcsInterface
 return {
   name = "Jujutsu",
   detect = {

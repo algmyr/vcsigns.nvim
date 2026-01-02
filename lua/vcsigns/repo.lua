@@ -3,7 +3,7 @@ local M = {}
 local util = require "vcsigns.util"
 
 --- List of VCSs, in priority order.
----@type Vcs[]
+---@type VcsInterface[]
 M.vcs = {
   require "vcsigns.repo_def.jj",
   require "vcsigns.repo_def.git",

@@ -1,6 +1,6 @@
 local common = require "vcsigns.repo_def.common"
 
----@type Vcs
+---@type VcsInterface
 return {
   name = "Git",
   detect = {

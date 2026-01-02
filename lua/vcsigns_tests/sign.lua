@@ -128,7 +128,7 @@ M.signs = {
         nil,
       },
       line_count = 5,
-    }
+    },
   },
   test = function(case)
     local result = sign.compute_signs(case.hunks, case.line_count)

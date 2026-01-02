@@ -107,11 +107,8 @@ local function _vim_diff(old_tokens, new_tokens, diff_opts)
   local opts = vim.deepcopy(diff_opts) or {}
   opts.result_type = "indices"
   local vim_diff_impl = vim.text.diff or vim.diff -- Fallback for older Neovim versions
-  local result = vim_diff_impl(
-    join_lines(old_tokens),
-    join_lines(new_tokens),
-    opts
-  )
+  local result =
+    vim_diff_impl(join_lines(old_tokens), join_lines(new_tokens), opts)
   ---@cast result integer[][]?
   if not result then
     error("Failed to compute diff: " .. vim.inspect(result))

@@ -170,7 +170,11 @@ local function _move_deprecated(tbl, old_key, new_key)
     -- Defer notification to avoid interfering with setup.
     vim.defer_fn(function()
       vim.notify(
-        "VCSigns config: '" .. old_key .. "' is deprecated. Use '" .. new_key .. "' instead.",
+        "VCSigns config: '"
+          .. old_key
+          .. "' is deprecated. Use '"
+          .. new_key
+          .. "' instead.",
         vim.log.levels.INFO,
         { title = "VCSigns" }
       )
@@ -182,7 +186,11 @@ end
 function M.setup(user_config)
   -- Migrate deprecated config options.
   user_config = vim.deepcopy(user_config)
-  _move_deprecated(user_config, "signs.text.change_delete", "signs.text.combined")
+  _move_deprecated(
+    user_config,
+    "signs.text.change_delete",
+    "signs.text.combined"
+  )
   _move_deprecated(user_config, "signs.hl.change_delete", "signs.hl.combined")
 
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})

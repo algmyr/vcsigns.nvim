@@ -109,10 +109,7 @@ local function _to_vim_sign(sign)
 
   local is_add = band(sign.type, SignType.ADD) ~= 0
   local is_change = band(sign.type, SignType.CHANGE) ~= 0
-  assert(
-    not (is_add and is_change),
-    "Sign cannot have both ADD and CHANGE."
-  )
+  assert(not (is_add and is_change), "Sign cannot have both ADD and CHANGE.")
 
   -- Add/change first.
   local text = ""
@@ -305,9 +302,13 @@ function M.debug_compute_signs(bufnr)
   -- Put representation in a buffer for human inspection.
   local function fmt(sign)
     if sign then
-      return string.format("%s(%d)", M.sign_type_to_string(sign.type), sign.count or -1)
+      return string.format(
+        "%s(%d)",
+        M.sign_type_to_string(sign.type),
+        sign.count or -1
+      )
     else
-      return ''
+      return ""
     end
   end
 

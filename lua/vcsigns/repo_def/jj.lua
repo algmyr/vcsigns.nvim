@@ -17,7 +17,7 @@ return {
     cmd = function()
       return { "jj", "--ignore-working-copy", "root" }
     end,
-    check = common.check_successful_command,
+    check = common.check_and_extract_root,
   },
   show = {
     cmd = function(target)

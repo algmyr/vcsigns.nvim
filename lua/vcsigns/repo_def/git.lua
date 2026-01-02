@@ -5,9 +5,9 @@ return {
   name = "Git",
   detect = {
     cmd = function()
-      return { "git", "rev-parse", "--is-inside-work-tree" }
+      return { "git", "rev-parse", "--show-toplevel" }
     end,
-    check = common.check_successful_command,
+    check = common.check_and_extract_root,
   },
   show = {
     cmd = function(target)

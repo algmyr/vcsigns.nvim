@@ -7,7 +7,7 @@ return {
     cmd = function()
       return { "hg", "root" }
     end,
-    check = common.check_successful_command,
+    check = common.check_and_extract_root,
   },
   show = {
     cmd = function(target)

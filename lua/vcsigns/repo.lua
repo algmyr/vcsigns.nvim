@@ -1,6 +1,7 @@
 local M = {}
 
 local util = require "vcsigns.util"
+local repo_common = require "vcsigns.repo_def.common"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
@@ -32,10 +33,22 @@ end
 
 --- Get the target for the current buffer.
 ---@param bufnr integer The buffer number.
+---@param vcs Vcs The version control system.
 ---@return Target
-local function _get_target(bufnr)
+local function _get_target(bufnr, vcs)
   local path = _get_path(bufnr)
-  local file = vim.fn.fnamemodify(path, ":t")
+  assert(vcs.root, "VCS root must be set")
+
+  -- Make file path relative to repo root.
+  local root = vcs.root
+  local file
+  if path:sub(1, #root) == root then
+    file = path:sub(#root + 2) -- +2 to skip root and the path separator.
+  else
+    -- File is outside the repo root.
+    error(string.format("File %s is not under repo root %s", path, root))
+  end
+
   return {
     commit = _target_commit(),
     file = file,
@@ -61,8 +74,7 @@ end
 ---@param target Target The target for the VCS command.
 ---@param cb fun(lines: string[]|nil) Callback function to handle the output.
 local function _show_file_impl(bufnr, vcs, target, cb)
-  local file_dir = util.file_dir(bufnr)
-  util.run_with_timeout(vcs.show.cmd(target), { cwd = file_dir }, function(out)
+  util.run_with_timeout(vcs.show.cmd(target), { cwd = vcs.root }, function(out)
     -- If the buffer was deleted, bail.
     if not vim.api.nvim_buf_is_valid(bufnr) then
       util.verbose "Buffer no longer valid, skipping diff"
@@ -81,7 +93,7 @@ local function _show_file_impl(bufnr, vcs, target, cb)
     -- Convert to lines as early as possible.
     if old_contents == "" then
       -- Non-existent file.
-      cb({})
+      cb {}
     end
     if old_contents:sub(-1) == "\n" then
       -- Trim trailing newline if present.
@@ -97,13 +109,12 @@ end
 ---@param vcs Vcs The version control system to use.
 ---@param cb fun(lines: string[]|nil) Callback function to handle the output.
 function M.show_file(bufnr, vcs, cb)
-  local target = _get_target(bufnr)
+  local target = _get_target(bufnr, vcs)
   if vcs.resolve_rename then
     util.verbose("Resolving rename for " .. target.file)
-    local file_dir = util.file_dir(bufnr)
     util.run_with_timeout(
       vcs.resolve_rename.cmd(target),
-      { cwd = file_dir },
+      { cwd = vcs.root },
       function(out)
         -- If the buffer was deleted, bail.
         if not vim.api.nvim_buf_is_valid(bufnr) then
@@ -145,8 +156,9 @@ function M.detect_vcs(bufnr)
     end
     local detect_cmd = vcs.detect.cmd()
     local res = util.run_with_timeout(detect_cmd, { cwd = file_dir }):wait()
-    if vcs.detect.check(res) then
-      return vcs
+    local detection_result = vcs.detect.check(res)
+    if detection_result.detected then
+      return repo_common.vcs_with_root(vcs, detection_result.root)
     end
     ::continue::
   end

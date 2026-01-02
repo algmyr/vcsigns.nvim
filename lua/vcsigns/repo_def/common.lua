@@ -8,10 +8,16 @@ local M = {}
 ---@field path string The absolute path to the file.
 local Target = {}
 
+--- Result of VCS detection.
+---@class DetectionResult
+---@field detected boolean Whether the VCS was detected.
+---@field root string|nil The root directory of the repository (only set if detected is true).
+local DetectionResult = {}
+
 --- Logic for detecting if a VCS is available.
 ---@class Detector
 ---@field cmd fun(): string[]
----@field check fun(cmd_out: vim.SystemCompleted): boolean
+---@field check fun(cmd_out: vim.SystemCompleted): DetectionResult
 local Detector = {}
 
 --- Logic for getting the file content from a VCS.
@@ -34,7 +40,19 @@ local RenameResolver = {}
 local VcsInterface = {}
 
 ---@class Vcs: VcsInterface
+---@field root string The root directory of the repository.
 local Vcs = {}
+
+--- Create a VCS instance with the given root.
+---@param vcs_interface VcsInterface The VCS interface.
+---@param root string The root directory of the repository.
+---@return Vcs
+function M.vcs_with_root(vcs_interface, root)
+  local vcs_instance = vim.deepcopy(vcs_interface)
+  ---@cast vcs_instance Vcs
+  vcs_instance.root = root
+  return vcs_instance
+end
 
 ---@param out vim.SystemCompleted
 ---@return boolean
@@ -44,9 +62,12 @@ function M.check_accept_any(out)
 end
 
 ---@param out vim.SystemCompleted
----@return boolean
-function M.check_successful_command(out)
-  return out.code == 0
+---@return DetectionResult
+function M.check_and_extract_root(out)
+  if out.code ~= 0 or not out.stdout then
+    return { detected = false, root = nil }
+  end
+  return { detected = true, root = vim.trim(out.stdout) }
 end
 
 return M

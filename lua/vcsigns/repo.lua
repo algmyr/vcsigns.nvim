@@ -94,6 +94,7 @@ local function _show_file_impl(bufnr, vcs, target, cb)
     if old_contents == "" then
       -- Non-existent file.
       cb {}
+      return
     end
     if old_contents:sub(-1) == "\n" then
       -- Trim trailing newline if present.

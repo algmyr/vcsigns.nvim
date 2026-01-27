@@ -24,10 +24,7 @@ local Detector = {}
 ---@alias FileShower fun(target: Target, root: string, callback: fun(lines: string[]|nil))
 
 --- Logic for resolving a rename in a VCS.
----@class RenameResolver
----@field cmd fun(target: Target): string[]
----@field extract fun(cmd_out: vim.SystemCompleted, target: Target): string|nil
-local RenameResolver = {}
+---@alias RenameResolver fun(target: Target, root: string, callback: fun(resolved_file: string|nil))
 
 ---@class VcsInterface
 ---@field name string Human-readable name of the VCS.

@@ -92,27 +92,20 @@ function M.show_file(bufnr, vcs, cb)
   local target = _get_target(bufnr, vcs)
   if vcs.resolve_rename then
     util.verbose("Resolving rename for " .. target.file)
-    util.run_with_timeout(
-      vcs.resolve_rename.cmd(target),
-      { cwd = vcs.root },
-      function(out)
-        -- If the buffer was deleted, bail.
-        if not vim.api.nvim_buf_is_valid(bufnr) then
-          util.verbose "Buffer no longer valid, skipping"
-          return
-        end
-        local resolved_file = vcs.resolve_rename.extract(out, target)
-        if resolved_file then
-          util.verbose(
-            "Rename found: " .. target.file .. " -> " .. resolved_file
-          )
-          vim.b[bufnr].vcsigns_resolved_rename =
-            { to = target.file, from = resolved_file }
-          target.file = resolved_file
-        end
-        _show_file_impl(bufnr, vcs, target, cb)
+    vcs.resolve_rename(target, vcs.root, function(resolved_file)
+      -- If the buffer was deleted, bail.
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        util.verbose "Buffer no longer valid, skipping"
+        return
       end
-    )
+      if resolved_file then
+        util.verbose("Rename found: " .. target.file .. " -> " .. resolved_file)
+        vim.b[bufnr].vcsigns_resolved_rename =
+          { to = target.file, from = resolved_file }
+        target.file = resolved_file
+      end
+      _show_file_impl(bufnr, vcs, target, cb)
+    end)
   else
     _show_file_impl(bufnr, vcs, target, cb)
   end

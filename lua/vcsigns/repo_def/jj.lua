@@ -35,33 +35,34 @@ return {
       lines_cb(common.content_to_lines(out.stdout))
     end)
   end,
-  resolve_rename = {
-    cmd = function(target)
-      return {
-        "jj",
-        "--ignore-working-copy",
-        "diff",
-        "-r",
-        _jj_target(target.commit - 1) .. "::@",
-        "-s",
-        _jj_exact_path(target.file),
-      }
-    end,
-    extract = function(out, _)
+  resolve_rename = function(target, root, resolved_cb)
+    local cmd = {
+      "jj",
+      "--ignore-working-copy",
+      "diff",
+      "-r",
+      _jj_target(target.commit - 1) .. "::@",
+      "-s",
+      _jj_exact_path(target.file),
+    }
+    util.run_with_timeout(cmd, { cwd = root }, function(out)
       if out.code ~= 0 then
-        return nil
+        resolved_cb(nil)
+        return
       end
       if not out.stdout then
-        return nil
+        resolved_cb(nil)
+        return
       end
       local lines = vim.split(vim.trim(out.stdout), "\n")
       local move_spec = lines[#lines]:sub(3)
       local res, replacements = move_spec:gsub("{(.*) => (.*)}", "%1")
       if replacements == 0 then
         -- Not a rename.
-        return nil
+        resolved_cb(nil)
+        return
       end
-      return res
-    end,
-  },
+      resolved_cb(res)
+    end)
+  end,
 }

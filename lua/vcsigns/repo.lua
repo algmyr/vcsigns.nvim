@@ -74,34 +74,13 @@ end
 ---@param target Target The target for the VCS command.
 ---@param cb fun(lines: string[]|nil) Callback function to handle the output.
 local function _show_file_impl(bufnr, vcs, target, cb)
-  util.run_with_timeout(vcs.show.cmd(target), { cwd = vcs.root }, function(out)
+  vcs.show(target, vcs.root, function(lines)
     -- If the buffer was deleted, bail.
     if not vim.api.nvim_buf_is_valid(bufnr) then
       util.verbose "Buffer no longer valid, skipping diff"
-      return nil
-    end
-    local old_contents = out.stdout
-    if not old_contents then
-      util.verbose "No output from command, skipping diff"
-      return nil
-    end
-    if not vcs.show.check(out) then
-      util.verbose "VCS decided to not produce a file, skipping diff"
-      return nil
-    end
-
-    -- Convert to lines as early as possible.
-    if old_contents == "" then
-      -- Non-existent file.
-      cb {}
       return
     end
-    if old_contents:sub(-1) == "\n" then
-      -- Trim trailing newline if present.
-      old_contents = old_contents:sub(1, -2)
-    end
-    local old_lines = vim.split(old_contents, "\n", { plain = true })
-    cb(old_lines)
+    cb(lines)
   end)
 end
 

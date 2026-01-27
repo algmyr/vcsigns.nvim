@@ -21,10 +21,7 @@ local DetectionResult = {}
 local Detector = {}
 
 --- Logic for getting the file content from a VCS.
----@class FileShower
----@field cmd fun(target: Target): string[]
----@field check fun(cmd_out: vim.SystemCompleted): boolean
-local FileShower = {}
+---@alias FileShower fun(target: Target, root: string, callback: fun(lines: string[]|nil))
 
 --- Logic for resolving a rename in a VCS.
 ---@class RenameResolver
@@ -68,6 +65,22 @@ function M.check_and_extract_root(out)
     return { detected = false, root = nil }
   end
   return { detected = true, root = vim.trim(out.stdout) }
+end
+
+--- Convert file contents to lines.
+---@param contents string|nil
+---@return string[]|nil
+function M.content_to_lines(contents)
+  if not contents then
+    return nil
+  end
+  if contents == "" then
+    return {}
+  end
+  if contents:sub(-1) == "\n" then
+    contents = contents:sub(1, -2)
+  end
+  return vim.split(contents, "\n", { plain = true })
 end
 
 return M

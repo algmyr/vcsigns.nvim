@@ -1,4 +1,5 @@
 local common = require "vcsigns.repo_def.common"
+local util = require "vcsigns.util"
 
 local function _jj_target(target)
   return string.format("roots(ancestors(@, %d))", target + 2)
@@ -19,21 +20,21 @@ return {
     end,
     check = common.check_and_extract_root,
   },
-  show = {
-    cmd = function(target)
-      return {
-        "jj",
-        "--ignore-working-copy",
-        "file",
-        "show",
-        "-r",
-        _jj_target(target.commit),
-        "--",
-        _jj_exact_path(target.file),
-      }
-    end,
-    check = common.check_accept_any,
-  },
+  show = function(target, root, lines_cb)
+    local cmd = {
+      "jj",
+      "--ignore-working-copy",
+      "file",
+      "show",
+      "-r",
+      _jj_target(target.commit),
+      "--",
+      _jj_exact_path(target.file),
+    }
+    util.run_with_timeout(cmd, { cwd = root }, function(out)
+      lines_cb(common.content_to_lines(out.stdout))
+    end)
+  end,
   resolve_rename = {
     cmd = function(target)
       return {

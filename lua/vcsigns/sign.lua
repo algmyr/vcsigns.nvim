@@ -7,6 +7,9 @@ local state = require "vcsigns.state"
 local band = bit.band
 local bor = bit.bor
 
+--- Count number of set bits.
+---@param x integer The integer to count bits in.
+---@return integer The number of bits set.
 local function _popcount(x)
   -- Count the number of bits set in x.
   local count = 0
@@ -29,6 +32,10 @@ local SignType = {
 }
 M.SignType = SignType
 
+--- Convert a sign type enum to a human-readable string.
+--- Used for debugging and displaying sign type information.
+---@param sign_type SignType The sign type to convert.
+---@return string Human-readable representation.
 function M.sign_type_to_string(sign_type)
   local types = {}
   if band(sign_type, SignType.ADD) ~= 0 then
@@ -57,7 +64,8 @@ local SignData = {}
 local VimSign = {}
 
 --- Convert the internal sign representation to a vim sign.
----@param sign SignData
+---@param sign SignData The internal sign data.
+---@return VimSign The vim-compatible sign representation.
 local function _to_vim_sign(sign)
   ---@param count integer
   ---@param text string
@@ -225,7 +233,9 @@ local function _adjust_signs(signs, line_count)
   return signs
 end
 
----@param hunks Hunk[]
+--- Compute unadjusted signs from hunks.
+--- Converts hunks into sign data without adjusting for line conflicts or boundaries.
+---@param hunks Hunk[] The list of hunks to process.
 ---@return { signs: table<number, SignData>, stats: { added: integer, modified: integer, removed: integer } }
 local function _compute_signs_unadjusted(hunks)
   ---@type table<number, SignData>
@@ -292,7 +302,9 @@ local function _compute_signs_unadjusted(hunks)
   }
 end
 
----@param bufnr integer
+--- Debug helper to visualize sign computation.
+--- Opens a split window showing raw and adjusted signs for inspection.
+---@param bufnr integer The buffer number.
 function M.debug_compute_signs(bufnr)
   local hunks = state.get(bufnr).diff.hunks
   local line_count = vim.api.nvim_buf_line_count(bufnr)
@@ -340,13 +352,16 @@ function M.compute_signs(hunks, line_count)
   return result
 end
 
+--- Get or create the sign namespace for VCSigns.
+---@return integer The namespace ID.
 local function _sign_namespace()
   return vim.api.nvim_create_namespace "vcsigns"
 end
 
----@param bufnr integer
----@param hunks Hunk[]
----@return nil
+--- Add signs to a buffer based on hunks.
+--- Clears existing signs, computes new ones, and updates buffer statistics.
+---@param bufnr integer The buffer number.
+---@param hunks Hunk[] The list of hunks to display signs for.
 function M.add_signs(bufnr, hunks)
   local ns = _sign_namespace()
   local line_count = vim.api.nvim_buf_line_count(bufnr)

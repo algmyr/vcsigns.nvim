@@ -46,6 +46,10 @@ local function _tokenize(text)
 end
 
 --- Reconstruct character intervals per line given the token list and hunk side.
+--- Converts token-based diffs into character-based intervals for each line.
+---@param parts string[] The list of token parts.
+---@param hunk_side any Iterator of hunk quads (start, count) pairs.
+---@return integer[][][] Line-indexed table of character intervals.
 local function _extract_intervals(parts, hunk_side)
   -- Precompute (line, col) positions for each part.
   local line = 0
@@ -84,6 +88,9 @@ local function _extract_intervals(parts, hunk_side)
   return line_intervals
 end
 
+--- Join lines with newline separators, with trailing newline if non-empty.
+---@param lines string[] The lines to join.
+---@return string The joined string.
 local function join_lines(lines)
   if #lines == 0 then
     return ""
@@ -145,6 +152,9 @@ local function _compute_intra_hunk_diff(minus_lines, plus_lines, diff_opts)
   }
 end
 
+--- Get or compute the fine-grained diff for a hunk.
+---@param hunk Hunk The hunk to compute the diff for.
+---@return IntraHunkDiff The fine-grained diff with character intervals.
 function M.intra_diff(hunk)
   if not hunk.intra_diff then
     hunk.intra_diff = _compute_intra_hunk_diff(
@@ -156,11 +166,12 @@ function M.intra_diff(hunk)
   return hunk.intra_diff
 end
 
---- Convert a hunk quad to a Hunk.
----@param hunk_quad integer[]
+--- Convert a hunk quad to a Hunk object.
+--- Extracts the relevant lines and creates a structured hunk representation.
+---@param hunk_quad integer[] The quad [minus_start, minus_count, plus_start, plus_count].
 ---@param old_lines string[] The old lines of the file.
 ---@param new_lines string[] The new lines of the file.
----@return Hunk
+---@return Hunk The structured hunk object.
 local function _quad_to_hunk(hunk_quad, old_lines, new_lines)
   local minus_lines = util.slice(old_lines, hunk_quad[1], hunk_quad[2])
   local plus_lines = util.slice(new_lines, hunk_quad[3], hunk_quad[4])

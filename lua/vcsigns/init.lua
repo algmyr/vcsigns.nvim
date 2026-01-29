@@ -4,6 +4,8 @@ M.actions = require "vcsigns.actions"
 local sign = require "vcsigns.sign"
 
 --- Decorator to wrap a function that takes no arguments.
+---@param fun function
+---@return function
 local function _no_args(fun)
   local function wrap(bufnr, arg)
     local args = vim.list_slice(arg.fargs, 2)
@@ -15,6 +17,9 @@ local function _no_args(fun)
   return wrap
 end
 
+--- Decorator to wrap a function that takes a line range.
+---@param fun function
+---@return function
 local function _with_range(fun)
   local function wrap(bufnr, arg)
     local args = vim.list_slice(arg.fargs, 2)
@@ -27,6 +32,9 @@ local function _with_range(fun)
   return wrap
 end
 
+--- Decorator to wrap a function that takes a count argument.
+---@param fun function
+---@return function
 local function _with_count(fun)
   local function wrap(bufnr, arg)
     local args = vim.list_slice(arg.fargs, 2)
@@ -51,6 +59,9 @@ local command_map = {
   hunk_diff = _no_args(M.actions.toggle_hunk_diff),
 }
 
+--- Handler for the VCSigns user command.
+--- Routes the command to the appropriate action based on the first argument.
+---@param arg table The command arguments.
 local function _command(arg)
   local bufnr = vim.api.nvim_get_current_buf()
   local cmd = arg.fargs[1]
@@ -127,6 +138,11 @@ local default_config = {
   respect_gitignore = true,
 }
 
+--- Migrate a deprecated config key to a new key.
+--- Displays a notification to the user about the deprecation.
+---@param tbl table The configuration table to migrate.
+---@param old_key string Dot-separated path of the old key.
+---@param new_key string Dot-separated path of the new key.
 local function _move_deprecated(tbl, old_key, new_key)
   local function extract_nested(t, key_path)
     local current = t
@@ -183,6 +199,9 @@ local function _move_deprecated(tbl, old_key, new_key)
   end
 end
 
+--- Setup and configure the VCSigns plugin.
+--- This function must be called before using VCSigns.
+---@param user_config table|nil Configuration table.
 function M.setup(user_config)
   -- Migrate deprecated config options.
   user_config = vim.deepcopy(user_config)
@@ -246,7 +265,10 @@ function M.setup(user_config)
     })
   end
 
-  -- Set default highlights with fallbacks to common groups for signs.
+  --- Set default highlights with fallbacks to common groups for signs.
+  --- Links to the first available fallback highlight group.
+  ---@param hl_group string The highlight group to set.
+  ---@param fallbacks string[] List of fallback highlight groups to try.
   local function hl_fallbacks(hl_group, fallbacks)
     for _, fallback in ipairs(fallbacks) do
       local hl = vim.api.nvim_get_hl(0, { name = fallback })

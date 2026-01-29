@@ -17,8 +17,9 @@ local M = {}
 ---@type table<integer, BufferState>
 local buffers = {}
 
----@param bufnr integer
----@return BufferState
+--- Get (or create) the state for the given buffer.
+---@param bufnr integer The buffer number (0 for current buffer).
+---@return BufferState The buffer state.
 function M.get(bufnr)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -40,7 +41,8 @@ function M.get(bufnr)
   return buffers[bufnr]
 end
 
----@param bufnr integer
+--- Clear the state for the given buffer.
+---@param bufnr integer The buffer number (0 for current buffer).
 function M.clear(bufnr)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()

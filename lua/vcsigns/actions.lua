@@ -9,6 +9,9 @@ local state = require "vcsigns.state"
 local util = require "vcsigns.util"
 local updates = require "vcsigns.updates"
 
+--- Set up buffer-local autocommands for VCSigns updates.
+--- Creates autocommands that trigger deep and shallow updates on various events.
+---@param bufnr integer The buffer number to set up autocommands for.
 local function _set_buflocal_autocmds(bufnr)
   local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
 
@@ -57,6 +60,8 @@ local function _set_buflocal_autocmds(bufnr)
 end
 
 --- Start VCSigns for the given buffer, forcing a VCS detection.
+--- Clears any existing state and re-detects the VCS.
+--- Sets up buffer-local autocommands for automatic updates.
 ---@param bufnr integer The buffer number.
 function M.start(bufnr)
   -- Clear existing state.
@@ -78,6 +83,7 @@ function M.start(bufnr)
 end
 
 --- Start VCSigns for the given buffer, but skip if detection was already done.
+--- This is a no-op if the VCS has already been detected for this buffer.
 ---@param bufnr integer The buffer number.
 function M.start_if_needed(bufnr)
   if state.get(bufnr).vcs.vcs == nil then
@@ -85,6 +91,8 @@ function M.start_if_needed(bufnr)
   end
 end
 
+--- Stop VCSigns for the given buffer.
+--- Clears autocommands, signs, and state associated with this buffer.
 ---@param bufnr integer The buffer number.
 function M.stop(bufnr)
   -- Clear autocommands.
@@ -100,6 +108,7 @@ end
 
 local last_target_notification = nil
 
+--- Display a notification about the target commit change.
 local function _target_change_message()
   local msg =
     string.format("Now diffing against HEAD~%d", vim.g.vcsigns_target_commit)
@@ -110,6 +119,8 @@ local function _target_change_message()
   )
 end
 
+--- Target an older commit for diffing (go back in history).
+--- Changes the target commit offset and triggers a full update.
 ---@param bufnr integer The buffer number.
 ---@param steps integer Number of steps to go back in time.
 function M.target_older_commit(bufnr, steps)
@@ -119,6 +130,9 @@ function M.target_older_commit(bufnr, steps)
   updates.deep_update(bufnr, true)
 end
 
+--- Target a newer commit for diffing (go forward in history).
+--- Changes the target commit offset and triggers a full update.
+--- Will not allow going beyond HEAD (negative offsets).
 ---@param bufnr integer The buffer number.
 ---@param steps integer Number of steps to go forward in time.
 function M.target_newer_commit(bufnr, steps)
@@ -140,6 +154,9 @@ function M.target_newer_commit(bufnr, steps)
   end
 end
 
+---@param bufnr integer The buffer number.
+---@param count integer The number of hunks to navigate.
+---@param forward boolean True for forward, false for backwards.
 local function _hunk_navigation(bufnr, count, forward)
   if vim.o.diff then
     vim.cmd("normal! " .. (forward and "]c" or "[c"))
@@ -159,18 +176,23 @@ local function _hunk_navigation(bufnr, count, forward)
   end
 end
 
+--- Navigate to the next hunk in the buffer.
+--- In diff mode, uses ]c command instead.
 ---@param bufnr integer The buffer number.
 ---@param count integer The number of hunks ahead.
 function M.hunk_next(bufnr, count)
   return _hunk_navigation(bufnr, count, true)
 end
 
+--- Navigate to the previous hunk in the buffer.
+--- In diff mode, uses [c command instead.
 ---@param bufnr integer The buffer number.
 ---@param count integer The number of hunks ahead.
 function M.hunk_prev(bufnr, count)
   return _hunk_navigation(bufnr, count, false)
 end
 
+--- Get all hunks that overlap with the specified line range.
 ---@param bufnr integer The buffer number.
 ---@param range integer[] The range of lines to consider for the hunks.
 ---@return Hunk[] Hunks in the specified range.
@@ -188,6 +210,9 @@ local function _hunks_in_range(bufnr, range)
   return hunks_in_range
 end
 
+--- Undo (revert) hunks in the specified line range.
+--- Restores the original content from the VCS for all hunks in the range.
+--- If no range is provided, uses the current visual selection.
 ---@param bufnr integer The buffer number.
 ---@param range integer[]|nil The range of lines to undo hunks in.
 function M.hunk_undo(bufnr, range)
@@ -228,6 +253,8 @@ function M.hunk_undo(bufnr, range)
   updates.shallow_update(bufnr)
 end
 
+--- Toggle inline hunk diff display.
+--- When enabled, shows detailed word-level diffs within hunks.
 ---@param bufnr integer The buffer number.
 function M.toggle_hunk_diff(bufnr)
   vim.b[bufnr].vcsigns_show_hunk_diffs =
@@ -235,6 +262,8 @@ function M.toggle_hunk_diff(bufnr)
   updates.shallow_update(bufnr)
 end
 
+--- Toggle fold mode for hunks.
+--- When enabled, applies fold levels based on configured context sizes.
 ---@param bufnr integer The buffer number.
 function M.toggle_fold(bufnr)
   fold.toggle(bufnr)

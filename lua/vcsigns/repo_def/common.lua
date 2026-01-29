@@ -48,15 +48,10 @@ function M.vcs_with_root(vcs_interface, root)
   return vcs_instance
 end
 
----@param out vim.SystemCompleted
----@return boolean
----@diagnostic disable-next-line: unused-local
-function M.check_accept_any(out)
-  return true
-end
-
----@param out vim.SystemCompleted
----@return DetectionResult
+--- Check command output and extract repository root.
+--- Returns a DetectionResult indicating if VCS was detected and the root path.
+---@param out vim.SystemCompleted The command output from detection.
+---@return DetectionResult Result with detected flag and root path.
 function M.check_and_extract_root(out)
   if out.code ~= 0 or not out.stdout then
     return { detected = false, root = nil }

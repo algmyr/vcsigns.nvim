@@ -42,6 +42,7 @@ function M.shallow_update(bufnr)
   end
 end
 
+--- Refresh the old file contents from VCS and invoke callback.
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The VCS object for the buffer.
 ---@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
@@ -66,6 +67,7 @@ local function _refresh_old_file_contents(bufnr, vcs, cb)
   end)
 end
 
+--- Get the VCS object for a buffer if it's ready.
 ---@param bufnr integer The buffer number.
 ---@return Vcs|nil The VCS object if ready, nil otherwise.
 local function _get_vcs_if_ready(bufnr)
@@ -81,8 +83,9 @@ local function _get_vcs_if_ready(bufnr)
   return vcs_state.vcs
 end
 
---- Expensive update including vcs querying for file contents.
+--- Expensive update including VCS querying for file contents.
 ---@param bufnr integer The buffer number.
+---@param clear_ignore_cache boolean|nil Whether to clear the gitignore cache.
 function M.deep_update(bufnr, clear_ignore_cache)
   if clear_ignore_cache then
     ignore.clear_ignored_cache()

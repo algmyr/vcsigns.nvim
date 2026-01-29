@@ -19,8 +19,8 @@ function M.register_vcs(vcs)
 end
 
 --- Get the absolute path of the file in the buffer.
---- @param bufnr integer The buffer number.
---- @return string The absolute path of the file.
+---@param bufnr integer The buffer number.
+---@return string The absolute path of the file.
 local function _get_path(bufnr)
   return vim.fn.resolve(
     vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":p")
@@ -56,6 +56,9 @@ local function _get_target(bufnr, vcs)
   }
 end
 
+--- Check if a VCS is available.
+---@param vcs VcsInterface The VCS to check.
+---@return boolean True if the VCS commands are available.
 local function _is_available(vcs)
   local programs = {
     vcs.detect.cmd()[1],

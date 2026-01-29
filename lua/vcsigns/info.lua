@@ -2,6 +2,8 @@ local M = {}
 
 local state = require "vcsigns.state"
 
+--- Create a lualine module for VCSigns statistics.
+---@return table A lualine module configuration table.
 function M.lualine_module()
   return {
     "diff",

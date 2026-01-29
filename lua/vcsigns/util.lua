@@ -8,6 +8,12 @@ local TERMINAL_WIDTH = 10000
 --- Print a message to the user if verbose mode is enabled.
 M.verbose = logging.verbose_logger "vcsigns"
 
+--- Run a system command with a timeout.
+--- If a callback is provided, runs async and calls the callback on completion.
+---@param cmd string[] The command to execute.
+---@param opts table Options table passed to vim.system (merged with defaults).
+---@param callback function|nil Optional callback function.
+---@return vim.SystemObj
 function M.run_with_timeout(cmd, opts, callback)
   M.verbose("Running command: " .. table.concat(cmd, " "))
   local merged_opts = vim.tbl_deep_extend(
@@ -30,6 +36,10 @@ function M.run_with_timeout(cmd, opts, callback)
   end)
 end
 
+--- Get the directory of the file in the given buffer.
+--- Returns the absolute path to the parent directory.
+---@param bufnr integer The buffer number.
+---@return string The absolute directory path.
 function M.file_dir(bufnr)
   return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":p:h")
 end

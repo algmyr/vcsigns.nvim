@@ -2,20 +2,23 @@ local M = {}
 
 local intervals = require "vclib.intervals"
 
----@param hunk Hunk
----@return integer The visual size of the hunk in lines.
+--- Get the visual start line of a hunk (snaps 0 to 1).
+---@param hunk Hunk The hunk to get the start line for.
+---@return integer
 function M.hunk_visual_start(hunk)
   return math.max(1, hunk.plus_start)
 end
 
----@param hunk Hunk
+--- Get the visual size of a hunk in lines (minimum 1).
+---@param hunk Hunk The hunk to get the size for.
 ---@return integer The visual size of the hunk in lines.
 function M.hunk_visual_size(hunk)
   return math.max(1, hunk.plus_count)
 end
 
----@param hunk Hunk
----@return Interval
+--- Convert a hunk to an interval for use with interval operations.
+---@param hunk Hunk The hunk to convert.
+---@return Interval The interval representation.
 function M.to_interval(hunk)
   return {
     l = M.hunk_visual_start(hunk),

@@ -5,10 +5,18 @@ local hunkops = require "vcsigns.hunkops"
 
 local HIGHLIGHT_PRIORITY = 3
 
+--- Get or create the highlights namespace.
+---@return integer The namespace ID for VCSigns highlights.
 local function _highlights_namespace()
   return vim.api.nvim_create_namespace "vcsigns_highlights"
 end
 
+--- Add virtual text for a hunk showing deletions and word-level diffs.
+--- Creates virtual lines below the hunk showing deleted content with highlights.
+--- Also highlights added content with word-level granularity.
+---@param bufnr integer The buffer number.
+---@param ns integer The namespace ID to use for extmarks.
+---@param hunk Hunk The hunk to display.
 local function put_virtual_hunk(bufnr, ns, hunk)
   local intra_diff = diff.intra_diff(hunk)
   local deletion_at_top = hunk.plus_start == 0 and hunk.plus_count == 0
@@ -94,6 +102,7 @@ local function put_virtual_hunk(bufnr, ns, hunk)
   end
 end
 
+--- Highlight hunks in a buffer with inline diffs (clears existing).
 ---@param bufnr integer The buffer number.
 ---@param hunks Hunk[] A list of hunks to highlight.
 function M.highlight_hunks(bufnr, hunks)

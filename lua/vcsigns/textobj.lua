@@ -3,6 +3,8 @@ local M = {}
 local hunkops = require "vcsigns.hunkops"
 local state = require "vcsigns.state"
 
+--- Select the hunk under the cursor in visual mode.
+---@param bufnr integer The buffer number.
 function M.select_hunk(bufnr)
   local lnum = vim.fn.line "."
   local hunks = state.get(bufnr).diff.hunks

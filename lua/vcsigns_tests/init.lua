@@ -10,4 +10,15 @@ function M.run()
   testing.run_tests(test_modules)
 end
 
+function M.run_functional()
+  require("vcsigns_tests.functional").run()
+end
+
+function M.run_all()
+  print "Running unit tests..."
+  M.run()
+  print "\nRunning functional tests..."
+  M.run_functional()
+end
+
 return M

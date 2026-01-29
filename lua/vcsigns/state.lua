@@ -50,4 +50,21 @@ function M.clear(bufnr)
   buffers[bufnr] = nil
 end
 
+---@class RepoState
+---@field commit_offset integer
+
+---@type table<string, RepoState>
+local repo_state = {}
+
+---Get (or create) the state for the given repository.
+---@param repo_path string
+function M.repo_get(repo_path)
+  if not repo_state[repo_path] then
+    repo_state[repo_path] = {
+      commit_offset = vim.g.vcsigns_target_commit or 0,
+    }
+  end
+  return repo_state[repo_path]
+end
+
 return M

@@ -2,6 +2,7 @@ local M = {}
 
 local util = require "vcsigns.util"
 local repo_common = require "vcsigns.repo_def.common"
+local state = require "vcsigns.state"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
@@ -27,8 +28,11 @@ local function _get_path(bufnr)
   )
 end
 
-local function _target_commit()
-  return vim.g.vcsigns_target_commit or 0
+--- Get the target commit from the global state.
+---@param repo_path string The repository path.
+---@return integer The target commit.
+local function _target_commit(repo_path)
+  return state.repo_get(repo_path).commit_offset
 end
 
 --- Get the target for the current buffer.
@@ -50,7 +54,7 @@ local function _get_target(bufnr, vcs)
   end
 
   return {
-    commit = _target_commit(),
+    commit = _target_commit(vcs.root),
     file = file,
     path = path,
   }

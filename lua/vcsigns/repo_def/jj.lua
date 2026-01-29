@@ -3,7 +3,7 @@ local patch = require "vclib.patch"
 local util = require "vcsigns.util"
 
 local function _jj_target(target)
-  return string.format("roots(ancestors(@, %d))", target + 2)
+  return string.format("roots(ancestors(@, %d))", target + 1)
 end
 
 local function _jj_exact_path(path)
@@ -87,7 +87,7 @@ return {
       "--ignore-working-copy",
       "diff",
       "-r",
-      _jj_target(target.commit - 1) .. "::@",
+      _jj_target(target.commit) .. "::@",
       "-s",
       _jj_exact_path(target.file),
     }

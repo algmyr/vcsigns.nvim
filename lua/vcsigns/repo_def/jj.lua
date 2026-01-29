@@ -2,10 +2,16 @@ local common = require "vcsigns.repo_def.common"
 local patch = require "vclib.patch"
 local util = require "vcsigns.util"
 
-local function _jj_target(target)
-  return string.format("roots(ancestors(@, %d))", target + 1)
+--- Construct a jj revset for the nth ancestors of @.
+---@param offset integer
+---@return string
+local function _jj_target(offset)
+  return string.format("roots(ancestors(@, %d))", offset + 1)
 end
 
+--- Construct a jj fileset to match an exact file path.
+---@param path string
+---@return string
 local function _jj_exact_path(path)
   -- Most basic thing. Will fail if path contains a quote.
   -- If someone runs into this I will question their life choices.

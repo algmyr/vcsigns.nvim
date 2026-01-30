@@ -235,7 +235,9 @@ function M.setup(user_config)
           if not vim.api.nvim_buf_is_valid(bufnr) then
             return
           end
-          if vim.bo[bufnr].buftype == "" then
+          if
+            vim.bo[bufnr].buftype == "" and vim.bo[bufnr].filetype ~= "netrw"
+          then
             M.actions.start_if_needed(bufnr)
           end
         end, 100)

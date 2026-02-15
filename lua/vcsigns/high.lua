@@ -53,20 +53,18 @@ local function put_virtual_hunk(bufnr, ns, hunk)
 
   if deletion_at_top then
     -- We can't put virtual lines below non-existent line -1.
-    vim.api.nvim_buf_set_extmark(
-      bufnr,
-      ns,
-      0,
-      0,
-      { virt_lines = virt_lines, virt_lines_above = true }
-    )
+    vim.api.nvim_buf_set_extmark(bufnr, ns, 0, 0, {
+      virt_lines = virt_lines,
+      virt_lines_above = true,
+      virt_lines_overflow = "scroll",
+    })
   else
     vim.api.nvim_buf_set_extmark(
       bufnr,
       ns,
       line + hunkops.hunk_visual_size(hunk) - 1,
       0,
-      { virt_lines = virt_lines }
+      { virt_lines = virt_lines, virt_lines_overflow = "scroll" }
     )
   end
   if hunk.plus_count > 0 then

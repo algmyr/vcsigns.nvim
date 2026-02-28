@@ -73,6 +73,38 @@ local function _command(arg)
   fun(bufnr, arg)
 end
 
+--- Configuration for VCSigns, keep in sync with UserVCSignsConfig.
+---@class VCSignsConfig
+---@field auto_enable boolean Enable by default?
+---@field target_commit integer Offset of initial commit to diff against.
+---@field show_delete_count boolean Show number of deleted lines in the sign column?
+---@field highlight_number boolean Highlight line number?
+---@field signs SignConfig Signs to use for different types of changes.
+---@field skip_sign_decongestion boolean
+---@field fold_context_sizes integer[] Sizes of context to add fold levels for.
+---@field diff_opts vim.text.diff.Opts Diff options to use.
+---@field fine_diff_opts vim.text.diff.Opts Diff options to use for "fine" diffs.
+---@field diff_max_lines integer Skip diffing files longer than this.
+---@field respect_gitignore boolean Respect .gitignore?
+local VCSignsConfig = {}
+
+--- User configuration for VCSigns.
+---@class UserVCSignsConfig
+---@field auto_enable boolean? Enable by default?
+---@field target_commit integer? Offset of initial commit to diff against.
+---@field show_delete_count boolean? Show number of deleted lines in the sign column?
+---@field highlight_number boolean? Highlight line number?
+---@field signs SignConfig? Signs to use for different types of changes.
+---@field skip_sign_decongestion boolean?
+---@field fold_context_sizes integer[]? Sizes of context to add fold levels for.
+---@field diff_opts vim.text.diff.Opts? Diff options to use.
+---@field fine_diff_opts vim.text.diff.Opts? Diff options to use for "fine" diffs.
+---@field diff_max_lines integer? Skip diffing files longer than this.
+---@field respect_gitignore boolean? Respect .gitignore?
+local UserVCSignsConfig = {}
+
+--- Default configuration for VCSigns.
+---@type VCSignsConfig
 local default_config = {
   -- Enable in all buffers by default.
   auto_enable = true,
@@ -201,7 +233,7 @@ end
 
 --- Setup and configure the VCSigns plugin.
 --- This function must be called before using VCSigns.
----@param user_config table|nil Configuration table.
+---@param user_config UserVCSignsConfig|nil Configuration table.
 function M.setup(user_config)
   -- Migrate deprecated config options.
   user_config = vim.deepcopy(user_config)
@@ -212,6 +244,7 @@ function M.setup(user_config)
   )
   _move_deprecated(user_config, "signs.hl.change_delete", "signs.hl.combined")
 
+  ---@type user_config VCSignsConfig
   local config = vim.tbl_deep_extend("force", default_config, user_config or {})
   vim.g.vcsigns_show_delete_count = config.show_delete_count
   vim.g.vcsigns_fold_context_sizes = config.fold_context_sizes

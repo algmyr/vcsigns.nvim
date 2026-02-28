@@ -20,7 +20,30 @@ local function _popcount(x)
   return count
 end
 
+---@class SignTextMapping
+---@field add string
+---@field change string
+---@field delete_below string
+---@field delete_above string
+---@field delete_above_below string
+---@field combined string|nil
+local SignTextMapping = {}
+
+---@class SignHighlightMapping
+---@field add string
+---@field change string
+---@field delete string
+---@field combined string
+local SignHighlightMapping = {}
+
+---@class SignConfig
+---@field text SignTextMapping
+---@field hl SignHighlightMapping
+---@field priority integer
+local SignConfig = {}
+
 -- Will be overridden by user config.
+---@type SignConfig
 M.signs = nil
 
 ---@enum SignType

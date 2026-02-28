@@ -358,6 +358,40 @@ local function _sign_namespace()
   return vim.api.nvim_create_namespace "vcsigns"
 end
 
+---@class SignGroup
+---@field line integer
+---@field count integer
+---@field sign_data SignData
+local SignGroup = {}
+
+--- Group signs with same type on consecutive lines.
+--- Used for optimizing the number of signs placed.
+---@param signs table<number, SignData> The signs to group.
+---@param line_count integer The number of lines in the buffer.
+---@return SignGroup[] The grouped signs.
+local function _group_signs(signs, line_count)
+  local grouped = {}
+  local cur = nil
+  for line = 1, line_count do
+    local sign = signs[line]
+    if sign then
+      if cur and cur.sign_data.type == sign.type then
+        cur.count = cur.count + 1
+      else
+        cur = {
+          line = line,
+          count = 1,
+          sign_data = sign,
+        }
+        grouped[#grouped + 1] = cur
+      end
+    else
+      cur = nil
+    end
+  end
+  return grouped
+end
+
 --- Add signs to a buffer based on hunks.
 --- Clears existing signs, computes new ones, and updates buffer statistics.
 ---@param bufnr integer The buffer number.
@@ -366,7 +400,7 @@ function M.add_signs(bufnr, hunks)
   local ns = _sign_namespace()
   local line_count = vim.api.nvim_buf_line_count(bufnr)
 
-  local function _add_sign(line, sign)
+  local function _add_sign_range(line, count, sign)
     if line < 1 or line > line_count then
       util.verbose(
         string.format(
@@ -377,15 +411,19 @@ function M.add_signs(bufnr, hunks)
       )
       return false
     end
+    line = line - 1
     local config = {
       sign_text = sign.text,
       sign_hl_group = sign.hl,
       priority = M.signs.priority,
     }
+    if count > 1 then
+      config.end_row = line + count - 1
+    end
     if vim.g.vcsigns_highlight_number then
       config.number_hl_group = sign.hl
     end
-    vim.api.nvim_buf_set_extmark(bufnr, ns, line - 1, 0, config)
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, config)
     return true
   end
 
@@ -395,10 +433,10 @@ function M.add_signs(bufnr, hunks)
     -- Record stats for use in statuslines and similar.
     -- The table format is compatible with the "diff" section of lualine.
     vim.b[bufnr].vcsigns_stats = result.stats
-    for i = 1, line_count do
-      if result.signs[i] then
-        _add_sign(i, _to_vim_sign(result.signs[i]))
-      end
+    local grouped_signs = _group_signs(result.signs, line_count)
+    for _, group in ipairs(grouped_signs) do
+      local vim_sign = _to_vim_sign(group.sign_data)
+      _add_sign_range(group.line, group.count, vim_sign)
     end
   end
 end

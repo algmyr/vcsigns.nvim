@@ -26,10 +26,15 @@ local Detector = {}
 --- Logic for resolving a rename in a VCS.
 ---@alias RenameResolver fun(target: Target, root: string, callback: fun(resolved_file: string|nil))
 
+--- Logic for checking if VCS state changed and refresh is needed.
+--- Returns true if refresh is needed, false if cached data can be reused.
+---@alias RefreshChecker fun(callback: fun(needs_refresh: boolean))
+
 ---@class VcsInterface
 ---@field name string Human-readable name of the VCS.
 ---@field detect Detector
 ---@field show FileShower
+---@field needs_refresh RefreshChecker Check if VCS state changed and refresh is needed (optional).
 ---@field resolve_rename RenameResolver|nil
 local VcsInterface = {}
 

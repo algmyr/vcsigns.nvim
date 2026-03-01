@@ -87,6 +87,30 @@ return {
       end)
     end)
   end,
+  needs_refresh = function(self, needs_refresh_cb)
+    local last_op_id = self._last_op_id
+
+    local cmd = {
+      "jj",
+      "--ignore-working-copy",
+      "op",
+      "log",
+      "-n",
+      "1",
+      "--no-graph",
+      "-T",
+      "id",
+    }
+    util.run_with_timeout(cmd, { cwd = self.root }, function(out)
+      local needs_refresh = true
+      if out.code == 0 and out.stdout then
+        local current_op_id = vim.trim(out.stdout)
+        needs_refresh = (not last_op_id or last_op_id ~= current_op_id)
+        self._last_op_id = current_op_id
+      end
+      needs_refresh_cb(needs_refresh)
+    end)
+  end,
   resolve_rename = function(target, root, resolved_cb)
     local cmd = {
       "jj",

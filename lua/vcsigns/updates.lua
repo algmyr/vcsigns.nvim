@@ -42,11 +42,11 @@ function M.shallow_update(bufnr)
   end
 end
 
---- Refresh the old file contents from VCS and invoke callback.
+--- Actually fetch the file contents from VCS.
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The VCS object for the buffer.
 ---@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
-local function _refresh_old_file_contents(bufnr, vcs, cb)
+local function _do_vcs_fetch(bufnr, vcs, cb)
   local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
 
   repo.show_file(bufnr, vcs, function(old_lines)
@@ -64,6 +64,22 @@ local function _refresh_old_file_contents(bufnr, vcs, cb)
     s.diff.last_update = start_time
     s.diff.hunks_changedtick = vim.b[bufnr].changedtick
     cb(bufnr)
+  end)
+end
+
+--- Refresh the old file contents from VCS and invoke callback.
+---@param bufnr integer The buffer number.
+---@param vcs Vcs The VCS object for the buffer.
+---@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
+local function _refresh_old_file_contents(bufnr, vcs, cb)
+  vcs.needs_refresh(vcs, function(needs_refresh)
+    if not needs_refresh then
+      util.verbose "VCS state unchanged, skipping fetch."
+      -- Still run the callback (shallow update) since buffer might have changed.
+      cb(bufnr)
+      return
+    end
+    _do_vcs_fetch(bufnr, vcs, cb)
   end)
 end
 

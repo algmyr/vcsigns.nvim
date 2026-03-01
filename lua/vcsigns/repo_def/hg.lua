@@ -25,6 +25,9 @@ return {
       lines_cb(common.content_to_lines(out.stdout))
     end)
   end,
+  needs_refresh = function(self, needs_refresh_cb)
+    needs_refresh_cb(true)
+  end,
   -- Rename resolution not implemented for Mercurial.
   resolve_rename = nil,
 }

@@ -163,7 +163,7 @@ local default_config = {
   fine_diff_opts = {},
 
   -- Skip diffing files with more than this many lines.
-  diff_max_lines = 10000,
+  diff_max_lines = 100000,
   -- Whether to try respecting .gitignore files.
   -- This relies on the `git` command being available.
   -- Works for git repos and git backed jj repos.

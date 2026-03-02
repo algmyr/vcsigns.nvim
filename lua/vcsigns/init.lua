@@ -2,6 +2,7 @@ local M = {}
 
 M.actions = require "vcsigns.actions"
 local sign = require "vcsigns.sign"
+local util = require "vcsigns.util"
 
 --- Decorator to wrap a function that takes no arguments.
 ---@param fun function
@@ -287,9 +288,7 @@ function M.setup(user_config)
           if not vim.api.nvim_buf_is_valid(bufnr) then
             return
           end
-          if
-            vim.bo[bufnr].buftype == "" and vim.bo[bufnr].filetype ~= "netrw"
-          then
+          if not util.is_special_buffer(bufnr) then
             M.actions.start_if_needed(bufnr)
           end
         end, 100)

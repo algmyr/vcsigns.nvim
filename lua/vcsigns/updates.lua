@@ -107,7 +107,7 @@ function M.deep_update(bufnr, force_refresh)
   if force_refresh then
     ignore.clear_ignored_cache()
   end
-  if vim.bo[bufnr].buftype ~= "" then
+  if util.is_special_buffer(bufnr) then
     -- Not a normal file buffer, don't do anything.
     util.verbose "Not a normal file buffer, skipping."
     return

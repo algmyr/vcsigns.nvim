@@ -59,4 +59,23 @@ function M.slice(tbl, start, count)
   return result
 end
 
+--- Check if the buffer is a special buffer that we shouldn't try to get VCS info for.
+--- @param bufnr integer The buffer number.
+--- @return boolean True if it's a special buffer, false otherwise.
+function M.is_special_buffer(bufnr)
+  if vim.bo[bufnr].buftype ~= "" then
+    -- Special buffer.
+    return true
+  end
+  if vim.api.nvim_buf_get_name(bufnr) == "" then
+    -- Unnamed buffer, treat as special.
+    return true
+  end
+  if vim.bo[bufnr].filetype == "netrw" then
+    -- Netrw buffer, don't try to get VCS info.
+    return true
+  end
+  return false
+end
+
 return M

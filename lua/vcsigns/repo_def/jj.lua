@@ -48,13 +48,11 @@ return {
     -- Get content at @ and reverse-apply diff to reconstruct target content.
     -- This works more generally than getting the content of the commit before
     -- which can fail if there are merges.
+
+    -- stylua: ignore
     local current_cmd = {
-      "jj",
-      "--ignore-working-copy",
-      "file",
-      "show",
-      "-r",
-      "@",
+      "jj", "--ignore-working-copy", "file", "show",
+      "-r", "@",
       "--",
       _jj_exact_path(target.file),
     }
@@ -65,13 +63,11 @@ return {
         return
       end
 
+      -- stylua: ignore
       local diff_cmd = {
-        "jj",
-        "--ignore-working-copy",
-        "diff",
+        "jj", "--ignore-working-copy", "diff",
         "--git",
-        "-r",
-        _jj_target(target.commit) .. "::@",
+        "-r", _jj_target(target.commit) .. "::@",
         "--",
         _jj_exact_path(target.file),
       }
@@ -90,16 +86,12 @@ return {
   needs_refresh = function(self, needs_refresh_cb)
     local last_op_id = self._last_op_id
 
+    -- stylua: ignore
     local cmd = {
-      "jj",
-      "--ignore-working-copy",
-      "op",
-      "log",
-      "-n",
-      "1",
+      "jj", "--ignore-working-copy", "op", "log",
+      "-n", "1",
       "--no-graph",
-      "-T",
-      "id",
+      "-T", "id",
     }
     util.run_with_timeout(cmd, { cwd = self.root }, function(out)
       local needs_refresh = true
@@ -112,12 +104,10 @@ return {
     end)
   end,
   resolve_rename = function(target, root, resolved_cb)
+    -- stylua: ignore
     local cmd = {
-      "jj",
-      "--ignore-working-copy",
-      "diff",
-      "-r",
-      _jj_target(target.commit) .. "::@",
+      "jj", "--ignore-working-copy", "diff",
+      "-r", _jj_target(target.commit) .. "::@",
       "-s",
       _jj_exact_path(target.file),
     }

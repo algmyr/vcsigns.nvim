@@ -11,13 +11,10 @@ return {
     check = common.check_and_extract_root,
   },
   show = function(target, root, lines_cb)
+    -- stylua: ignore
     local cmd = {
-      "hg",
-      "cat",
-      "--config",
-      "extensions.color=!",
-      "--rev",
-      string.format(".~%d", target.commit),
+      "hg", "cat", "--config", "extensions.color=!",
+      "--rev", string.format(".~%d", target.commit),
       "--",
       target.file,
     }

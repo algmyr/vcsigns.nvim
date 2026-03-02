@@ -70,10 +70,11 @@ end
 --- Refresh the old file contents from VCS and invoke callback.
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The VCS object for the buffer.
+---@param force_refresh boolean Whether to force refresh.
 ---@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
-local function _refresh_old_file_contents(bufnr, vcs, cb)
+local function _refresh_old_file_contents(bufnr, vcs, force_refresh, cb)
   vcs.needs_refresh(vcs, function(needs_refresh)
-    if not needs_refresh then
+    if not force_refresh and not needs_refresh then
       util.verbose "VCS state unchanged, skipping fetch."
       -- Still run the callback (shallow update) since buffer might have changed.
       cb(bufnr)
@@ -101,9 +102,9 @@ end
 
 --- Expensive update including VCS querying for file contents.
 ---@param bufnr integer The buffer number.
----@param clear_ignore_cache boolean|nil Whether to clear the gitignore cache.
-function M.deep_update(bufnr, clear_ignore_cache)
-  if clear_ignore_cache then
+---@param force_refresh boolean|nil Whether to clear the gitignore cache.
+function M.deep_update(bufnr, force_refresh)
+  if force_refresh then
     ignore.clear_ignored_cache()
   end
   if vim.bo[bufnr].buftype ~= "" then
@@ -117,7 +118,7 @@ function M.deep_update(bufnr, clear_ignore_cache)
     return
   end
 
-  _refresh_old_file_contents(bufnr, vcs, M.shallow_update)
+  _refresh_old_file_contents(bufnr, vcs, force_refresh, M.shallow_update)
 end
 
 return M

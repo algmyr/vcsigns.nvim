@@ -1,6 +1,7 @@
 local M = {}
 
 local logging = require "vclib.logging"
+local run = require "vclib.run"
 
 local DEFAULT_TIMEOUT_MS = 2000
 local TERMINAL_WIDTH = 10000

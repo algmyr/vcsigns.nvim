@@ -1,5 +1,5 @@
-local common = require "vcsigns.repo_def.common"
-local util = require "vcsigns.util"
+local common = require "vcrepo.common"
+local util = require "vcrepo.util"
 local run = require "vclib.run"
 
 ---@type VcsInterface

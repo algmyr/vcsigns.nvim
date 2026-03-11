@@ -1,16 +1,16 @@
 local M = {}
 
 local util = require "vcsigns.util"
-local repo_common = require "vcsigns.repo_def.common"
+local repo_common = require "vcrepo.common"
 local state = require "vcsigns.state"
 local run = require "vclib.run"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
 M.vcs = {
-  require "vcsigns.repo_def.jj",
-  require "vcsigns.repo_def.git",
-  require "vcsigns.repo_def.hg",
+  require "vcrepo.jj",
+  require "vcrepo.git",
+  require "vcrepo.hg",
 }
 
 --- Register a custom VCS implementation.

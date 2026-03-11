@@ -1,6 +1,5 @@
-local common = require "vcsigns.repo_def.common"
+local common = require "vcrepo.common"
 local patch = require "vclib.patch"
-local util = require "vcsigns.util"
 local run = require "vclib.run"
 
 --- Construct a jj revset for the nth ancestors of @.

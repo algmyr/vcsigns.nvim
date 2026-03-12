@@ -1,5 +1,6 @@
 local common = require "vcsigns.repo_def.common"
 local util = require "vcsigns.util"
+local run = require "vclib.run"
 
 ---@type VcsInterface
 return {
@@ -18,7 +19,7 @@ return {
       "--",
       target.file,
     }
-    util.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = root }, function(out)
       lines_cb(common.content_to_lines(out.stdout))
     end)
   end,

@@ -3,6 +3,7 @@ local M = {}
 local util = require "vcsigns.util"
 local repo_common = require "vcsigns.repo_def.common"
 local state = require "vcsigns.state"
+local run = require "vclib.run"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
@@ -135,7 +136,7 @@ function M.detect_vcs(bufnr)
       goto continue
     end
     local detect_cmd = vcs.detect.cmd()
-    local res = util.run_with_timeout(detect_cmd, { cwd = file_dir }):wait()
+    local res = run.run_with_timeout(detect_cmd, { cwd = file_dir }):wait()
     local detection_result = vcs.detect.check(res)
     if detection_result.detected then
       return repo_common.vcs_with_root(vcs, detection_result.root)

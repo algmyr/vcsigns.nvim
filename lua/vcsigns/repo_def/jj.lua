@@ -1,6 +1,7 @@
 local common = require "vcsigns.repo_def.common"
 local patch = require "vclib.patch"
 local util = require "vcsigns.util"
+local run = require "vclib.run"
 
 --- Construct a jj revset for the nth ancestors of @.
 ---@param offset integer
@@ -56,7 +57,7 @@ return {
       "--",
       _jj_exact_path(target.file),
     }
-    util.run_with_timeout(current_cmd, { cwd = root }, function(current_out)
+    run.run_with_timeout(current_cmd, { cwd = root }, function(current_out)
       local current_lines = common.content_to_lines(current_out.stdout)
       if not current_lines then
         lines_cb(nil)
@@ -71,7 +72,7 @@ return {
         "--",
         _jj_exact_path(target.file),
       }
-      util.run_with_timeout(diff_cmd, { cwd = root }, function(diff_out)
+      run.run_with_timeout(diff_cmd, { cwd = root }, function(diff_out)
         if not diff_out.stdout or diff_out.stdout == "" then
           -- No diff means file is unchanged.
           lines_cb(current_lines)
@@ -93,7 +94,7 @@ return {
       "--no-graph",
       "-T", "id",
     }
-    util.run_with_timeout(cmd, { cwd = self.root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       local needs_refresh = true
       if out.code == 0 and out.stdout then
         local current_op_id = vim.trim(out.stdout)
@@ -111,7 +112,7 @@ return {
       "-s",
       _jj_exact_path(target.file),
     }
-    util.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = root }, function(out)
       if out.code ~= 0 then
         resolved_cb(nil)
         return

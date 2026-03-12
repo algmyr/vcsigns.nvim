@@ -1,16 +1,22 @@
 local common = require "vcrepo.common"
-local util = require "vcrepo.util"
 local run = require "vclib.run"
 
 ---@type VcsInterface
 return {
   name = "Mercurial",
-  detect = {
-    cmd = function()
-      return { "hg", "root" }
-    end,
-    check = common.check_and_extract_root,
-  },
+  detect = function(dir)
+    -- Check if hg executable exists.
+    if vim.fn.executable "hg" == 0 then
+      return nil
+    end
+
+    local cmd = { "hg", "root" }
+    local out = run.run_with_timeout(cmd, { cwd = dir }):wait()
+    if out.code ~= 0 or not out.stdout then
+      return nil
+    end
+    return vim.trim(out.stdout)
+  end,
   show = function(target, root, lines_cb)
     -- stylua: ignore
     local cmd = {

@@ -38,12 +38,19 @@ end
 ---@type VcsInterface
 return {
   name = "Jujutsu",
-  detect = {
-    cmd = function()
-      return { "jj", "--ignore-working-copy", "root" }
-    end,
-    check = common.check_and_extract_root,
-  },
+  detect = function(dir)
+    -- Check if jj executable exists.
+    if vim.fn.executable "jj" == 0 then
+      return nil
+    end
+
+    local cmd = { "jj", "--ignore-working-copy", "root" }
+    local out = run.run_with_timeout(cmd, { cwd = dir }):wait()
+    if out.code ~= 0 or not out.stdout then
+      return nil
+    end
+    return vim.trim(out.stdout)
+  end,
   show = function(target, root, lines_cb)
     -- Get content at @ and reverse-apply diff to reconstruct target content.
     -- This works more generally than getting the content of the commit before

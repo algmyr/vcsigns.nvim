@@ -4,12 +4,19 @@ local run = require "vclib.run"
 ---@type VcsInterface
 return {
   name = "Git",
-  detect = {
-    cmd = function()
-      return { "git", "rev-parse", "--show-toplevel" }
-    end,
-    check = common.check_and_extract_root,
-  },
+  detect = function(dir)
+    -- Check if git executable exists.
+    if vim.fn.executable "git" == 0 then
+      return nil
+    end
+
+    local cmd = { "git", "rev-parse", "--show-toplevel" }
+    local out = run.run_with_timeout(cmd, { cwd = dir }):wait()
+    if out.code ~= 0 or not out.stdout then
+      return nil
+    end
+    return vim.trim(out.stdout)
+  end,
   show = function(target, root, lines_cb)
     local cmd = {
       "git",

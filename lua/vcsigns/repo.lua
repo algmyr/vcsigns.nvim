@@ -61,22 +61,6 @@ local function _get_target(bufnr, vcs)
   }
 end
 
---- Check if a VCS is available.
----@param vcs VcsInterface The VCS to check.
----@return boolean True if the VCS commands are available.
-local function _is_available(vcs)
-  local programs = {
-    vcs.detect.cmd()[1],
-  }
-  for _, program in ipairs(programs) do
-    if vim.fn.executable(program) == 0 then
-      util.verbose("VCS command not executable: " .. program)
-      return false
-    end
-  end
-  return true
-end
-
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The version control system to use.
 ---@param target Target The target for the VCS command.
@@ -129,20 +113,18 @@ function M.detect_vcs(bufnr)
     util.verbose("File directory does not exist: " .. file_dir)
     return nil
   end
+
+  -- Try each VCS in priority order.
   for _, vcs in ipairs(M.vcs) do
     util.verbose("Trying to detect VCS " .. vcs.name)
-    if not _is_available(vcs) then
-      util.verbose("VCS " .. vcs.name .. " is not available")
-      goto continue
+    local root = vcs.detect(file_dir)
+    if root then
+      util.verbose("Detected " .. vcs.name .. " at " .. root)
+      return repo_common.vcs_with_root(vcs, root)
     end
-    local detect_cmd = vcs.detect.cmd()
-    local res = run.run_with_timeout(detect_cmd, { cwd = file_dir }):wait()
-    local detection_result = vcs.detect.check(res)
-    if detection_result.detected then
-      return repo_common.vcs_with_root(vcs, detection_result.root)
-    end
-    ::continue::
+    util.verbose("VCS " .. vcs.name .. " not detected")
   end
+
   return nil
 end
 

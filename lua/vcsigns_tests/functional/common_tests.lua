@@ -215,4 +215,102 @@ function M.file_edge_case_tests(adapter)
   }
 end
 
+--- Generate blame tests for a VCS adapter.
+---@param adapter VcsAdapter
+---@return table test_suite
+function M.blame_tests(adapter)
+  return adapter:wrap {
+    test_cases = {
+      basic_blame = {
+        description = "Get blame annotations for a file",
+        file_content = "line1\nline2\n\n\nline3\n",
+        expected_line_count = 5,
+      },
+      single_line = {
+        description = "Get blame for single-line file",
+        file_content = "single line\n",
+        expected_line_count = 1,
+      },
+      empty_file = {
+        description = "Get blame for empty file",
+        file_content = "",
+        expected_line_count = 0,
+      },
+    },
+    test = function(repo, case)
+      local test_file = repo:path "blame_test.txt"
+      repo:write_file("blame_test.txt", case.file_content)
+      repo:commit_file("blame_test.txt", "Test commit")
+
+      vim.cmd("edit " .. vim.fn.fnameescape(test_file))
+      local bufnr = vim.api.nvim_get_current_buf()
+
+      local vcs = repo_mod.detect_vcs(bufnr)
+      assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
+
+      -- Get blame annotations with nil template (use defaults).
+      local annotations = helpers.wait_for_callback(function(cb)
+        if vcs.blame then
+          local rel_path = vim.fn.fnamemodify(test_file, ":.")
+          vcs:blame(rel_path, nil, cb)
+        else
+          cb(nil)
+        end
+      end)
+
+      if case.expected_line_count == 0 then
+        -- Empty file should return empty annotations or nil.
+        assert(
+          annotations == nil or #annotations == 0,
+          "Expected empty annotations for empty file"
+        )
+      else
+        assert(annotations ~= nil, "Expected blame annotations, got nil")
+        assert(
+          #annotations == case.expected_line_count,
+          "Line count mismatch: expected "
+            .. case.expected_line_count
+            .. ", got "
+            .. #annotations
+        )
+
+        -- Verify line content matches the expected content.
+        local lines = vim.split(case.file_content, "\n", { plain = true })
+        -- Verify structure of each annotation.
+        for i, ann in ipairs(annotations) do
+          local label = string.format("Annotation %d", i)
+          assert(ann.line_num ~= nil, label .. " missing line_num")
+          assert(
+            type(ann.line_num) == "number",
+            label .. " line_num is not a number"
+          )
+          assert(ann.annotation ~= nil, label .. " missing annotation")
+          assert(
+            type(ann.annotation) == "string",
+            label .. " annotation is not a string"
+          )
+          assert(ann.annotation ~= "", label .. " has empty annotation string")
+          assert(ann.content ~= nil, "Annotation " .. i .. " missing content")
+          assert(
+            type(ann.content) == "string",
+            label .. " content is not a string"
+          )
+
+          assert(
+            ann.content == lines[i],
+            string.format(
+              "Line %d content mismatch: expected '%s', got '%s'",
+              i,
+              lines[i],
+              ann.content
+            )
+          )
+        end
+      end
+
+      vim.cmd "bdelete!"
+    end,
+  }
+end
+
 return M

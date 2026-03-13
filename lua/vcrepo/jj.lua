@@ -138,4 +138,34 @@ return {
       resolved_cb(res)
     end)
   end,
+  blame = function(file, root, template, annotations_cb)
+    -- Default template: just the short change_id.
+    local annotation_template = template or "commit.change_id().shortest(8)"
+
+    local full_template = string.format(
+      [[%s ++ "%s" ++ line_number ++ "%s" ++ content]],
+      annotation_template,
+      common.SEP,
+      common.SEP
+    )
+
+    -- stylua: ignore
+    local cmd = {
+      "jj", "--ignore-working-copy", "file", "annotate",
+      "-r", "@",
+      "-T", full_template,
+      "--",
+      file,
+    }
+
+    run.run_with_timeout(cmd, { cwd = root }, function(out)
+      if out.code ~= 0 or not out.stdout or out.stdout == "" then
+        annotations_cb(nil)
+        return
+      end
+      local raw_lines = vim.split(out.stdout, "\n", { plain = true })
+      local annotations = common.parse_blame_annotations(raw_lines)
+      annotations_cb(annotations)
+    end)
+  end,
 }

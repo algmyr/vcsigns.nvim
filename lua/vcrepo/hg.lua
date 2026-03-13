@@ -34,4 +34,28 @@ return {
   end,
   -- Rename resolution not implemented for Mercurial.
   resolve_rename = nil,
+  blame = function(file, root, template, annotations_cb)
+    -- Default template: just the short node hash.
+    local annotation_template = template or "{node|short}"
+
+    -- Full template: iterate over lines and output "annotation#SEP#lineno#SEP#line"
+    local full_template = string.format(
+      '{lines %% "%s%s{lineno}%s{line}\\n"}',
+      annotation_template,
+      common.SEP,
+      common.SEP
+    )
+
+    local cmd = { "hg", "annotate", "-T", full_template, "--", file }
+
+    run.run_with_timeout(cmd, { cwd = root }, function(out)
+      if out.code ~= 0 or not out.stdout or out.stdout == "" then
+        annotations_cb(nil)
+        return
+      end
+      local raw_lines = vim.split(out.stdout, "\n", { plain = true })
+      local annotations = common.parse_blame_annotations(raw_lines)
+      annotations_cb(annotations)
+    end)
+  end,
 }

@@ -17,6 +17,7 @@ Defines the contract that all VCS implementations must follow:
 - `name` - Human-readable VCS name
 - `detect` - Detection logic to find repositories
 - `show` - Retrieve file content at a specific commit
+- `blame` - Get blame annotations for a file
 - `needs_refresh` - Optional optimization to check if refresh needed
 - `resolve_rename` - Optional rename resolution support
 

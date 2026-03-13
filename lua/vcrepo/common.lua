@@ -8,12 +8,29 @@ local M = {}
 ---@field path string The absolute path to the file.
 local Target = {}
 
+--- Blame annotation for a single line.
+---@class BlameAnnotation
+---@field line_num integer The line number in the current file (1-based).
+---@field annotation string The formatted blame annotation (from template).
+---@field content string The content of the line.
+local BlameAnnotation = {}
+
+--- Template string for blame output formatting.
+--- For git: Uses git's pretty-format placeholders (see git-log).
+--- For jj: Uses jujutsu template language expressions.
+--- For hg: Uses mercurial template language.
+--- If nil, uses VCS-specific defaults.
+---@alias BlameTemplate string|nil
+
 --- Logic for detecting if a VCS is available in a directory.
 --- Returns the repository root if detected, nil otherwise.
 ---@alias VcsDetector fun(dir: string): string|nil
 
 --- Logic for getting the file content from a VCS.
 ---@alias FileShower fun(target: Target, root: string, callback: fun(lines: string[]|nil))
+
+--- Logic for getting blame annotations for a file.
+---@alias BlameGetter fun(file: string, root: string, template: BlameTemplate, callback: fun(annotations: BlameAnnotation[]|nil))
 
 --- Logic for resolving a rename in a VCS.
 ---@alias RenameResolver fun(target: Target, root: string, callback: fun(resolved_file: string|nil))
@@ -26,6 +43,7 @@ local Target = {}
 ---@field name string Human-readable name of the VCS.
 ---@field detect VcsDetector
 ---@field show FileShower
+---@field blame BlameGetter|nil Get blame annotations for a file (optional).
 ---@field needs_refresh RefreshChecker Check if VCS state changed and refresh is needed (optional).
 ---@field resolve_rename RenameResolver|nil
 local VcsInterface = {}
@@ -59,6 +77,31 @@ function M.content_to_lines(contents)
     contents = contents:sub(1, -2)
   end
   return vim.split(contents, "\n", { plain = true })
+end
+
+M.SEP = "#SEP#"
+
+function M.parse_blame_annotations(raw_lines)
+  local annotations = {}
+
+  for _, line in ipairs(raw_lines) do
+    local parts = vim.split(line, M.SEP, { plain = true })
+    if #parts == 3 then
+      local annotation = parts[1]
+      local line_num = tonumber(parts[2])
+      local content = parts[3]
+
+      if line_num then
+        table.insert(annotations, {
+          line_num = line_num,
+          annotation = vim.trim(annotation),
+          content = content,
+        })
+      end
+    end
+  end
+
+  return annotations
 end
 
 return M

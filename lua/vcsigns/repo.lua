@@ -3,6 +3,7 @@ local M = {}
 local util = require "vcsigns.util"
 local repo_common = require "vcrepo.common"
 local state = require "vcsigns.state"
+local paths = require "vclib.paths"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
@@ -19,15 +20,6 @@ function M.register_vcs(vcs)
   table.insert(M.vcs, 1, vcs)
 end
 
---- Get the absolute path of the file in the buffer.
----@param bufnr integer The buffer number.
----@return string The absolute path of the file.
-local function _get_path(bufnr)
-  return vim.fn.resolve(
-    vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":p")
-  )
-end
-
 --- Get the target commit from the global state.
 ---@param repo_path string The repository path.
 ---@return integer The target commit.
@@ -40,19 +32,9 @@ end
 ---@param vcs Vcs The version control system.
 ---@return Target
 local function _get_target(bufnr, vcs)
-  local path = _get_path(bufnr)
   assert(vcs.root, "VCS root must be set")
-
-  -- Make file path relative to repo root.
-  local root = vcs.root
-  local file
-  if path:sub(1, #root) == root then
-    file = path:sub(#root + 2) -- +2 to skip root and the path separator.
-  else
-    -- File is outside the repo root.
-    error(string.format("File %s is not under repo root %s", path, root))
-  end
-
+  local path = paths.abs_path(bufnr)
+  local file = paths.relativize(path, vcs.root)
   return {
     commit = _target_commit(vcs.root),
     file = file,

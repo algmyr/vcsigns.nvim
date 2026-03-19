@@ -112,8 +112,8 @@ M.diff_computation = git_adapter:wrap {
     local vcs = repo_mod.detect_vcs(bufnr)
     assert(vcs ~= nil, "Failed to detect git repository")
 
-    local vcs_lines = helpers.wait_for_callback(function(cb)
-      repo_mod.show_file(bufnr, vcs, cb)
+    local vcs_lines = helpers.wait_for_async(function()
+      return repo_mod.show_file(bufnr, vcs)
     end)
     assert(vcs_lines ~= nil, "Failed to get VCS content")
     local buf_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -209,8 +209,8 @@ M.sign_placement = git_adapter:wrap {
 
     local vcs = repo_mod.detect_vcs(bufnr)
     assert(vcs ~= nil, "Failed to detect git repository")
-    local vcs_lines = helpers.wait_for_callback(function(cb)
-      repo_mod.show_file(bufnr, vcs, cb)
+    local vcs_lines = helpers.wait_for_async(function()
+      return repo_mod.show_file(bufnr, vcs)
     end)
 
     local buf_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -249,16 +249,16 @@ M.target_commit_switching = git_adapter:wrap {
     local state = require "vcsigns.state"
 
     state.repo_get(vcs.root).commit_offset = 0
-    local lines_at_head = helpers.wait_for_callback(function(cb)
-      repo_mod.show_file(bufnr, vcs, cb)
+    local lines_at_head = helpers.wait_for_async(function()
+      return repo_mod.show_file(bufnr, vcs)
     end)
 
     assert(lines_at_head ~= nil, "Failed to get HEAD content")
     assert(lines_at_head[1] == "version3", "Expected version3 at HEAD")
 
     state.repo_get(vcs.root).commit_offset = 1
-    local lines_at_head1 = helpers.wait_for_callback(function(cb)
-      repo_mod.show_file(bufnr, vcs, cb)
+    local lines_at_head1 = helpers.wait_for_async(function()
+      return repo_mod.show_file(bufnr, vcs)
     end)
 
     assert(lines_at_head1 ~= nil, "Failed to get HEAD~1 content")
@@ -282,8 +282,8 @@ M.empty_diff = git_adapter:wrap {
     local bufnr = vim.api.nvim_get_current_buf()
 
     local vcs = repo_mod.detect_vcs(bufnr)
-    local vcs_lines = helpers.wait_for_callback(function(cb)
-      repo_mod.show_file(bufnr, vcs, cb)
+    local vcs_lines = helpers.wait_for_async(function()
+      return repo_mod.show_file(bufnr, vcs)
     end)
 
     local buf_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)

@@ -4,6 +4,7 @@ local util = require "vcsigns.util"
 local repo_common = require "vcrepo.common"
 local state = require "vcsigns.state"
 local paths = require "vclib.paths"
+local async = require "async"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
@@ -42,46 +43,59 @@ local function _get_target(bufnr, vcs)
   }
 end
 
+--- Check if buffer is valid after an async operation.
+--- Returns nil if buffer is invalid, otherwise returns the result of fn.
+---@async
 ---@param bufnr integer The buffer number.
----@param vcs Vcs The version control system to use.
----@param target Target The target for the VCS command.
----@param cb fun(lines: string[]|nil) Callback function to handle the output.
-local function _show_file_impl(bufnr, vcs, target, cb)
-  vcs:show(target, function(lines)
-    -- If the buffer was deleted, bail.
-    if not vim.api.nvim_buf_is_valid(bufnr) then
-      util.verbose "Buffer no longer valid, skipping diff"
-      return
-    end
-    cb(lines)
-  end)
+---@param fn fun(): any The function to call if buffer is valid.
+---@return any|nil The result of fn, or nil if buffer is invalid.
+local function _with_valid_buffer(bufnr, fn)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    util.verbose "Buffer no longer valid, skipping"
+    return nil
+  end
+  return fn()
 end
 
 --- Get the relevant file contents of the file according to the VCS.
+---@async
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The version control system to use.
----@param cb fun(lines: string[]|nil) Callback function to handle the output.
-function M.show_file(bufnr, vcs, cb)
+---@return string[]|nil The file lines or nil if unavailable.
+function M.show_file(bufnr, vcs)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    util.verbose "Buffer no longer valid, skipping"
+    return nil
+  end
+
   local target = _get_target(bufnr, vcs)
+
   if vcs.resolve_rename then
     util.verbose("Resolving rename for " .. target.file)
-    vcs:resolve_rename(target, function(resolved_file)
-      -- If the buffer was deleted, bail.
-      if not vim.api.nvim_buf_is_valid(bufnr) then
-        util.verbose "Buffer no longer valid, skipping"
-        return
-      end
+    local resolved_file = vcs:resolve_rename(target)
+
+    -- Check buffer still valid after async operation.
+    local result = _with_valid_buffer(bufnr, function()
       if resolved_file then
         util.verbose("Rename found: " .. target.file .. " -> " .. resolved_file)
         vim.b[bufnr].vcsigns_resolved_rename =
           { to = target.file, from = resolved_file }
         target.file = resolved_file
       end
-      _show_file_impl(bufnr, vcs, target, cb)
+      return true
     end)
-  else
-    _show_file_impl(bufnr, vcs, target, cb)
+
+    if not result then
+      return nil
+    end
   end
+
+  local lines = vcs:show(target)
+
+  -- Check buffer still valid after async operation.
+  return _with_valid_buffer(bufnr, function()
+    return lines
+  end)
 end
 
 --- Detect the VCS for the current buffer.

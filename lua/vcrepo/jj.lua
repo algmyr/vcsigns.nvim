@@ -1,4 +1,5 @@
 local common = require "vcrepo.common"
+local util = require "vcrepo.util"
 local patch = require "vclib.patch"
 local run = require "vclib.run"
 
@@ -51,7 +52,8 @@ return {
     end
     return vim.trim(out.stdout)
   end,
-  show = function(self, target, lines_cb)
+  ---@async
+  show = function(self, target)
     -- Get content at @ and reverse-apply diff to reconstruct target content.
     -- This works more generally than getting the content of the commit before
     -- which can fail if there are merges.
@@ -63,34 +65,30 @@ return {
       "--",
       _jj_exact_path(target.file),
     }
-    run.run_with_timeout(current_cmd, { cwd = self.root }, function(current_out)
-      local current_lines = common.content_to_lines(current_out.stdout)
-      if not current_lines then
-        lines_cb(nil)
-        return
-      end
+    local current_out = util.run_async(current_cmd, { cwd = self.root })
+    local current_lines = common.content_to_lines(current_out.stdout)
+    if not current_lines then
+      return nil
+    end
 
-      -- stylua: ignore
-      local diff_cmd = {
-        "jj", "--ignore-working-copy", "diff",
-        "--git",
-        "-r", _jj_target(target.commit) .. "::@",
-        "--",
-        _jj_exact_path(target.file),
-      }
-      run.run_with_timeout(diff_cmd, { cwd = self.root }, function(diff_out)
-        if not diff_out.stdout or diff_out.stdout == "" then
-          -- No diff means file is unchanged.
-          lines_cb(current_lines)
-          return
-        end
+    -- stylua: ignore
+    local diff_cmd = {
+      "jj", "--ignore-working-copy", "diff",
+      "--git",
+      "-r", _jj_target(target.commit) .. "::@",
+      "--",
+      _jj_exact_path(target.file),
+    }
+    local diff_out = util.run_async(diff_cmd, { cwd = self.root })
+    if not diff_out.stdout or diff_out.stdout == "" then
+      -- No diff means file is unchanged.
+      return current_lines
+    end
 
-        local old_lines = _reverse_apply_patch(current_lines, diff_out.stdout)
-        lines_cb(old_lines)
-      end)
-    end)
+    return _reverse_apply_patch(current_lines, diff_out.stdout)
   end,
-  needs_refresh = function(self, needs_refresh_cb)
+  ---@async
+  needs_refresh = function(self)
     local last_op_id = self._last_op_id
 
     -- stylua: ignore
@@ -100,17 +98,17 @@ return {
       "--no-graph",
       "-T", "id",
     }
-    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
-      local needs_refresh = true
-      if out.code == 0 and out.stdout then
-        local current_op_id = vim.trim(out.stdout)
-        needs_refresh = (not last_op_id or last_op_id ~= current_op_id)
-        self._last_op_id = current_op_id
-      end
-      needs_refresh_cb(needs_refresh)
-    end)
+    local out = util.run_async(cmd, { cwd = self.root })
+    local needs_refresh = true
+    if out.code == 0 and out.stdout then
+      local current_op_id = vim.trim(out.stdout)
+      needs_refresh = (not last_op_id or last_op_id ~= current_op_id)
+      self._last_op_id = current_op_id
+    end
+    return needs_refresh
   end,
-  resolve_rename = function(self, target, resolved_cb)
+  ---@async
+  resolve_rename = function(self, target)
     -- stylua: ignore
     local cmd = {
       "jj", "--ignore-working-copy", "diff",
@@ -118,27 +116,21 @@ return {
       "-s",
       _jj_exact_path(target.file),
     }
-    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
-      if out.code ~= 0 then
-        resolved_cb(nil)
-        return
-      end
-      if not out.stdout then
-        resolved_cb(nil)
-        return
-      end
-      local lines = vim.split(vim.trim(out.stdout), "\n")
-      local move_spec = lines[#lines]:sub(3)
-      local res, replacements = move_spec:gsub("{(.*) => (.*)}", "%1")
-      if replacements == 0 then
-        -- Not a rename.
-        resolved_cb(nil)
-        return
-      end
-      resolved_cb(res)
-    end)
+    local out = util.run_async(cmd, { cwd = self.root })
+    if out.code ~= 0 or not out.stdout then
+      return nil
+    end
+    local lines = vim.split(vim.trim(out.stdout), "\n")
+    local move_spec = lines[#lines]:sub(3)
+    local res, replacements = move_spec:gsub("{(.*) => (.*)}", "%1")
+    if replacements == 0 then
+      -- Not a rename.
+      return nil
+    end
+    return res
   end,
-  blame = function(self, file, template, annotations_cb)
+  ---@async
+  blame = function(self, file, template)
     -- Default template: just the short change_id.
     local annotation_template = template or "commit.change_id().shortest(8)"
 
@@ -158,14 +150,11 @@ return {
       file,
     }
 
-    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
-      if out.code ~= 0 or not out.stdout or out.stdout == "" then
-        annotations_cb(nil)
-        return
-      end
-      local raw_lines = vim.split(out.stdout, "\n", { plain = true })
-      local annotations = common.parse_blame_annotations(raw_lines)
-      annotations_cb(annotations)
-    end)
+    local out = util.run_async(cmd, { cwd = self.root })
+    if out.code ~= 0 or not out.stdout or out.stdout == "" then
+      return nil
+    end
+    local raw_lines = vim.split(out.stdout, "\n", { plain = true })
+    return common.parse_blame_annotations(raw_lines)
   end,
 }

@@ -29,17 +29,21 @@ local BlameAnnotation = {}
 ---@alias VcsDetector fun(dir: string): string|nil
 
 --- Logic for getting the file content from a VCS.
----@alias FileShower fun(self: Vcs, target: Target, callback: fun(lines: string[]|nil))
+--- Expected to be async.
+---@alias FileShower fun(self: Vcs, target: Target): string[]|nil
 
 --- Logic for getting blame annotations for a file.
----@alias BlameGetter fun(self: Vcs, file: string, template: BlameTemplate, callback: fun(annotations: BlameAnnotation[]|nil))
+--- Expected to be async.
+---@alias BlameGetter fun(self: Vcs, file: string, template: BlameTemplate): BlameAnnotation[]|nil
 
 --- Logic for resolving a rename in a VCS.
----@alias RenameResolver fun(self: Vcs, target: Target, callback: fun(resolved_file: string|nil))
+--- Expected to be async.
+---@alias RenameResolver fun(self: Vcs, target: Target): string|nil
 
 --- Logic for checking if VCS state changed and refresh is needed.
 --- Returns true if refresh is needed, false if cached data can be reused.
----@alias RefreshChecker fun(self: Vcs, callback: fun(needs_refresh: boolean))
+--- Expected to be async.
+---@alias RefreshChecker fun(self: Vcs): boolean
 
 ---@class VcsInterface
 ---@field name string Human-readable name of the VCS.

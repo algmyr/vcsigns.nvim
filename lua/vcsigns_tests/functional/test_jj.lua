@@ -46,8 +46,8 @@ M.jj_rename_resolution = adapter:wrap {
 
     local function content_at(offset)
       state.repo_get(vcs.root).commit_offset = offset
-      return helpers.wait_for_callback(function(cb)
-        repo_mod.show_file(bufnr, vcs, cb)
+      return helpers.wait_for_async(function()
+        return repo_mod.show_file(bufnr, vcs)
       end)
     end
 

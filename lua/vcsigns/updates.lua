@@ -7,6 +7,7 @@ local sign = require "vcsigns.sign"
 local state = require "vcsigns.state"
 local util = require "vcsigns.util"
 local ignore = require "vclib.ignore"
+local async = require "async"
 
 --- Cheap update assuming the old file contents are still fresh.
 ---@param bufnr integer The buffer number.
@@ -43,45 +44,43 @@ function M.shallow_update(bufnr)
 end
 
 --- Actually fetch the file contents from VCS.
+---@async
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The VCS object for the buffer.
----@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
-local function _do_vcs_fetch(bufnr, vcs, cb)
+---@return boolean fetched Whether the fetch was successful and state was updated.
+local function _do_vcs_fetch(bufnr, vcs)
   local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
 
-  repo.show_file(bufnr, vcs, function(old_lines)
-    if not old_lines then
-      -- Some kind of failure, skip the diff.
-      return
-    end
-    local s = state.get(bufnr)
-    local last = s.diff.last_update
-    if start_time <= last then
-      util.verbose "Skipping updating old file, we already have a newer update."
-      return
-    end
-    s.diff.old_lines = old_lines
-    s.diff.last_update = start_time
-    s.diff.hunks_changedtick = vim.b[bufnr].changedtick
-    cb(bufnr)
-  end)
+  local old_lines = repo.show_file(bufnr, vcs)
+  if not old_lines then
+    -- Some kind of failure, skip the diff.
+    return false
+  end
+  local s = state.get(bufnr)
+  local last = s.diff.last_update
+  if start_time <= last then
+    util.verbose "Skipping updating old file, we already have a newer update."
+    return false
+  end
+  s.diff.old_lines = old_lines
+  s.diff.last_update = start_time
+  s.diff.hunks_changedtick = vim.b[bufnr].changedtick
+  return true
 end
 
---- Refresh the old file contents from VCS and invoke callback.
+--- Refresh the old file contents from VCS.
+---@async
 ---@param bufnr integer The buffer number.
 ---@param vcs Vcs The VCS object for the buffer.
 ---@param force_refresh boolean Whether to force refresh.
----@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
-local function _refresh_old_file_contents(bufnr, vcs, force_refresh, cb)
-  vcs:needs_refresh(function(needs_refresh)
-    if not force_refresh and not needs_refresh then
-      util.verbose "VCS state unchanged, skipping fetch."
-      -- Still run the callback (shallow update) since buffer might have changed.
-      cb(bufnr)
-      return
-    end
-    _do_vcs_fetch(bufnr, vcs, cb)
-  end)
+---@return boolean fetched Whether a VCS fetch was performed.
+local function _refresh_old_file_contents(bufnr, vcs, force_refresh)
+  local needs_refresh = vcs.needs_refresh(vcs)
+  if not force_refresh and not needs_refresh then
+    util.verbose "VCS state unchanged, skipping fetch."
+    return false
+  end
+  return _do_vcs_fetch(bufnr, vcs)
 end
 
 --- Get the VCS object for a buffer if it's ready.
@@ -118,7 +117,17 @@ function M.deep_update(bufnr, force_refresh)
     return
   end
 
-  _refresh_old_file_contents(bufnr, vcs, force_refresh, M.shallow_update)
+  async.run(function()
+    local ok, err = pcall(function()
+      _refresh_old_file_contents(bufnr, vcs, force_refresh)
+      -- Always run shallow update after, regardless of whether VCS fetch happened.
+      -- Buffer content may have changed even if VCS state didn't.
+      M.shallow_update(bufnr)
+    end)
+    if not ok then
+      util.verbose("Error during update: " .. tostring(err))
+    end
+  end)
 end
 
 return M

@@ -1,4 +1,5 @@
 local common = require "vcrepo.common"
+local util = require "vcrepo.util"
 local run = require "vclib.run"
 
 ---@type VcsInterface
@@ -17,7 +18,8 @@ return {
     end
     return vim.trim(out.stdout)
   end,
-  show = function(self, target, lines_cb)
+  ---@async
+  show = function(self, target)
     -- stylua: ignore
     local cmd = {
       "hg", "cat", "--config", "extensions.color=!",
@@ -25,16 +27,17 @@ return {
       "--",
       target.file,
     }
-    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
-      lines_cb(common.content_to_lines(out.stdout))
-    end)
+    local out = util.run_async(cmd, { cwd = self.root })
+    return common.content_to_lines(out.stdout)
   end,
-  needs_refresh = function(self, needs_refresh_cb)
-    needs_refresh_cb(true)
+  ---@async
+  needs_refresh = function(self)
+    return true
   end,
   -- Rename resolution not implemented for Mercurial.
   resolve_rename = nil,
-  blame = function(self, file, template, annotations_cb)
+  ---@async
+  blame = function(self, file, template)
     -- Default template: just the short node hash.
     local annotation_template = template or "{node|short}"
 
@@ -48,14 +51,11 @@ return {
 
     local cmd = { "hg", "annotate", "-T", full_template, "--", file }
 
-    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
-      if out.code ~= 0 or not out.stdout or out.stdout == "" then
-        annotations_cb(nil)
-        return
-      end
-      local raw_lines = vim.split(out.stdout, "\n", { plain = true })
-      local annotations = common.parse_blame_annotations(raw_lines)
-      annotations_cb(annotations)
-    end)
+    local out = util.run_async(cmd, { cwd = self.root })
+    if out.code ~= 0 or not out.stdout or out.stdout == "" then
+      return nil
+    end
+    local raw_lines = vim.split(out.stdout, "\n", { plain = true })
+    return common.parse_blame_annotations(raw_lines)
   end,
 }

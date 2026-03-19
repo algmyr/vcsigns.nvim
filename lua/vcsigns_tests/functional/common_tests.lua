@@ -80,8 +80,8 @@ function M.show_file_tests(adapter)
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
       state.repo_get(vcs.root).commit_offset = case.commit_offset
 
-      local lines = helpers.wait_for_callback(function(cb)
-        repo_mod.show_file(bufnr, vcs, cb)
+      local lines = helpers.wait_for_async(function()
+        return repo_mod.show_file(bufnr, vcs)
       end)
 
       assert(lines ~= nil, "Expected content in commit")
@@ -131,8 +131,8 @@ function M.error_handling_tests(adapter)
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
       -- File doesn't exist in current commit, should return empty file {}.
-      local lines = helpers.wait_for_callback(function(cb)
-        repo_mod.show_file(bufnr, vcs, cb)
+      local lines = helpers.wait_for_async(function()
+        return repo_mod.show_file(bufnr, vcs)
       end)
       assert(lines ~= nil, "Expected empty table, got nil")
       assert(
@@ -185,8 +185,8 @@ function M.file_edge_case_tests(adapter)
       local vcs = repo_mod.detect_vcs(bufnr)
       assert(vcs ~= nil, "Failed to detect git repository")
 
-      local lines = helpers.wait_for_callback(function(cb)
-        repo_mod.show_file(bufnr, vcs, cb)
+      local lines = helpers.wait_for_async(function()
+        return repo_mod.show_file(bufnr, vcs)
       end)
 
       assert(lines ~= nil, "Expected content, got nil")
@@ -249,12 +249,12 @@ function M.blame_tests(adapter)
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
       -- Get blame annotations with nil template (use defaults).
-      local annotations = helpers.wait_for_callback(function(cb)
+      local annotations = helpers.wait_for_async(function()
         if vcs.blame then
           local rel_path = vim.fn.fnamemodify(test_file, ":.")
-          vcs:blame(rel_path, nil, cb)
+          return vcs:blame(rel_path, nil)
         else
-          cb(nil)
+          return nil
         end
       end)
 

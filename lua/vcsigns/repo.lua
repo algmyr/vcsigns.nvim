@@ -3,7 +3,6 @@ local M = {}
 local util = require "vcsigns.util"
 local repo_common = require "vcrepo.common"
 local state = require "vcsigns.state"
-local run = require "vclib.run"
 
 --- List of VCSs, in priority order.
 ---@type VcsInterface[]
@@ -108,24 +107,7 @@ end
 ---@return Vcs|nil The detected VCS or nil if no VCS was detected.
 function M.detect_vcs(bufnr)
   local file_dir = util.file_dir(bufnr)
-  -- If the file dir does not exist, things will end poorly.
-  if vim.fn.isdirectory(file_dir) == 0 then
-    util.verbose("File directory does not exist: " .. file_dir)
-    return nil
-  end
-
-  -- Try each VCS in priority order.
-  for _, vcs in ipairs(M.vcs) do
-    util.verbose("Trying to detect VCS " .. vcs.name)
-    local root = vcs.detect(file_dir)
-    if root then
-      util.verbose("Detected " .. vcs.name .. " at " .. root)
-      return repo_common.vcs_with_root(vcs, root)
-    end
-    util.verbose("VCS " .. vcs.name .. " not detected")
-  end
-
-  return nil
+  return repo_common.detect_vcs(M.vcs, file_dir)
 end
 
 return M

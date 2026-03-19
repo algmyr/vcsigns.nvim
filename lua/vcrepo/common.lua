@@ -1,5 +1,7 @@
 local M = {}
 
+local util = require "vcrepo.util"
+
 --- The target of diff calculations.
 --- This is a file at a particular commit in the VCS.
 ---@class Target
@@ -56,7 +58,7 @@ local Vcs = {}
 ---@param vcs_interface VcsInterface The VCS interface.
 ---@param root string The root directory of the repository.
 ---@return Vcs
-function M.vcs_with_root(vcs_interface, root)
+local function _vcs_with_root(vcs_interface, root)
   local vcs_instance = vim.deepcopy(vcs_interface)
   ---@cast vcs_instance Vcs
   vcs_instance.root = root
@@ -102,6 +104,31 @@ function M.parse_blame_annotations(raw_lines)
   end
 
   return annotations
+end
+
+--- Detect the VCS for the current buffer.
+---@param VcsInterface[] vcs_list List of VCS interfaces to try, in priority order.
+---@param string file_dir The directory of the file to detect the VCS for.
+---@return Vcs|nil The detected VCS or nil if no VCS was detected.
+function M.detect_vcs(vcs_list, file_dir)
+  -- If the file dir does not exist, things will end poorly.
+  if vim.fn.isdirectory(file_dir) == 0 then
+    util.verbose("File directory does not exist: " .. file_dir)
+    return nil
+  end
+
+  -- Try each VCS in priority order.
+  for _, vcs in ipairs(vcs_list) do
+    util.verbose("Trying to detect VCS " .. vcs.name)
+    local root = vcs.detect(file_dir)
+    if root then
+      util.verbose("Detected " .. vcs.name .. " at " .. root)
+      return _vcs_with_root(vcs, root)
+    end
+    util.verbose("VCS " .. vcs.name .. " not detected")
+  end
+
+  return nil
 end
 
 return M

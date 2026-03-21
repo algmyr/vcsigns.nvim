@@ -51,7 +51,7 @@ return {
     end
     return vim.trim(out.stdout)
   end,
-  show = function(target, root, lines_cb)
+  show = function(self, target, lines_cb)
     -- Get content at @ and reverse-apply diff to reconstruct target content.
     -- This works more generally than getting the content of the commit before
     -- which can fail if there are merges.
@@ -63,7 +63,7 @@ return {
       "--",
       _jj_exact_path(target.file),
     }
-    run.run_with_timeout(current_cmd, { cwd = root }, function(current_out)
+    run.run_with_timeout(current_cmd, { cwd = self.root }, function(current_out)
       local current_lines = common.content_to_lines(current_out.stdout)
       if not current_lines then
         lines_cb(nil)
@@ -78,7 +78,7 @@ return {
         "--",
         _jj_exact_path(target.file),
       }
-      run.run_with_timeout(diff_cmd, { cwd = root }, function(diff_out)
+      run.run_with_timeout(diff_cmd, { cwd = self.root }, function(diff_out)
         if not diff_out.stdout or diff_out.stdout == "" then
           -- No diff means file is unchanged.
           lines_cb(current_lines)
@@ -110,7 +110,7 @@ return {
       needs_refresh_cb(needs_refresh)
     end)
   end,
-  resolve_rename = function(target, root, resolved_cb)
+  resolve_rename = function(self, target, resolved_cb)
     -- stylua: ignore
     local cmd = {
       "jj", "--ignore-working-copy", "diff",
@@ -118,7 +118,7 @@ return {
       "-s",
       _jj_exact_path(target.file),
     }
-    run.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       if out.code ~= 0 then
         resolved_cb(nil)
         return
@@ -138,7 +138,7 @@ return {
       resolved_cb(res)
     end)
   end,
-  blame = function(file, root, template, annotations_cb)
+  blame = function(self, file, template, annotations_cb)
     -- Default template: just the short change_id.
     local annotation_template = template or "commit.change_id().shortest(8)"
 
@@ -158,7 +158,7 @@ return {
       file,
     }
 
-    run.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       if out.code ~= 0 or not out.stdout or out.stdout == "" then
         annotations_cb(nil)
         return

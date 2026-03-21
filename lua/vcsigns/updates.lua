@@ -73,7 +73,7 @@ end
 ---@param force_refresh boolean Whether to force refresh.
 ---@param cb fun(bufnr: integer) Callback to call after the old file contents are refreshed.
 local function _refresh_old_file_contents(bufnr, vcs, force_refresh, cb)
-  vcs.needs_refresh(vcs, function(needs_refresh)
+  vcs:needs_refresh(function(needs_refresh)
     if not force_refresh and not needs_refresh then
       util.verbose "VCS state unchanged, skipping fetch."
       -- Still run the callback (shallow update) since buffer might have changed.

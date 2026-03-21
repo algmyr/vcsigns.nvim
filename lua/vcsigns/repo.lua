@@ -47,7 +47,7 @@ end
 ---@param target Target The target for the VCS command.
 ---@param cb fun(lines: string[]|nil) Callback function to handle the output.
 local function _show_file_impl(bufnr, vcs, target, cb)
-  vcs.show(target, vcs.root, function(lines)
+  vcs:show(target, function(lines)
     -- If the buffer was deleted, bail.
     if not vim.api.nvim_buf_is_valid(bufnr) then
       util.verbose "Buffer no longer valid, skipping diff"
@@ -65,7 +65,7 @@ function M.show_file(bufnr, vcs, cb)
   local target = _get_target(bufnr, vcs)
   if vcs.resolve_rename then
     util.verbose("Resolving rename for " .. target.file)
-    vcs.resolve_rename(target, vcs.root, function(resolved_file)
+    vcs:resolve_rename(target, function(resolved_file)
       -- If the buffer was deleted, bail.
       if not vim.api.nvim_buf_is_valid(bufnr) then
         util.verbose "Buffer no longer valid, skipping"

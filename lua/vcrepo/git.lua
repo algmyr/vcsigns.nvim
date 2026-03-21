@@ -17,24 +17,24 @@ return {
     end
     return vim.trim(out.stdout)
   end,
-  show = function(target, root, lines_cb)
+  show = function(self, target, lines_cb)
     local cmd = {
       "git",
       "show",
       string.format("HEAD~%d", target.commit) .. ":./" .. target.file,
     }
-    run.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       lines_cb(common.content_to_lines(out.stdout))
     end)
   end,
-  blame = function(file, root, template, annotations_cb)
+  blame = function(self, file, template, annotations_cb)
     -- Git does not support custom templates. Template must be nil.
     assert(template == nil, "Git blame does not support custom templates")
 
     -- Use line-porcelain format to get commit SHA and metadata.
     local cmd = { "git", "blame", "--line-porcelain", "--", file }
 
-    run.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       if out.code ~= 0 or not out.stdout or out.stdout == "" then
         annotations_cb(nil)
         return

@@ -17,7 +17,7 @@ return {
     end
     return vim.trim(out.stdout)
   end,
-  show = function(target, root, lines_cb)
+  show = function(self, target, lines_cb)
     -- stylua: ignore
     local cmd = {
       "hg", "cat", "--config", "extensions.color=!",
@@ -25,7 +25,7 @@ return {
       "--",
       target.file,
     }
-    run.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       lines_cb(common.content_to_lines(out.stdout))
     end)
   end,
@@ -34,7 +34,7 @@ return {
   end,
   -- Rename resolution not implemented for Mercurial.
   resolve_rename = nil,
-  blame = function(file, root, template, annotations_cb)
+  blame = function(self, file, template, annotations_cb)
     -- Default template: just the short node hash.
     local annotation_template = template or "{node|short}"
 
@@ -48,7 +48,7 @@ return {
 
     local cmd = { "hg", "annotate", "-T", full_template, "--", file }
 
-    run.run_with_timeout(cmd, { cwd = root }, function(out)
+    run.run_with_timeout(cmd, { cwd = self.root }, function(out)
       if out.code ~= 0 or not out.stdout or out.stdout == "" then
         annotations_cb(nil)
         return

@@ -2,8 +2,8 @@
 
 local M = {}
 
-local vcs_adapter = require "vcsigns_tests.functional.vcs_adapter"
-local common_tests = require "vcsigns_tests.functional.common_tests"
+local vcs_adapter = require "vcrepo.testing.vcs_adapter"
+local common_tests = require "vcrepo_tests.functional.common_tests"
 
 local git_adapter = vcs_adapter.new "git"
 local jj_adapter = vcs_adapter.new "jj"

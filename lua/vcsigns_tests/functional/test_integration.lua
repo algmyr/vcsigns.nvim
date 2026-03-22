@@ -1,11 +1,11 @@
 local M = {}
 
-local helpers = require "vcsigns_tests.functional.helpers"
+local helpers = require "vcrepo_tests.functional.helpers"
 local repo_mod = require "vcsigns.repo"
 local diff = require "vcsigns.diff"
 local sign = require "vcsigns.sign"
 local testing = require "vclib.testing"
-local vcs_adapter = require "vcsigns_tests.functional.vcs_adapter"
+local vcs_adapter = require "vcrepo.testing.vcs_adapter"
 
 -- Use git for integration tests.
 local git_adapter = vcs_adapter.new "git"

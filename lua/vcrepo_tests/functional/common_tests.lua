@@ -3,7 +3,7 @@
 
 local M = {}
 
-local helpers = require "vcsigns_tests.functional.helpers"
+local helpers = require "vcrepo_tests.functional.helpers"
 local repo_mod = require "vcsigns.repo"
 local state = require "vcsigns.state"
 local testing = require "vclib.testing"

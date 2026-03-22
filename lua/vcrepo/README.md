@@ -7,6 +7,7 @@ Core VCS (Version Control System) abstraction layer for Neovim plugins.
 - **vcrepo.jj** - Jujutsu implementation  
 - **vcrepo.hg** - Mercurial implementation
 - **vcrepo.util** - Command execution utilities
+- **vcrepo.testing** - Test utilities for VCS-agnostic testing
 
 ## Key Abstractions
 

@@ -46,7 +46,7 @@ end
 --- Actually fetch the file contents from VCS.
 ---@async
 ---@param bufnr integer The buffer number.
----@param vcs Vcs The VCS object for the buffer.
+---@param vcs VcsHandle The VCS handle for the buffer.
 ---@return boolean fetched Whether the fetch was successful and state was updated.
 local function _do_vcs_fetch(bufnr, vcs)
   local start_time = vim.uv.now() ---@diagnostic disable-line: undefined-field
@@ -71,11 +71,11 @@ end
 --- Refresh the old file contents from VCS.
 ---@async
 ---@param bufnr integer The buffer number.
----@param vcs Vcs The VCS object for the buffer.
+---@param vcs VcsHandle The VCS handle for the buffer.
 ---@param force_refresh boolean Whether to force refresh.
 ---@return boolean fetched Whether a VCS fetch was performed.
 local function _refresh_old_file_contents(bufnr, vcs, force_refresh)
-  local needs_refresh = vcs.needs_refresh(vcs)
+  local needs_refresh = vcs:needs_refresh()
   if not force_refresh and not needs_refresh then
     util.verbose "VCS state unchanged, skipping fetch."
     return false
@@ -85,7 +85,7 @@ end
 
 --- Get the VCS object for a buffer if it's ready.
 ---@param bufnr integer The buffer number.
----@return Vcs|nil The VCS object if ready, nil otherwise.
+---@return VcsHandle|nil The VCS handle if ready, nil otherwise.
 local function _get_vcs_if_ready(bufnr)
   local vcs_state = state.get(bufnr).vcs
   local detecting = vcs_state.detecting

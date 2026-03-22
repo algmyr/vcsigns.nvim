@@ -11,7 +11,7 @@ local M = {}
 ---@field hunks_changedtick integer
 
 ---@class VcsState
----@field vcs Vcs|nil
+---@field vcs VcsHandle|nil
 ---@field detecting boolean|nil
 
 ---@type table<integer, BufferState>

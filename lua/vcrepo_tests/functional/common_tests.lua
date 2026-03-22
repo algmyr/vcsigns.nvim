@@ -4,9 +4,12 @@
 local M = {}
 
 local helpers = require "vcrepo_tests.functional.helpers"
-local repo_mod = require "vcsigns.repo"
-local state = require "vcsigns.state"
+local vcrepo = require "vcrepo"
 local testing = require "vclib.testing"
+
+local function file_dir(bufnr)
+  return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":h")
+end
 
 --- Generate detection test for a VCS adapter.
 ---@param adapter VcsAdapter
@@ -25,7 +28,9 @@ function M.detection_tests(adapter)
       vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
       local bufnr = vim.api.nvim_get_current_buf()
 
-      local vcs = repo_mod.detect_vcs(bufnr)
+      local file_dir =
+        vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":h")
+      local vcs = vcrepo.detect(file_dir)
 
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
       assert(
@@ -76,12 +81,13 @@ function M.show_file_tests(adapter)
       vim.cmd("edit " .. vim.fn.fnameescape(test_file))
       local bufnr = vim.api.nvim_get_current_buf()
 
-      local vcs = repo_mod.detect_vcs(bufnr)
+      local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
-      state.repo_get(vcs.root).commit_offset = case.commit_offset
 
+      local target = vcrepo.create_target(bufnr, vcs, case.commit_offset)
       local lines = helpers.wait_for_async(function()
-        return repo_mod.show_file(bufnr, vcs)
+        local content, _ = vcs:show_file(target, { follow_renames = true })
+        return content
       end)
 
       assert(lines ~= nil, "Expected content in commit")
@@ -127,12 +133,15 @@ function M.error_handling_tests(adapter)
       case.repo_setup(repo)
       vim.cmd("edit " .. vim.fn.fnameescape(repo:path(case.file_to_edit)))
       local bufnr = vim.api.nvim_get_current_buf()
-      local vcs = repo_mod.detect_vcs(bufnr)
+
+      local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
       -- File doesn't exist in current commit, should return empty file {}.
+      local target = vcrepo.create_target(bufnr, vcs, 0)
       local lines = helpers.wait_for_async(function()
-        return repo_mod.show_file(bufnr, vcs)
+        local content, _ = vcs:show_file(target, { follow_renames = true })
+        return content
       end)
       assert(lines ~= nil, "Expected empty table, got nil")
       assert(
@@ -182,11 +191,13 @@ function M.file_edge_case_tests(adapter)
       vim.cmd("edit " .. vim.fn.fnameescape(test_file))
       local bufnr = vim.api.nvim_get_current_buf()
 
-      local vcs = repo_mod.detect_vcs(bufnr)
+      local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect git repository")
 
+      local target = vcrepo.create_target(bufnr, vcs, 0)
       local lines = helpers.wait_for_async(function()
-        return repo_mod.show_file(bufnr, vcs)
+        local content, _ = vcs:show_file(target, { follow_renames = true })
+        return content
       end)
 
       assert(lines ~= nil, "Expected content, got nil")
@@ -245,7 +256,7 @@ function M.blame_tests(adapter)
       vim.cmd("edit " .. vim.fn.fnameescape(test_file))
       local bufnr = vim.api.nvim_get_current_buf()
 
-      local vcs = repo_mod.detect_vcs(bufnr)
+      local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
       -- Get blame annotations with nil template (use defaults).

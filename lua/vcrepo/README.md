@@ -1,26 +1,37 @@
 Core VCS (Version Control System) abstraction layer for Neovim plugins.
 
-## Components
+# Components
 
-- **vcrepo.common** - Core VCS interface types and utilities
-- **vcrepo.git** - Git implementation
-- **vcrepo.jj** - Jujutsu implementation  
-- **vcrepo.hg** - Mercurial implementation
-- **vcrepo.util** - Command execution utilities
+- **vcrepo** (init.lua) - Public API with VcsHandle and VCS registry
+- **vcrepo.common** - Core VCS interface types and utilities (internal)
+- **vcrepo.git** - Git implementation (internal)
+- **vcrepo.jj** - Jujutsu implementation (internal)  
+- **vcrepo.hg** - Mercurial implementation (internal)
+- **vcrepo.util** - Command execution utilities (internal)
 - **vcrepo.testing** - Test utilities for VCS-agnostic testing
 
 ## Key Abstractions
 
-### VcsInterface
+### VcsHandle (Public API)
 
-Defines the contract that all VCS implementations must follow:
+The public interface returned by `vcrepo.detect()`:
+
+- `name` - Human-readable VCS name
+- `root` - Repository root directory
+- `show_file(target, opts)` - Retrieve file content with optional rename following
+- `blame(file, template)` - Get blame annotations
+- `needs_refresh()` - Check if VCS state changed compared to the last call
+
+### VcsInterface (Internal)
+
+Internal contract that VCS implementations must follow:
 
 - `name` - Human-readable VCS name
 - `detect` - Detection logic to find repositories
 - `show` - Retrieve file content at a specific commit
-- `blame` - Get blame annotations for a file
-- `needs_refresh` - Optional optimization to check if refresh needed
-- `resolve_rename` - Optional rename resolution support
+- `blame` - Get blame annotations for a file (optional)
+- `needs_refresh` - Check if refresh needed (optional)
+- `resolve_rename` - Rename resolution support (optional)
 
 ### Target
 

@@ -324,4 +324,81 @@ function M.blame_tests(adapter)
   }
 end
 
+--- Generate rename resolution tests for a VCS adapter.
+--- Only applicable to VCS systems that support rename tracking (e.g., jj).
+---@param adapter VcsAdapter
+---@return table test_suite
+function M.rename_resolution_tests(adapter)
+  return adapter:wrap {
+    test_cases = {
+      follow_file_rename = {
+        description = "Track file rename and get old content",
+      },
+    },
+    test = function(repo, _)
+      -- Long common suffix is enough to trigger rename detection.
+      local common_suffix = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9"
+      local v1 = "version 1\n" .. common_suffix
+      local v2 = "version 2\n" .. common_suffix
+      local v3 = "version 3\n" .. common_suffix
+      local v1_lines = vim.split(v1, "\n", { plain = true })
+      local v2_lines = vim.split(v2, "\n", { plain = true })
+
+      -- Create file with v1 content.
+      repo:write_file("old_name.txt", v1)
+      repo:commit_file("old_name.txt", "Original content")
+
+      -- Modify to v2.
+      repo:write_file("old_name.txt", v2)
+      repo:commit_file("old_name.txt", "Modify content")
+
+      -- Rename file.
+      repo:run_cmd { "mv", "old_name.txt", "new_name.txt" }
+      repo:commit_all "Rename file"
+
+      -- Modify to v3 (not committed).
+      repo:write_file("new_name.txt", v3)
+
+      -- Open the renamed file.
+      vim.cmd("edit " .. vim.fn.fnameescape(repo:path "new_name.txt"))
+      local bufnr = vim.api.nvim_get_current_buf()
+
+      local vcs = vcrepo.detect(file_dir(bufnr))
+      assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
+
+      -- Helper to get content at a specific commit offset.
+      local function content_at(offset)
+        local target = vcrepo.create_target(bufnr, vcs, offset)
+        return helpers.wait_for_async(function()
+          local content, _ = vcs:show_file(target, { follow_renames = true })
+          return content
+        end)
+      end
+
+      -- At offset 0 (current commit), should see v2 (the last committed version).
+      testing.assert_list_eq(
+        content_at(0),
+        v2_lines,
+        "At offset 0, expected version 2 at current commit"
+      )
+
+      -- At offset 1 (previous commit = rename), should still see v2.
+      testing.assert_list_eq(
+        content_at(1),
+        v2_lines,
+        "At offset 1, expected version 2 at rename commit"
+      )
+
+      -- At offset 2 (before rename), should see v1 via rename resolution.
+      testing.assert_list_eq(
+        content_at(2),
+        v1_lines,
+        "At offset 2, expected version 1 pre-rename"
+      )
+
+      vim.cmd "bdelete!"
+    end,
+  }
+end
+
 return M

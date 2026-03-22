@@ -29,6 +29,12 @@ for _, vcs_info in ipairs(vcs_list) do
   M[vcs_name .. "_error_handling"] = common_tests.error_handling_tests(adapter)
   M[vcs_name .. "_file_edge_cases"] = common_tests.file_edge_case_tests(adapter)
   M[vcs_name .. "_blame"] = common_tests.blame_tests(adapter)
+
+  -- Rename resolution is currently only supported by jj.
+  if vcs_name == "jj" then
+    M[vcs_name .. "_rename_resolution"] =
+      common_tests.rename_resolution_tests(adapter)
+  end
 end
 
 return M

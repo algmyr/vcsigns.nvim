@@ -3,6 +3,7 @@ local M = {}
 ---@class BufferState
 ---@field diff DiffState
 ---@field vcs VcsState
+---@field anchor string|nil
 
 ---@class DiffState
 ---@field hunks Hunk[]
@@ -36,6 +37,7 @@ function M.get(bufnr)
         vcs = nil,
         detecting = nil,
       },
+      anchor = nil,
     }
   end
   return buffers[bufnr]
@@ -51,7 +53,7 @@ function M.clear(bufnr)
 end
 
 ---@class RepoState
----@field offset integer Offset relative to current commit.
+---@field offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
 
 ---@type table<string, RepoState>
 local repo_state = {}

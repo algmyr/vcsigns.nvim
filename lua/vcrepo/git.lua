@@ -20,10 +20,12 @@ return {
   end,
   ---@async
   show = function(self, target)
+    local anchor = target.anchor or "HEAD"
+    local revspec = string.format("%s~%d", anchor, target.offset)
     local cmd = {
       "git",
       "show",
-      string.format("HEAD~%d", target.commit) .. ":./" .. target.file,
+      revspec .. ":./" .. target.file,
     }
     local out = util.run_async(cmd, { cwd = self.root })
     return common.content_to_lines(out.stdout)

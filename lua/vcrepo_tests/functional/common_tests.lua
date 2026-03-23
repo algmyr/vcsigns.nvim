@@ -51,21 +51,37 @@ end
 ---@param adapter VcsAdapter
 ---@return table test_suite
 function M.show_file_tests(adapter)
+  local parent
+  if adapter.vcs_type == "jj" then
+    parent = "@-"
+  elseif adapter.vcs_type == "git" then
+    parent = "HEAD~1"
+  elseif adapter.vcs_type == "hg" then
+    parent = ".~1"
+  else
+    error("Unknown adapter: " .. adapter.name)
+  end
   return adapter:wrap {
     test_cases = {
       show_current_commit = {
         description = "Show file content at current commit",
-        commit_offset = 0,
+        offset = 0,
         expected_lines = { "version3" },
       },
       show_previous_commit = {
         description = "Show file content at previous commit",
-        commit_offset = 1,
+        offset = 1,
         expected_lines = { "version2" },
       },
       show_multiple_commits_back = {
         description = "Show file content at grandparent commit",
-        commit_offset = 2,
+        offset = 2,
+        expected_lines = { "version1" },
+      },
+      show_previous_commit_with_anchor = {
+        description = "Show file content at previous commit with anchor",
+        offset = 1,
+        anchor = parent,
         expected_lines = { "version1" },
       },
     },
@@ -84,7 +100,7 @@ function M.show_file_tests(adapter)
       local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
-      local target = vcrepo.create_target(bufnr, vcs, case.commit_offset)
+      local target = vcrepo.create_target(bufnr, vcs, case.offset, case.anchor)
       local lines = helpers.wait_for_async(function()
         local content, _ = vcs:show_file(target, { follow_renames = true })
         return content
@@ -192,7 +208,7 @@ function M.file_edge_case_tests(adapter)
       local bufnr = vim.api.nvim_get_current_buf()
 
       local vcs = vcrepo.detect(file_dir(bufnr))
-      assert(vcs ~= nil, "Failed to detect git repository")
+      assert(vcs ~= nil, "Failed to detect repository")
 
       local target = vcrepo.create_target(bufnr, vcs, 0)
       local lines = helpers.wait_for_async(function()

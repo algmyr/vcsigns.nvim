@@ -109,9 +109,9 @@ end
 local last_target_notification = nil
 
 --- Display a notification about the target commit change.
----@param commit_offset integer
-local function _target_change_message(commit_offset)
-  local msg = string.format("Now diffing against HEAD~%d", commit_offset)
+---@param offset integer
+local function _target_change_message(offset)
+  local msg = string.format("Now diffing against HEAD~%d", offset)
   last_target_notification = vim.notify(
     msg,
     vim.log.levels.INFO,
@@ -126,8 +126,8 @@ end
 function M.target_older_commit(bufnr, steps)
   local repo_root = state.get(bufnr).vcs.vcs.root
   local repo_state = state.repo_get(repo_root)
-  local new_target = repo_state.commit_offset + steps
-  repo_state.commit_offset = new_target
+  local new_target = repo_state.offset + steps
+  repo_state.offset = new_target
   _target_change_message(new_target)
   -- Target has changed, trigger a full update.
   updates.deep_update(bufnr, true)
@@ -141,9 +141,9 @@ end
 function M.target_newer_commit(bufnr, steps)
   local repo_root = state.get(bufnr).vcs.vcs.root
   local repo_state = state.repo_get(repo_root)
-  local new_target = repo_state.commit_offset - steps
+  local new_target = repo_state.offset - steps
   if new_target >= 0 then
-    repo_state.commit_offset = new_target
+    repo_state.offset = new_target
     _target_change_message(new_target)
     -- Target has changed, trigger a full update.
     updates.deep_update(bufnr, true)

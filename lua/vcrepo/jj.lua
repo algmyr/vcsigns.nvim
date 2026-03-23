@@ -3,11 +3,12 @@ local util = require "vcrepo.util"
 local patch = require "vclib.patch"
 local run = require "vclib.run"
 
---- Construct a jj revset for the nth ancestors of @.
----@param offset integer
+--- Construct a jj revset for the target commit.
+---@param anchor string|nil Anchor commit (nil = @).
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
 ---@return string
-local function _jj_target(offset)
-  return string.format("roots(ancestors(@, %d))", offset + 1)
+local function _jj_target(anchor, offset)
+  return string.format("roots(ancestors(" .. anchor .. ", %d))", offset + 1)
 end
 
 --- Construct a jj fileset to match an exact file path.
@@ -54,10 +55,12 @@ return {
   end,
   ---@async
   show = function(self, target)
+    local anchor = target.anchor or "@"
     -- stylua: ignore
+
     local current_cmd = {
       "jj", "--ignore-working-copy", "file", "show",
-      "-r", "@",
+      "-r", anchor,
       "--",
       _jj_exact_path(target.file),
     }
@@ -67,7 +70,7 @@ return {
       return nil
     end
 
-    -- Special case: offset=-1 means we want the content at @ itself.
+    -- Special case: offset=-1 means we want the content at anchor itself.
     if target.offset == -1 then
       return current_lines
     end
@@ -79,7 +82,7 @@ return {
     local diff_cmd = {
       "jj", "--ignore-working-copy", "diff",
       "--git",
-      "-r", _jj_target(target.commit) .. "::@",
+      "-r", _jj_target(anchor, target.offset) .. "::(" .. anchor .. ")",
       "--",
       _jj_exact_path(target.file),
     }
@@ -113,10 +116,13 @@ return {
   end,
   ---@async
   resolve_rename = function(self, target)
+    local anchor = target.anchor or "@"
+    local target_rev = _jj_target(anchor, target.offset)
+    
     -- stylua: ignore
     local cmd = {
       "jj", "--ignore-working-copy", "diff",
-      "-r", _jj_target(target.commit) .. "::@",
+      "-r", target_rev .. "::(" .. anchor .. ")",
       "-s",
       _jj_exact_path(target.file),
     }

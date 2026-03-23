@@ -248,7 +248,7 @@ M.target_commit_switching = git_adapter:wrap {
     assert(vcs ~= nil, "Failed to detect git repository")
     local state = require "vcsigns.state"
 
-    state.repo_get(vcs.root).commit_offset = 0
+    state.repo_get(vcs.root).offset = 0
     local lines_at_head = helpers.wait_for_async(function()
       return repo_mod.show_file(bufnr, vcs)
     end)
@@ -256,7 +256,7 @@ M.target_commit_switching = git_adapter:wrap {
     assert(lines_at_head ~= nil, "Failed to get HEAD content")
     assert(lines_at_head[1] == "version3", "Expected version3 at HEAD")
 
-    state.repo_get(vcs.root).commit_offset = 1
+    state.repo_get(vcs.root).offset = 1
     local lines_at_head1 = helpers.wait_for_async(function()
       return repo_mod.show_file(bufnr, vcs)
     end)

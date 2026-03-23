@@ -20,10 +20,12 @@ return {
   end,
   ---@async
   show = function(self, target)
+    local anchor = target.anchor or "."
+    local revset = string.format("(%s)~%d", anchor, target.offset)
     -- stylua: ignore
     local cmd = {
       "hg", "cat", "--config", "extensions.color=!",
-      "--rev", string.format(".~%d", target.commit),
+      "--rev", revset,
       "--",
       target.file,
     }

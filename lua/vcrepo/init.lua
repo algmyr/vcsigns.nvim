@@ -8,7 +8,8 @@ local common = require "vcrepo.common"
 --- The target of VCS operations.
 --- This represents a file at a particular commit in the VCS.
 ---@class Target
----@field commit integer Target commit offset (0 = current, 1 = parent, etc.).
+---@field anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@field offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
 ---@field file string The file path relative to VCS root.
 ---@field path string The absolute path to the file.
 
@@ -105,14 +106,16 @@ end
 --- Create a target from an absolute path for VCS operations.
 ---@param abs_path string The absolute file path.
 ---@param vcs VcsHandle The VCS handle.
----@param commit_offset integer The commit offset (0 = current, 1 = parent, etc.).
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
 ---@return Target
-function M.create_target_from_path(abs_path, vcs, commit_offset)
+function M.create_target_from_path(abs_path, vcs, offset, anchor)
   local paths = require "vclib.paths"
   assert(vcs.root, "VCS root must be set")
   local file = paths.relativize(abs_path, vcs.root)
   return {
-    commit = commit_offset,
+    anchor = anchor,
+    offset = offset,
     file = file,
     path = abs_path,
   }
@@ -121,12 +124,13 @@ end
 --- Create a target from a buffer for VCS operations.
 ---@param bufnr integer The buffer number.
 ---@param vcs VcsHandle The VCS handle.
----@param commit_offset integer The commit offset (0 = current, 1 = parent, etc.).
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
 ---@return Target
-function M.create_target(bufnr, vcs, commit_offset)
+function M.create_target(bufnr, vcs, offset, anchor)
   local paths = require "vclib.paths"
   local abs_path = paths.abs_path(bufnr)
-  return M.create_target_from_path(abs_path, vcs, commit_offset)
+  return M.create_target_from_path(abs_path, vcs, offset, anchor)
 end
 
 --- Export common utilities.

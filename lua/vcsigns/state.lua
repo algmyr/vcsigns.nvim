@@ -3,6 +3,7 @@ local M = {}
 ---@class BufferState
 ---@field diff DiffState
 ---@field vcs VcsState
+---@field anchor string|nil
 
 ---@class DiffState
 ---@field hunks Hunk[]
@@ -36,6 +37,7 @@ function M.get(bufnr)
         vcs = nil,
         detecting = nil,
       },
+      anchor = nil,
     }
   end
   return buffers[bufnr]
@@ -51,7 +53,7 @@ function M.clear(bufnr)
 end
 
 ---@class RepoState
----@field commit_offset integer
+---@field offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
 
 ---@type table<string, RepoState>
 local repo_state = {}
@@ -61,7 +63,7 @@ local repo_state = {}
 function M.repo_get(repo_path)
   if not repo_state[repo_path] then
     repo_state[repo_path] = {
-      commit_offset = vim.g.vcsigns_target_commit or 0,
+      offset = vim.g.vcsigns_target_commit or 0,
     }
   end
   return repo_state[repo_path]

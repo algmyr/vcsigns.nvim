@@ -75,6 +75,13 @@ local command_map = {
   hunk_diff = _no_args(M.actions.toggle_hunk_diff),
   -- Other.
   diffview = _no_args(M.actions.diffview),
+  open_at = function(bufnr, arg)
+    local args = vim.list_slice(arg.fargs, 2)
+    if #args ~= 1 then
+      error "VCSigns open_at requires exactly one argument (anchor)"
+    end
+    M.actions.open_at_anchor(bufnr, args[1])
+  end,
 }
 
 --- Handler for the VCSigns user command.

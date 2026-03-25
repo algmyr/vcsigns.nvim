@@ -4,6 +4,7 @@ local M = {}
 ---@field diff DiffState
 ---@field vcs VcsState
 ---@field anchor string|nil
+---@field offset integer|nil Buffer-specific offset override (if set, ignores repo offset).
 
 ---@class DiffState
 ---@field hunks Hunk[]

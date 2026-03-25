@@ -274,4 +274,141 @@ function M.toggle_fold(bufnr)
   fold.toggle(bufnr)
 end
 
+--- Open a file at a specific revision (anchor) in a read-only buffer.
+--- Shows the file content at that revision with VCSigns indicating changes
+--- made in that specific commit (diff from parent to anchor).
+--- The buffer is immutable and does not respond to repo offset changes.
+---@param bufnr integer The source buffer (must have VCS detected).
+---@param anchor string The VCS-specific anchor (revset) to show.
+function M.open_at_anchor(bufnr, anchor)
+  local s = state.get(bufnr)
+  local vcs = s.vcs.vcs
+  if not vcs then
+    vim.notify(
+      "No VCS detected for buffer",
+      vim.log.levels.ERROR,
+      { title = "VCSigns" }
+    )
+    return
+  end
+
+  -- Get the file path from the source buffer.
+  local vcrepo = require "vcrepo"
+  local paths = require "vclib.paths"
+  local abs_path = paths.abs_path(bufnr)
+
+  -- Create a new buffer for the historical view.
+  local hist_buf = vim.api.nvim_create_buf(false, true)
+
+  -- Set buffer name to show it's a historical view.
+  vim.api.nvim_buf_set_name(hist_buf, abs_path .. " (" .. anchor .. ")")
+
+  -- Configure buffer options for read-only display.
+  vim.bo[hist_buf].buftype = "nofile"
+  vim.bo[hist_buf].bufhidden = "wipe"
+  vim.bo[hist_buf].swapfile = false
+  vim.bo[hist_buf].modifiable = false
+  vim.bo[hist_buf].filetype = vim.bo[bufnr].filetype
+
+  -- Fetch content asynchronously.
+  local async = require "async"
+  async.run(function()
+    local ok, err = pcall(function()
+      -- Fetch file content at the anchor (offset=-1 means anchor itself).
+      util.verbose("open_at_anchor: fetching content at anchor " .. anchor)
+      local target_at_anchor = vcrepo.create_target_from_path(abs_path, vcs, -1, anchor)
+      util.verbose("open_at_anchor: target_at_anchor = " .. vim.inspect(target_at_anchor))
+      local lines_at_anchor = vcs:show_file(target_at_anchor, { follow_renames = false })
+      util.verbose("open_at_anchor: got " .. tostring(lines_at_anchor and #lines_at_anchor or "nil") .. " lines at anchor")
+
+      if not lines_at_anchor then
+        util.verbose("open_at_anchor: failed to get content at anchor")
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(hist_buf) then
+            vim.api.nvim_buf_delete(hist_buf, { force = true })
+          end
+          vim.notify(
+            "Failed to get file content at anchor: " .. anchor,
+            vim.log.levels.ERROR,
+            { title = "VCSigns" }
+          )
+        end)
+        return
+      end
+
+      util.verbose("open_at_anchor: got " .. #lines_at_anchor .. " lines at anchor")
+
+      -- Fetch file content at the parent (offset=0) for diff base.
+      util.verbose("open_at_anchor: fetching content at parent")
+      local target_at_parent = vcrepo.create_target_from_path(abs_path, vcs, 0, anchor)
+      local lines_at_parent = vcs:show_file(target_at_parent, { follow_renames = false })
+
+      if not lines_at_parent then
+        util.verbose("open_at_anchor: failed to get content at parent")
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(hist_buf) then
+            vim.api.nvim_buf_delete(hist_buf, { force = true })
+          end
+          vim.notify(
+            "Failed to get parent file content for anchor: " .. anchor,
+            vim.log.levels.ERROR,
+            { title = "VCSigns" }
+          )
+        end)
+        return
+      end
+
+      util.verbose("open_at_anchor: got " .. #lines_at_parent .. " lines at parent")
+
+      vim.schedule(function()
+        if not vim.api.nvim_buf_is_valid(hist_buf) then
+          util.verbose("open_at_anchor: hist_buf no longer valid")
+          return
+        end
+
+        util.verbose("open_at_anchor: setting buffer content")
+        -- Set buffer content to file at anchor.
+        vim.bo[hist_buf].modifiable = true
+        vim.api.nvim_buf_set_lines(hist_buf, 0, -1, false, lines_at_anchor)
+        vim.bo[hist_buf].modifiable = false
+
+        -- Compute diff from parent to anchor.
+        util.verbose("open_at_anchor: computing diff")
+        local hunks = diff.compute_diff(lines_at_parent, lines_at_anchor)
+        util.verbose("open_at_anchor: got " .. #hunks .. " hunks")
+        
+        -- Set up state with the diff results.
+        local hist_state = state.get(hist_buf)
+        hist_state.diff.old_lines = lines_at_parent
+        hist_state.diff.hunks = hunks
+        hist_state.diff.last_update = vim.uv.now() ---@diagnostic disable-line: undefined-field
+        hist_state.diff.hunks_changedtick = vim.b[hist_buf].changedtick
+
+        -- Add signs to show the changes.
+        util.verbose("open_at_anchor: adding signs")
+        sign.add_signs(hist_buf, hunks)
+
+        -- Open the buffer in a new window.
+        util.verbose("open_at_anchor: opening window")
+        vim.api.nvim_open_win(hist_buf, true, {
+          split = "right",
+          win = 0,
+        })
+        util.verbose("open_at_anchor: done")
+      end)
+    end)
+    
+    if not ok then
+      util.verbose("open_at_anchor: error - " .. tostring(err))
+      vim.schedule(function()
+        vim.notify(
+          "Error in open_at_anchor: " .. tostring(err),
+          vim.log.levels.ERROR,
+          { title = "VCSigns" }
+        )
+      end)
+    end
+  end)
+end
+
 return M

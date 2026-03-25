@@ -54,10 +54,6 @@ return {
   end,
   ---@async
   show = function(self, target)
-    -- Get content at @ and reverse-apply diff to reconstruct target content.
-    -- This works more generally than getting the content of the commit before
-    -- which can fail if there are merges.
-
     -- stylua: ignore
     local current_cmd = {
       "jj", "--ignore-working-copy", "file", "show",
@@ -71,6 +67,14 @@ return {
       return nil
     end
 
+    -- Special case: offset=-1 means we want the content at @ itself.
+    if target.offset == -1 then
+      return current_lines
+    end
+    
+    -- For offset >= 0, reverse-apply diff.
+    -- This works more generally than getting the content of the commit before
+    -- which can fail if there are merges.
     -- stylua: ignore
     local diff_cmd = {
       "jj", "--ignore-working-copy", "diff",

@@ -37,6 +37,10 @@ For a documented default config, have a look inside `init.lua`.
 ```
 {
   'algmyr/vcsigns.nvim',
+  dependencies = {
+    "algmyr/vclib.nvim",
+    "lewis6991/async.nvim",
+  },
   config = function()
     require('vcsigns').setup {
       target_commit = 1,  -- Nice default for jj with new+squash flow.

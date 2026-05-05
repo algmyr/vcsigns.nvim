@@ -37,16 +37,36 @@ local function _set_buflocal_autocmds(bufnr)
         updates.deep_update(bufnr)
       end
     end,
-    desc = "VCSigns refresh and update hunks",
+    desc = "VCSigns deep refresh and update hunks",
   })
 
   -- Cheaper update on some frequent events.
   local frequent_events = {
     "TextChanged",
     "TextChangedI",
-    "BufModifiedSet",
     "InsertLeave",
   }
+
+  -- BufModifiedSet deprecated in 0.13 in favor of OptionSet with 'modified'.
+  local has_buf_modified_set = vim.fn.exists "##BufModifiedSet" == 1
+  if has_buf_modified_set then
+    table.insert(frequent_events, "BufModifiedSet")
+  else
+    vim.api.nvim_create_autocmd("OptionSet", {
+      group = group,
+      buffer = bufnr,
+      callback = function()
+        -- Manual check, pattern doesn't work together with buf.
+        if args.match == "modified" then
+          if not state.get(bufnr).vcs.detecting then
+            updates.shallow_update(bufnr)
+          end
+        end
+      end,
+      desc = "VCSigns refresh and update hunks",
+    })
+  end
+
   vim.api.nvim_create_autocmd(frequent_events, {
     group = group,
     buffer = bufnr,

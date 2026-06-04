@@ -4,11 +4,13 @@ local patch = require "vclib.patch"
 local run = require "vclib.run"
 
 --- Construct a jj revset for the target commit.
----@param anchor string|nil Anchor commit (nil = @).
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param target Target The target containing anchor and offset.
 ---@return string
-local function _jj_target(anchor, offset)
-  return string.format("roots(ancestors(" .. anchor .. ", %d))", offset + 1)
+local function _jj_target(target)
+  return string.format(
+    "roots(ancestors(" .. target.anchor .. ", %d))",
+    target.offset + 1
+  )
 end
 
 --- Construct a jj fileset to match an exact file path.
@@ -37,6 +39,46 @@ local function _reverse_apply_patch(current_lines, patch_output)
   return patch.apply_patch(current_lines, inverted)
 end
 
+--- Construct a jj revset for the target commit, defaulting anchor to "@" if not set.
+---@param target Target
+---@return Target
+local function _resolve_target(target)
+  local resolved_target = vim.deepcopy(target)
+  if not resolved_target.anchor then
+    resolved_target.anchor = "@"
+  end
+  return resolved_target
+end
+
+local function _flatten(seqs)
+  local result = {}
+  for _, seq in ipairs(seqs) do
+    for _, item in ipairs(seq) do
+      result[#result + 1] = item
+    end
+  end
+  return result
+end
+
+---@param target Target
+---@param args string[] Extra args.
+---@param files string[] File paths to include in the diff.
+local function _diff_cmd(target, args, files)
+  local target_rev = _jj_target(target)
+  return _flatten {
+    {
+      "jj",
+      "--ignore-working-copy",
+      "diff",
+      "-r",
+      target_rev .. "::(" .. target.anchor .. ")",
+    },
+    args,
+    { "--" },
+    files,
+  }
+end
+
 ---@type VcsInterface
 return {
   name = "Jujutsu",
@@ -55,12 +97,12 @@ return {
   end,
   ---@async
   show = function(self, target)
-    local anchor = target.anchor or "@"
+    target = _resolve_target(target)
     -- stylua: ignore
 
     local current_cmd = {
       "jj", "--ignore-working-copy", "file", "show",
-      "-r", anchor,
+      "-r", target.anchor,
       "--",
       _jj_exact_path(target.file),
     }
@@ -79,13 +121,7 @@ return {
     -- This works more generally than getting the content of the commit before
     -- which can fail if there are merges.
     -- stylua: ignore
-    local diff_cmd = {
-      "jj", "--ignore-working-copy", "diff",
-      "--git",
-      "-r", _jj_target(anchor, target.offset) .. "::(" .. anchor .. ")",
-      "--",
-      _jj_exact_path(target.file),
-    }
+    local diff_cmd = _diff_cmd(target, { "--git" }, { _jj_exact_path(target.file) })
     local diff_out = util.run_async(diff_cmd, { cwd = self.root })
     if not diff_out.stdout or diff_out.stdout == "" then
       -- No diff means file is unchanged.
@@ -116,16 +152,11 @@ return {
   end,
   ---@async
   resolve_rename = function(self, target)
-    local anchor = target.anchor or "@"
-    local target_rev = _jj_target(anchor, target.offset)
+    target = _resolve_target(target)
+    local target_rev = _jj_target(target)
     
     -- stylua: ignore
-    local cmd = {
-      "jj", "--ignore-working-copy", "diff",
-      "-r", target_rev .. "::(" .. anchor .. ")",
-      "-s",
-      _jj_exact_path(target.file),
-    }
+    local cmd = _diff_cmd(target, { "-s" }, { _jj_exact_path(target.file) })
     local out = util.run_async(cmd, { cwd = self.root })
     if out.code ~= 0 or not out.stdout then
       return nil

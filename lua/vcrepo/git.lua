@@ -23,7 +23,7 @@ return {
     local cmd = {
       "git",
       "show",
-      string.format("HEAD~%d", target.commit) .. ":./" .. target.file,
+      string.format("HEAD~%d", target.offset) .. ":./" .. target.file,
     }
     local out = util.run_async(cmd, { cwd = self.root })
     return common.content_to_lines(out.stdout)

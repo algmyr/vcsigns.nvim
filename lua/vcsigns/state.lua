@@ -51,7 +51,7 @@ function M.clear(bufnr)
 end
 
 ---@class RepoState
----@field commit_offset integer
+---@field offset integer Offset relative to current commit.
 
 ---@type table<string, RepoState>
 local repo_state = {}
@@ -61,7 +61,7 @@ local repo_state = {}
 function M.repo_get(repo_path)
   if not repo_state[repo_path] then
     repo_state[repo_path] = {
-      commit_offset = vim.g.vcsigns_target_commit or 0,
+      offset = vim.g.vcsigns_target_commit or 0,
     }
   end
   return repo_state[repo_path]

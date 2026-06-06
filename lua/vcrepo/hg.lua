@@ -23,7 +23,7 @@ return {
     -- stylua: ignore
     local cmd = {
       "hg", "cat", "--config", "extensions.color=!",
-      "--rev", string.format(".~%d", target.commit),
+      "--rev", string.format(".~%d", target.offset),
       "--",
       target.file,
     }

@@ -9,7 +9,7 @@ local async = require "async"
 ---@param repo_path string The repository path.
 ---@return integer The target commit.
 local function _target_commit(repo_path)
-  return state.repo_get(repo_path).commit_offset
+  return state.repo_get(repo_path).offset
 end
 
 --- Check if buffer is valid after an async operation.

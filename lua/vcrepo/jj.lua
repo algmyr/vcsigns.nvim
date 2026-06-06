@@ -79,7 +79,7 @@ return {
     local diff_cmd = {
       "jj", "--ignore-working-copy", "diff",
       "--git",
-      "-r", _jj_target(target.commit) .. "::@",
+      "-r", _jj_target(target.offset) .. "::@",
       "--",
       _jj_exact_path(target.file),
     }
@@ -116,7 +116,7 @@ return {
     -- stylua: ignore
     local cmd = {
       "jj", "--ignore-working-copy", "diff",
-      "-r", _jj_target(target.commit) .. "::@",
+      "-r", _jj_target(target.offset) .. "::@",
       "-s",
       _jj_exact_path(target.file),
     }

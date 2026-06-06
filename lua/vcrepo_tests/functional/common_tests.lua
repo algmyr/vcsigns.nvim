@@ -55,17 +55,17 @@ function M.show_file_tests(adapter)
     test_cases = {
       show_current_commit = {
         description = "Show file content at current commit",
-        commit_offset = 0,
+        offset = 0,
         expected_lines = { "version3" },
       },
       show_previous_commit = {
         description = "Show file content at previous commit",
-        commit_offset = 1,
+        offset = 1,
         expected_lines = { "version2" },
       },
       show_multiple_commits_back = {
         description = "Show file content at grandparent commit",
-        commit_offset = 2,
+        offset = 2,
         expected_lines = { "version1" },
       },
     },
@@ -84,7 +84,7 @@ function M.show_file_tests(adapter)
       local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
-      local target = vcrepo.create_target(bufnr, vcs, case.commit_offset)
+      local target = vcrepo.create_target(bufnr, vcs, case.offset)
       local lines = helpers.wait_for_async(function()
         local content, _ = vcs:show_file(target, { follow_renames = true })
         return content

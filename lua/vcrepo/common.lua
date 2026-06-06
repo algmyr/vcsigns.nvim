@@ -5,7 +5,7 @@ local util = require "vcrepo.util"
 --- The target of VCS operations.
 --- This is a file at a particular commit in the VCS.
 ---@class Target
----@field commit integer Target commit.
+---@field offset integer Offset relative to current commit.
 ---@field file string The file name.
 ---@field path string The absolute path to the file.
 local Target = {}

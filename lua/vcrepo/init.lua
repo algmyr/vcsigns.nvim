@@ -98,14 +98,14 @@ end
 --- Create a target from an absolute path for VCS operations.
 ---@param abs_path string The absolute file path.
 ---@param vcs VcsHandle The VCS handle.
----@param commit_offset integer The commit offset (0 = current, 1 = parent, etc.).
+---@param offset integer The commit offset (0 = current, 1 = parent, etc.).
 ---@return Target
-function M.create_target_from_path(abs_path, vcs, commit_offset)
+function M.create_target_from_path(abs_path, vcs, offset)
   local paths = require "vclib.paths"
   assert(vcs.root, "VCS root must be set")
   local file = paths.relativize(abs_path, vcs.root)
   return {
-    commit = commit_offset,
+    offset = offset,
     file = file,
     path = abs_path,
   }
@@ -114,12 +114,12 @@ end
 --- Create a target from a buffer for VCS operations.
 ---@param bufnr integer The buffer number.
 ---@param vcs VcsHandle The VCS handle.
----@param commit_offset integer The commit offset (0 = current, 1 = parent, etc.).
+---@param offset integer The commit offset (0 = current, 1 = parent, etc.).
 ---@return Target
-function M.create_target(bufnr, vcs, commit_offset)
+function M.create_target(bufnr, vcs, offset)
   local paths = require "vclib.paths"
   local abs_path = paths.abs_path(bufnr)
-  return M.create_target_from_path(abs_path, vcs, commit_offset)
+  return M.create_target_from_path(abs_path, vcs, offset)
 end
 
 --- Export common utilities.

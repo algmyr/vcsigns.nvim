@@ -100,7 +100,7 @@ function M.show_file_tests(adapter)
       local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
-      local target = vcrepo.create_target(bufnr, vcs, case.offset, case.anchor)
+      local target = vcs:create_target(bufnr, case.offset, case.anchor)
       local lines = helpers.wait_for_async(function()
         local content, _ = vcs:show_file(target, { follow_renames = true })
         return content
@@ -154,7 +154,7 @@ function M.error_handling_tests(adapter)
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
       -- File doesn't exist in current commit, should return empty file {}.
-      local target = vcrepo.create_target(bufnr, vcs, 0)
+      local target = vcs:create_target(bufnr, 0)
       local lines = helpers.wait_for_async(function()
         local content, _ = vcs:show_file(target, { follow_renames = true })
         return content
@@ -210,7 +210,7 @@ function M.file_edge_case_tests(adapter)
       local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect repository")
 
-      local target = vcrepo.create_target(bufnr, vcs, 0)
+      local target = vcs:create_target(bufnr, 0)
       local lines = helpers.wait_for_async(function()
         local content, _ = vcs:show_file(target, { follow_renames = true })
         return content
@@ -384,7 +384,7 @@ function M.rename_resolution_tests(adapter)
 
       -- Helper to get content at a specific commit offset.
       local function content_at(offset)
-        local target = vcrepo.create_target(bufnr, vcs, offset)
+        local target = vcs:create_target(bufnr, offset)
         return helpers.wait_for_async(function()
           local content, _ = vcs:show_file(target, { follow_renames = true })
           return content

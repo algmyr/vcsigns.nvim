@@ -136,4 +136,33 @@ function M.detect_vcs(vcs_list, file_dir)
   return nil
 end
 
+--- Create a target from an absolute path for VCS operations.
+---@param abs_path string The absolute file path.
+---@param vcs_root string The root directory of the repository.
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@return Target
+function M.create_target_from_path(abs_path, vcs_root, offset, anchor)
+  local paths = require "vclib.paths"
+  local file = paths.relativize(abs_path, vcs_root)
+  return {
+    anchor = anchor,
+    offset = offset,
+    file = file,
+    path = abs_path,
+  }
+end
+
+--- Create a target from a buffer for VCS operations.
+---@param bufnr integer The buffer number.
+---@param vcs_root string The root directory of the repository.
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@return Target
+function M.create_target(bufnr, vcs_root, offset, anchor)
+  local paths = require "vclib.paths"
+  local abs_path = paths.abs_path(bufnr)
+  return M.create_target_from_path(abs_path, vcs_root, offset, anchor)
+end
+
 return M

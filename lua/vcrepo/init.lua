@@ -69,6 +69,24 @@ function VcsHandle:needs_refresh()
   return self._internal:needs_refresh()
 end
 
+--- Create a target from an absolute path for VCS operations.
+---@param abs_path string The absolute file path.
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@return Target
+function VcsHandle:create_target_from_path(abs_path, offset, anchor)
+  return common.create_target_from_path(abs_path, self.root, offset, anchor)
+end
+
+--- Create a target from a buffer for VCS operations.
+---@param bufnr integer The buffer number.
+---@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@return Target
+function VcsHandle:create_target(bufnr, offset, anchor)
+  return common.create_target(bufnr, self.root, offset, anchor)
+end
+
 --- Register a custom VCS implementation.
 --- The VCS will be added at the beginning of the detection priority list.
 ---@param vcs VcsInterface The VCS implementation to register.
@@ -93,36 +111,6 @@ function M.detect(file_dir)
   }
   setmetatable(handle, VcsHandle)
   return handle
-end
-
---- Create a target from an absolute path for VCS operations.
----@param abs_path string The absolute file path.
----@param vcs VcsHandle The VCS handle.
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
----@return Target
-function M.create_target_from_path(abs_path, vcs, offset, anchor)
-  local paths = require "vclib.paths"
-  assert(vcs.root, "VCS root must be set")
-  local file = paths.relativize(abs_path, vcs.root)
-  return {
-    anchor = anchor,
-    offset = offset,
-    file = file,
-    path = abs_path,
-  }
-end
-
---- Create a target from a buffer for VCS operations.
----@param bufnr integer The buffer number.
----@param vcs VcsHandle The VCS handle.
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
----@return Target
-function M.create_target(bufnr, vcs, offset, anchor)
-  local paths = require "vclib.paths"
-  local abs_path = paths.abs_path(bufnr)
-  return M.create_target_from_path(abs_path, vcs, offset, anchor)
 end
 
 --- Export common utilities.

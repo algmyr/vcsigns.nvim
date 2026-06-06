@@ -5,13 +5,6 @@ local M = {}
 
 local common = require "vcrepo.common"
 
---- The target of VCS operations.
---- This represents a file at a particular commit in the VCS.
----@class Target
----@field commit integer Target commit offset (0 = current, 1 = parent, etc.).
----@field file string The file path relative to VCS root.
----@field path string The absolute path to the file.
-
 --- Global registry of VCS implementations.
 --- Custom implementations can be added via add_backend().
 ---@type VcsInterface[]

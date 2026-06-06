@@ -2,7 +2,7 @@ local M = {}
 
 local util = require "vcrepo.util"
 
---- The target of diff calculations.
+--- The target of VCS operations.
 --- This is a file at a particular commit in the VCS.
 ---@class Target
 ---@field commit integer Target commit.

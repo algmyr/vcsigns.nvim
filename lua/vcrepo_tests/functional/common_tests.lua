@@ -52,16 +52,6 @@ end
 ---@param adapter VcsAdapter
 ---@return table test_suite
 function M.show_file_tests(adapter)
-  local parent
-  if adapter.vcs_type == "jj" then
-    parent = "@-"
-  elseif adapter.vcs_type == "git" then
-    parent = "HEAD~1"
-  elseif adapter.vcs_type == "hg" then
-    parent = ".~1"
-  else
-    error("Unknown adapter: " .. adapter.name)
-  end
   return adapter:wrap {
     test_cases = {
       show_current_commit = {
@@ -82,7 +72,7 @@ function M.show_file_tests(adapter)
       show_previous_commit_with_anchor = {
         description = "Show file content at previous commit with anchor",
         offset = 1,
-        anchor = parent,
+        anchor_offset = 1,
         expected_lines = { "version1" },
       },
     },
@@ -102,7 +92,9 @@ function M.show_file_tests(adapter)
       local vcs = vcrepo.detect(file_dir(bufnr))
       assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
 
-      local target = vcs:create_target(bufnr, case.offset, case.anchor)
+      local anchor = case.anchor_offset
+        and repo:revision_back(case.anchor_offset)
+      local target = vcs:create_target(bufnr, case.offset, anchor)
       local lines = helpers.wait_for_async(function()
         local content, _ = vcs:show_file(target, { follow_renames = true })
         return content

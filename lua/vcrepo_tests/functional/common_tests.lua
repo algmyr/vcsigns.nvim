@@ -23,7 +23,8 @@ function M.detection_tests(adapter)
     },
     test = function(repo, _)
       repo:write_file("test.txt", "line1\nline2\n")
-      repo:commit_file("test.txt", "Initial commit")
+      repo:add_files { "test.txt" }
+      repo:commit_all "Initial commit"
 
       vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
       local bufnr = vim.api.nvim_get_current_buf()
@@ -88,11 +89,12 @@ function M.show_file_tests(adapter)
     test = function(repo, case)
       local test_file = repo:path "test.txt"
       repo:write_file("test.txt", "version1\n")
-      repo:commit_file("test.txt", "First commit")
+      repo:add_files { "test.txt" }
+      repo:commit_all "First commit"
       repo:write_file("test.txt", "version2\n")
-      repo:commit_file("test.txt", "Second commit")
+      repo:commit_all "Second commit"
       repo:write_file("test.txt", "version3\n")
-      repo:commit_file("test.txt", "Third commit")
+      repo:commit_all "Third commit"
 
       vim.cmd("edit " .. vim.fn.fnameescape(test_file))
       local bufnr = vim.api.nvim_get_current_buf()
@@ -128,7 +130,8 @@ function M.error_handling_tests(adapter)
         description = "Handle file that doesn't exist in target commit",
         repo_setup = function(repo)
           repo:write_file("dummy.txt", "dummy\n")
-          repo:commit_file("dummy.txt", "Initial commit")
+          repo:add_files { "dummy.txt" }
+          repo:commit_all "Initial commit"
           repo:write_file("new.txt", "new content\n")
         end,
         file_to_edit = "new.txt",
@@ -137,7 +140,8 @@ function M.error_handling_tests(adapter)
         description = "Handle newly added file not yet in VCS",
         repo_setup = function(repo)
           repo:write_file("test.txt", "content\n")
-          repo:commit_file("test.txt", "First commit")
+          repo:add_files { "test.txt" }
+          repo:commit_all "First commit"
           repo:remove_file "test.txt"
           repo:commit_all "Remove test.txt"
           repo:write_file("test.txt", "new content\n")
@@ -201,7 +205,8 @@ function M.file_edge_case_tests(adapter)
     test = function(repo, case)
       local test_file = repo:path(case.file.path)
       repo:write_file(case.file.path, case.file.content)
-      repo:commit_file(case.file.path, "Test commit")
+      repo:add_files { case.file.path }
+      repo:commit_all "Test commit"
       local expected_content = case.expected_lines
 
       vim.cmd("edit " .. vim.fn.fnameescape(test_file))
@@ -267,7 +272,8 @@ function M.blame_tests(adapter)
     test = function(repo, case)
       local test_file = repo:path "blame_test.txt"
       repo:write_file("blame_test.txt", case.file_content)
-      repo:commit_file("blame_test.txt", "Test commit")
+      repo:add_files { "blame_test.txt" }
+      repo:commit_all "Test commit"
 
       vim.cmd("edit " .. vim.fn.fnameescape(test_file))
       local bufnr = vim.api.nvim_get_current_buf()
@@ -362,11 +368,12 @@ function M.rename_resolution_tests(adapter)
 
       -- Create file with v1 content.
       repo:write_file("old_name.txt", v1)
-      repo:commit_file("old_name.txt", "Original content")
+      repo:add_files { "old_name.txt" }
+      repo:commit_all "Original content"
 
       -- Modify to v2.
       repo:write_file("old_name.txt", v2)
-      repo:commit_file("old_name.txt", "Modify content")
+      repo:commit_all "Modify content"
 
       -- Rename file.
       repo:run_cmd { "mv", "old_name.txt", "new_name.txt" }

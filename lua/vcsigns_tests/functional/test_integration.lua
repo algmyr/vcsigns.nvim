@@ -103,7 +103,8 @@ M.diff_computation = git_adapter:wrap {
     local lines_before = testing.dedent(case.lines_before)
     local lines_after = testing.dedent(case.lines_after)
     repo:write_file("test.txt", lines_before)
-    repo:commit_file("test.txt", "Initial commit")
+    repo:add_files { "test.txt" }
+    repo:commit_all "Initial commit"
     repo:write_file("test.txt", lines_after)
 
     vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
@@ -201,7 +202,8 @@ M.sign_placement = git_adapter:wrap {
     local lines_before = testing.dedent(case.lines_before)
     local lines_after = testing.dedent(case.lines_after)
     repo:write_file("test.txt", lines_before)
-    repo:commit_file("test.txt", "Initial commit")
+    repo:add_files { "test.txt" }
+    repo:commit_all "Initial commit"
     repo:write_file("test.txt", lines_after)
 
     vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
@@ -235,11 +237,12 @@ M.target_commit_switching = git_adapter:wrap {
   },
   test = function(repo, _)
     repo:write_file("test.txt", "version1\n")
-    repo:commit_file("test.txt", "First")
+    repo:add_files { "test.txt" }
+    repo:commit_all "First"
     repo:write_file("test.txt", "version2\n")
-    repo:commit_file("test.txt", "Second")
+    repo:commit_all "Second"
     repo:write_file("test.txt", "version3\n")
-    repo:commit_file("test.txt", "Third")
+    repo:commit_all "Third"
 
     vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
     local bufnr = vim.api.nvim_get_current_buf()
@@ -276,7 +279,8 @@ M.empty_diff = git_adapter:wrap {
   },
   test = function(repo, _)
     repo:write_file("test.txt", "unchanged\n")
-    repo:commit_file("test.txt", "Initial")
+    repo:add_files { "test.txt" }
+    repo:commit_all "Initial"
 
     vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
     local bufnr = vim.api.nvim_get_current_buf()

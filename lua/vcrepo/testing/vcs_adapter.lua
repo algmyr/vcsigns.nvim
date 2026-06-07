@@ -89,34 +89,6 @@ local function _write_file(filepath, content)
   file:close()
 end
 
---- Commit a file in a VCS repository.
----@param vcs_type "git"|"jj"|"hg" VCS type.
----@param dir string Repository directory.
----@param filepath string Relative path to file from repo root.
----@param message string Commit message.
----@return boolean success Whether commit succeeded.
-local function _commit_file(vcs_type, dir, filepath, message)
-  local res
-  if vcs_type == "git" then
-    res = _run({ "git", "add", filepath }, { cwd = dir })
-    if res.code ~= 0 then
-      return false
-    end
-    res = _run({ "git", "commit", "-m", message }, { cwd = dir })
-  elseif vcs_type == "jj" then
-    res = _run({ "jj", "commit", "-m", message, filepath }, { cwd = dir })
-  elseif vcs_type == "hg" then
-    res = _run({ "hg", "add", filepath }, { cwd = dir })
-    if res.code ~= 0 then
-      return false
-    end
-    res = _run({ "hg", "commit", "-m", message }, { cwd = dir })
-  else
-    error("Unknown VCS type: " .. vcs_type)
-  end
-  return res.code == 0
-end
-
 ---@class VcsAdapter
 ---@field vcs_type "git"|"jj"|"hg"
 ---@field name string Display name for the VCS.
@@ -224,12 +196,24 @@ function VcsRepo:write_file(filename, content)
   _write_file(filepath, content)
 end
 
---- Commit a file.
----@param filename string Relative filename.
----@param message string Commit message.
----@return boolean success Whether commit succeeded.
-function VcsRepo:commit_file(filename, message)
-  return _commit_file(self.vcs_type, self.repo_dir, filename, message)
+--- Add files to VCS tracking.
+---@param filepaths string[] Relative file paths to add.
+---@return boolean success Whether add succeeded.
+function VcsRepo:add_files(filepaths)
+  local vcs_type = self.vcs_type
+  local dir = self.repo_dir
+  local res
+  if vcs_type == "git" then
+    res = _run(vim.list_extend({ "git", "add" }, filepaths), { cwd = dir })
+  elseif vcs_type == "jj" then
+    -- JJ doesn't do this.
+    res = { code = 0 }
+  elseif vcs_type == "hg" then
+    res = _run(vim.list_extend({ "hg", "add" }, filepaths), { cwd = dir })
+  else
+    error("Unknown VCS type: " .. vcs_type)
+  end
+  return res.code == 0
 end
 
 --- Commit all changes (including deletions).

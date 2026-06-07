@@ -416,4 +416,77 @@ function M.rename_resolution_tests(adapter)
   }
 end
 
+function M.changed_files_tests(adapter)
+  return adapter:wrap {
+    test_cases = {
+      list_changed_files = {
+        description = "List changed files in a commit",
+        expectations = {
+          { offset = 0, expected_files = { "file1.txt", "file3.txt" } },
+          { offset = 2, expected_files = { "file2.txt", "file3.txt" } },
+          { offset = 0, anchor_offset = 1, expected_files = { "file1.txt" } },
+          {
+            offset = 1,
+            anchor_offset = 1,
+            expected_files = { "file1.txt", "file2.txt" },
+          },
+        },
+      },
+    },
+    test = function(repo, case)
+      repo:write_file("file1.txt", "content1\n")
+      repo:write_file("file2.txt", "content2\n")
+      repo:add_files { "file1.txt", "file2.txt" }
+      repo:commit_all "Add two files"
+
+      repo:write_file("file1.txt", "new content\n")
+      repo:commit_all "Modify file1"
+
+      repo:remove_file "file1.txt"
+      repo:write_file("file3.txt", "content3\n")
+      repo:add_files { "file3.txt" }
+      repo:commit_all "Delete file1 and add file3"
+
+      if adapter.vcs_type == "jj" then
+        -- Align things so that expectations align.
+        repo:run_cmd { "jj", "edit", "@-" }
+      end
+
+      vim.cmd("edit " .. vim.fn.fnameescape(repo:path "file2.txt"))
+      local bufnr = vim.api.nvim_get_current_buf()
+
+      local vcs = vcrepo.detect(file_dir(bufnr))
+      assert(vcs ~= nil, "Failed to detect " .. adapter.name .. " repository")
+
+      local function _get_changed_files(offset, anchor)
+        local entries = helpers.wait_for_async(function()
+          -- TODO(algmyr): Expose via handle.
+          local content, _ = vcs._internal:get_changed_files(offset, anchor)
+          return content
+        end)
+        return vim
+          .iter(entries)
+          :map(function(x)
+            return x.target.file
+          end)
+          :totable()
+      end
+
+      for i, exp in ipairs(case.expectations) do
+        local anchor = exp.anchor_offset
+          and repo:revision_back(exp.anchor_offset)
+        local current = _get_changed_files(exp.offset, anchor)
+        assert(current ~= nil, "Expected changed files, got nil")
+        testing.assert_list_unordered_eq(
+          current,
+          exp.expected_files,
+          "In case " .. i .. ", changed files mismatch"
+        )
+      end
+
+      vim.cmd "bdelete!"
+    end,
+  }
+end
+
 return M

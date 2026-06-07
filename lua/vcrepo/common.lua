@@ -46,14 +46,21 @@ local BlameAnnotation = {}
 --- Expected to be async.
 ---@alias RefreshChecker fun(self: Vcs): boolean
 
+---@alias ChangedFileGetter fun(self: Vcs, offset: integer, anchor: string): VcsDiffEntry[]
+
 ---@class VcsInterface
 ---@field name string Human-readable name of the VCS.
 ---@field detect VcsDetector
 ---@field show FileShower
+---@field get_changed_files ChangedFileGetter Get list of changed files for a commit.
 ---@field blame BlameGetter|nil Get blame annotations for a file (optional).
 ---@field needs_refresh RefreshChecker Check if VCS state changed and refresh is needed (optional).
 ---@field resolve_rename RenameResolver|nil
 local VcsInterface = {}
+
+---@class VcsDiffEntry
+--- Represents a single file diff entry.
+---@field target Target The target file path.
 
 ---@class Vcs: VcsInterface
 ---@field root string The root directory of the repository.
@@ -163,6 +170,25 @@ function M.create_target(bufnr, vcs_root, offset, anchor)
   local paths = require "vclib.paths"
   local abs_path = paths.abs_path(bufnr)
   return M.create_target_from_path(abs_path, vcs_root, offset, anchor)
+end
+
+function M.process_diff_result(diff_output, root, offset, anchor)
+  if diff_output.code ~= 0 or not diff_output.stdout then
+    return nil
+  end
+  if #diff_output.stdout == 0 then
+    return {}
+  end
+  local lines = vim.split(vim.trim(diff_output.stdout), "\n", { plain = true })
+  return vim
+    .iter(lines)
+    :map(function(line)
+      local abs_path = root .. "/" .. line
+      return {
+        target = M.create_target_from_path(abs_path, root, offset, anchor),
+      }
+    end)
+    :totable()
 end
 
 return M

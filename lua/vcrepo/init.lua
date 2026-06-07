@@ -87,6 +87,18 @@ function VcsHandle:create_target(bufnr, offset, anchor)
   return common.create_target(bufnr, self.root, offset, anchor)
 end
 
+--- List changed files.
+---@param bufnr integer The buffer number to check for changes.
+---@param offset integer Offset relative to anchor.
+---@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@return VcsDiffEntry[]|nil changed_files List of changed file paths, or nil if unavailable.
+function VcsHandle:get_changed_files(offset, anchor)
+  if not self._internal.get_changed_files then
+    return nil
+  end
+  return self._internal:get_changed_files(offset, anchor)
+end
+
 --- Register a custom VCS implementation.
 --- The VCS will be added at the beginning of the detection priority list.
 ---@param vcs VcsInterface The VCS implementation to register.

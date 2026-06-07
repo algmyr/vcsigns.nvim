@@ -31,6 +31,37 @@ return {
     return common.content_to_lines(out.stdout)
   end,
   ---@async
+  get_changed_files = function(self, offset, anchor)
+    local anchor = anchor or "HEAD"
+    local revspec = string.format("%s~%d", anchor, offset + 1)
+
+    -- Git is annoying and has no root commit.
+    -- Diffing all commit would need to target it.
+    -- Hacky solution, try to resolve the target, if it fails use the empty tree hash.
+    local parent_cmd = {
+      "git",
+      "rev-parse",
+      revspec,
+    }
+    local parent_out = util.run_async(parent_cmd, { cwd = self.root })
+    local parent
+    if parent_out.code == 0 then
+      parent = vim.trim(parent_out.stdout)
+    else
+      parent = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+    end
+
+    local cmd = {
+      "git",
+      "diff",
+      "--name-only",
+      parent,
+      anchor,
+    }
+    local out = util.run_async(cmd, { cwd = self.root })
+    return common.process_diff_result(out, self.root, offset, anchor)
+  end,
+  ---@async
   blame = function(self, file, template)
     -- Git does not support custom templates. Template must be nil.
     assert(template == nil, "Git blame does not support custom templates")

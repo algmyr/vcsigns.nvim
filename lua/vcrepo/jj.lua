@@ -131,6 +131,16 @@ return {
     return _reverse_apply_patch(current_lines, diff_out.stdout)
   end,
   ---@async
+  get_changed_files = function(self, offset, anchor)
+    local target = _resolve_target {
+      offset = offset,
+      anchor = anchor,
+    }
+    local cmd = _diff_cmd(target, { "--name-only" }, {})
+    local out = util.run_async(cmd, { cwd = self.root })
+    return common.process_diff_result(out, self.root, offset, anchor)
+  end,
+  ---@async
   needs_refresh = function(self)
     local last_op_id = self._last_op_id
 

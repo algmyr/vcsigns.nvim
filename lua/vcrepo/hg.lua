@@ -33,6 +33,20 @@ return {
     return common.content_to_lines(out.stdout)
   end,
   ---@async
+  get_changed_files = function(self, offset, anchor)
+    local anchor = anchor or "."
+    local revset = string.format("(%s)~%d", anchor, offset + 1)
+    local cmd = {
+      "hg",
+      "status",
+      "--no-status",
+      "--rev",
+      string.format("%s:%s", revset, anchor),
+    }
+    local out = util.run_async(cmd, { cwd = self.root })
+    return common.process_diff_result(out, self.root, offset, anchor)
+  end,
+  ---@async
   needs_refresh = function(self)
     return true
   end,

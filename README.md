@@ -61,7 +61,7 @@ For a documented default config, have a look inside `init.lua`.
     map('n', '<leader>su', function() require('vcsigns.actions').hunk_undo(0) end, 'Undo hunks under cursor')
     map('v', '<leader>su', function() require('vcsigns.actions').hunk_undo(0) end, 'Undo hunks in range')
     map('n', '<leader>sd', function() require('vcsigns.actions').toggle_hunk_diff(0) end, 'Show hunk diffs inline in the current buffer')
-    map('n', '<leader>sf'  function() require('vcsigns.fold').toggle(0) end, 'Fold outside hunks')
+    map('n', '<leader>sf', function() require('vcsigns.actions').toggle_fold(0) end, 'Fold outside hunks')
   end,
 }
 ```

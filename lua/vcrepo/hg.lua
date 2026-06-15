@@ -6,6 +6,9 @@ local run = require "vclib.run"
 ---@param target TargetRevision The target containing anchor and offset.
 ---@return string
 local function _diffbase(target_rev)
+  if target_rev.revset then
+    return target_rev.revset
+  end
   return string.format("(%s)~%d", target_rev.anchor, target_rev.offset)
 end
 

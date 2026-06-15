@@ -6,6 +6,7 @@ local util = require "vcrepo.util"
 ---@class TargetRevision
 ---@field anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
 ---@field offset integer Offset relative to anchor (0 = anchor, 1 = parent, etc.).
+---@field revset string|nil VCS-specific revset (optional; overrides anchor + offset if provided).
 
 --- The file target of VCS operations.
 --- This is a file at a particular commit in the VCS.

@@ -134,8 +134,9 @@ end
 ---@param refresh_only boolean
 local function _populate_quickfix_list(vcs, layout, refresh_only)
   async.run(function()
-    local offset = state.repo_get(vcs.root).offset
-    local entries = vcs:get_changed_files(offset, nil)
+    local target_rev =
+      { anchor = nil, offset = state.repo_get(vcs.root).offset }
+    local entries = vcs:get_changed_files(target_rev)
     if not entries then
       vim.notify(
         "No changed files detected in VCS.",

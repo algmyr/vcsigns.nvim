@@ -2,11 +2,15 @@ local M = {}
 
 local util = require "vcrepo.util"
 
---- The target of VCS operations.
---- This is a file at a particular commit in the VCS.
----@class Target
+--- Target VCS revision.
+---@class TargetRevision
 ---@field anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
 ---@field offset integer Offset relative to anchor (0 = anchor, 1 = parent, etc.).
+
+--- The file target of VCS operations.
+--- This is a file at a particular commit in the VCS.
+---@class Target
+---@field rev TargetRevision The base revision of the target.
 ---@field file string The file name.
 ---@field path string The absolute path to the file.
 local Target = {}
@@ -46,7 +50,7 @@ local BlameAnnotation = {}
 --- Expected to be async.
 ---@alias RefreshChecker fun(self: Vcs): boolean
 
----@alias ChangedFileGetter fun(self: Vcs, offset: integer, anchor: string): VcsDiffEntry[]
+---@alias ChangedFileGetter fun(self: Vcs, target_rev: TargetRevision): VcsDiffEntry[]
 
 ---@class VcsInterface
 ---@field name string Human-readable name of the VCS.
@@ -147,15 +151,13 @@ end
 --- Create a target from an absolute path for VCS operations.
 ---@param abs_path string The absolute file path.
 ---@param vcs_root string The root directory of the repository.
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@param target_rev TargetRevision The target revision for the file.
 ---@return Target
-function M.create_target_from_path(abs_path, vcs_root, offset, anchor)
+function M.create_target_from_path(abs_path, vcs_root, target_rev)
   local paths = require "vclib.paths"
   local file = paths.relativize(abs_path, vcs_root)
   return {
-    anchor = anchor,
-    offset = offset,
+    rev = target_rev,
     file = file,
     path = abs_path,
   }
@@ -164,16 +166,18 @@ end
 --- Create a target from a buffer for VCS operations.
 ---@param bufnr integer The buffer number.
 ---@param vcs_root string The root directory of the repository.
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@param target_rev TargetRevision The target revision for the file.
 ---@return Target
-function M.create_target(bufnr, vcs_root, offset, anchor)
+function M.create_target(bufnr, vcs_root, target_rev)
   local paths = require "vclib.paths"
   local abs_path = paths.abs_path(bufnr)
-  return M.create_target_from_path(abs_path, vcs_root, offset, anchor)
+  return M.create_target_from_path(abs_path, vcs_root, target_rev)
 end
 
-function M.process_diff_result(diff_output, root, offset, anchor)
+---@param diff_output vim.SystemObj
+---@param root string The root directory of the repository.
+---@param target_rev TargetRevision The target revision.
+function M.process_diff_result(diff_output, root, target_rev)
   if diff_output.code ~= 0 or not diff_output.stdout then
     return nil
   end
@@ -186,10 +190,27 @@ function M.process_diff_result(diff_output, root, offset, anchor)
     :map(function(line)
       local abs_path = root .. "/" .. line
       return {
-        target = M.create_target_from_path(abs_path, root, offset, anchor),
+        target = M.create_target_from_path(abs_path, root, target_rev),
       }
     end)
     :totable()
+end
+
+--- Resolve the target revision for a VCS operation, in-place.
+---@param vcs Vcs The VCS instance.
+---@param target_rev TargetRevision The target revision to resolve.
+local function _resolve_target_revision_in_place(vcs, target_rev)
+  target_rev.anchor = target_rev.anchor or vcs.head_revision
+  return target_rev
+end
+
+--- Resolve the target revision for a VCS operation.
+--- In particular, resolve default anchor if needed.
+---@param vcs Vcs The VCS instance.
+---@param target_rev TargetRevision The target revision to resolve.
+function M.resolve_target_revision(vcs, target_rev)
+  local resolved_target_rev = vim.deepcopy(target_rev)
+  return _resolve_target_revision_in_place(vcs, resolved_target_rev)
 end
 
 --- Resolve the target for a VCS operation.
@@ -198,9 +219,8 @@ end
 ---@param target Target The target to resolve.
 function M.resolve_target(vcs, target)
   local resolved_target = vim.deepcopy(target)
-  if not resolved_target.anchor then
-    resolved_target.anchor = vcs.head_revision
-  end
+  resolved_target.rev =
+    _resolve_target_revision_in_place(vcs, resolved_target.rev)
   return resolved_target
 end
 

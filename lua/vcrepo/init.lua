@@ -71,32 +71,29 @@ end
 
 --- Create a target from an absolute path for VCS operations.
 ---@param abs_path string The absolute file path.
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@param target_rev TargetRevision The target revision for the file.
 ---@return Target
-function VcsHandle:create_target_from_path(abs_path, offset, anchor)
-  return common.create_target_from_path(abs_path, self.root, offset, anchor)
+function VcsHandle:create_target_from_path(abs_path, target_rev)
+  return common.create_target_from_path(abs_path, self.root, target_rev)
 end
 
 --- Create a target from a buffer for VCS operations.
 ---@param bufnr integer The buffer number.
----@param offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@param target_rev TargetRevision The target revision for the file.
 ---@return Target
-function VcsHandle:create_target(bufnr, offset, anchor)
-  return common.create_target(bufnr, self.root, offset, anchor)
+function VcsHandle:create_target(bufnr, target_rev)
+  return common.create_target(bufnr, self.root, target_rev)
 end
 
 --- List changed files.
 ---@param bufnr integer The buffer number to check for changes.
----@param offset integer Offset relative to anchor.
----@param anchor string|nil Anchor commit (VCS-specific revset; nil = working copy).
+---@param target_rev TargetRevision The target revision to compare against.
 ---@return VcsDiffEntry[]|nil changed_files List of changed file paths, or nil if unavailable.
-function VcsHandle:get_changed_files(offset, anchor)
+function VcsHandle:get_changed_files(target_rev)
   if not self._internal.get_changed_files then
     return nil
   end
-  return self._internal:get_changed_files(offset, anchor)
+  return self._internal:get_changed_files(target_rev)
 end
 
 --- Register a custom VCS implementation.

@@ -22,7 +22,8 @@ return {
   ---@async
   show = function(self, target)
     target = common.resolve_target(self, target)
-    local revset = string.format("(%s)~%d", target.anchor, target.offset)
+    local revset =
+      string.format("(%s)~%d", target.rev.anchor, target.rev.offset)
     -- stylua: ignore
     local cmd = {
       "hg", "cat", "--config", "extensions.color=!",
@@ -34,19 +35,19 @@ return {
     return common.content_to_lines(out.stdout)
   end,
   ---@async
-  get_changed_files = function(self, offset, anchor)
-    local target =
-      common.resolve_target(self, { offset = offset, anchor = anchor })
-    local revset = string.format("(%s)~%d", target.anchor, target.offset + 1)
+  get_changed_files = function(self, target_rev)
+    target_rev = common.resolve_target_revision(self, target_rev)
+    local revset =
+      string.format("(%s)~%d", target_rev.anchor, target_rev.offset + 1)
     local cmd = {
       "hg",
       "status",
       "--no-status",
       "--rev",
-      string.format("%s:%s", revset, target.anchor),
+      string.format("%s:%s", revset, target_rev.anchor),
     }
     local out = util.run_async(cmd, { cwd = self.root })
-    return common.process_diff_result(out, self.root, offset, target.anchor)
+    return common.process_diff_result(out, self.root, target_rev)
   end,
   ---@async
   needs_refresh = function(self)

@@ -33,10 +33,17 @@ Internal contract that VCS implementations must follow:
 - `needs_refresh` - Check if refresh needed (optional)
 - `resolve_rename` - Rename resolution support (optional)
 
+### TargetRevision
+
+Represents a file at a specific commit:
+
+- `anchor` - Anchor override (optional, defaults to current commit)
+- `offset` - Commit offset (0 = anchor, 1 = anchor~1, etc.)
+
 ### Target
 
 Represents a file at a specific commit:
 
-- `commit` - Commit offset (0 = HEAD, 1 = HEAD~1, etc.)
+- `rev` - The target revision
 - `file` - Relative path from repo root
 - `path` - Absolute file path

@@ -4,12 +4,12 @@ local patch = require "vclib.patch"
 local run = require "vclib.run"
 
 --- Construct a jj revset for the target commit.
----@param target Target The target containing anchor and offset.
+---@param target TargetRevision The target containing anchor and offset.
 ---@return string
-local function _jj_target(target)
+local function _jj_diffbase(target_rev)
   return string.format(
-    "roots(ancestors(" .. target.anchor .. ", %d))",
-    target.offset + 1
+    "roots(ancestors(" .. target_rev.anchor .. ", %d))",
+    target_rev.offset + 1
   )
 end
 
@@ -49,18 +49,18 @@ local function _flatten(seqs)
   return result
 end
 
----@param target Target
+---@param target_rev TargetRevision
 ---@param args string[] Extra args.
 ---@param files string[] File paths to include in the diff.
-local function _diff_cmd(target, args, files)
-  local target_rev = _jj_target(target)
+local function _diff_cmd(target_rev, args, files)
+  local diffrev = _jj_diffbase(target_rev)
   return _flatten {
     {
       "jj",
       "--ignore-working-copy",
       "diff",
       "-r",
-      target_rev .. "::(" .. target.anchor .. ")",
+      diffrev .. "::(" .. target_rev.anchor .. ")",
     },
     args,
     { "--" },
@@ -92,7 +92,7 @@ return {
 
     local current_cmd = {
       "jj", "--ignore-working-copy", "file", "show",
-      "-r", target.anchor,
+      "-r", target.rev.anchor,
       "--",
       _jj_exact_path(target.file),
     }
@@ -103,7 +103,7 @@ return {
     end
 
     -- Special case: offset=-1 means we want the content at anchor itself.
-    if target.offset == -1 then
+    if target.rev.offset == -1 then
       return current_lines
     end
     
@@ -111,7 +111,7 @@ return {
     -- This works more generally than getting the content of the commit before
     -- which can fail if there are merges.
     -- stylua: ignore
-    local diff_cmd = _diff_cmd(target, { "--git" }, { _jj_exact_path(target.file) })
+    local diff_cmd = _diff_cmd(target.rev, { "--git" }, { _jj_exact_path(target.file) })
     local diff_out = util.run_async(diff_cmd, { cwd = self.root })
     if not diff_out.stdout or diff_out.stdout == "" then
       -- No diff means file is unchanged.
@@ -121,14 +121,11 @@ return {
     return _reverse_apply_patch(current_lines, diff_out.stdout)
   end,
   ---@async
-  get_changed_files = function(self, offset, anchor)
-    local target = common.resolve_target(self, {
-      offset = offset,
-      anchor = anchor,
-    })
-    local cmd = _diff_cmd(target, { "--name-only" }, {})
+  get_changed_files = function(self, target_rev)
+    target_rev = common.resolve_target_revision(self, target_rev)
+    local cmd = _diff_cmd(target_rev, { "--name-only" }, {})
     local out = util.run_async(cmd, { cwd = self.root })
-    return common.process_diff_result(out, self.root, offset, anchor)
+    return common.process_diff_result(out, self.root, target_rev)
   end,
   ---@async
   needs_refresh = function(self)
@@ -153,10 +150,10 @@ return {
   ---@async
   resolve_rename = function(self, target)
     target = common.resolve_target(self, target)
-    local target_rev = _jj_target(target)
+    local target_rev = _jj_diffbase(target.rev)
     
     -- stylua: ignore
-    local cmd = _diff_cmd(target, { "-s" }, { _jj_exact_path(target.file) })
+    local cmd = _diff_cmd(target.rev, { "-s" }, { _jj_exact_path(target.file) })
     local out = util.run_async(cmd, { cwd = self.root })
     if out.code ~= 0 or not out.stdout then
       return nil

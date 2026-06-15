@@ -3,10 +3,10 @@ local util = require "vcrepo.util"
 local patch = require "vclib.patch"
 local run = require "vclib.run"
 
---- Construct a jj revset for the target commit.
+--- Construct a revset for the target commit.
 ---@param target TargetRevision The target containing anchor and offset.
 ---@return string
-local function _jj_diffbase(target_rev)
+local function _diffbase(target_rev)
   return string.format(
     "roots(ancestors(" .. target_rev.anchor .. ", %d))",
     target_rev.offset + 1
@@ -53,7 +53,7 @@ end
 ---@param args string[] Extra args.
 ---@param files string[] File paths to include in the diff.
 local function _diff_cmd(target_rev, args, files)
-  local diffrev = _jj_diffbase(target_rev)
+  local diffrev = _diffbase(target_rev)
   return _flatten {
     {
       "jj",
@@ -150,7 +150,7 @@ return {
   ---@async
   resolve_rename = function(self, target)
     target = common.resolve_target(self, target)
-    local target_rev = _jj_diffbase(target.rev)
+    local target_rev = _diffbase(target.rev)
     
     -- stylua: ignore
     local cmd = _diff_cmd(target.rev, { "-s" }, { _jj_exact_path(target.file) })

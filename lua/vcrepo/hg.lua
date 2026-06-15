@@ -2,6 +2,13 @@ local common = require "vcrepo.common"
 local util = require "vcrepo.util"
 local run = require "vclib.run"
 
+--- Construct a revset for the target commit.
+---@param target TargetRevision The target containing anchor and offset.
+---@return string
+local function _diffbase(target_rev)
+  return string.format("(%s)~%d", target_rev.anchor, target_rev.offset)
+end
+
 ---@type VcsInterface
 return {
   name = "Mercurial",
@@ -22,8 +29,7 @@ return {
   ---@async
   show = function(self, target)
     target = common.resolve_target(self, target)
-    local revset =
-      string.format("(%s)~%d", target.rev.anchor, target.rev.offset)
+    local revset = _diffbase(target.rev)
     -- stylua: ignore
     local cmd = {
       "hg", "cat", "--config", "extensions.color=!",
@@ -37,8 +43,7 @@ return {
   ---@async
   get_changed_files = function(self, target_rev)
     target_rev = common.resolve_target_revision(self, target_rev)
-    local revset =
-      string.format("(%s)~%d", target_rev.anchor, target_rev.offset + 1)
+    local revset = _diffbase(target_rev) .. "~1"
     local cmd = {
       "hg",
       "status",

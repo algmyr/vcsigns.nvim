@@ -50,6 +50,7 @@ local BlameAnnotation = {}
 
 ---@class VcsInterface
 ---@field name string Human-readable name of the VCS.
+---@field head_revision string The VCS-specific revset for the current working copy.
 ---@field detect VcsDetector
 ---@field show FileShower
 ---@field get_changed_files ChangedFileGetter Get list of changed files for a commit.
@@ -189,6 +190,18 @@ function M.process_diff_result(diff_output, root, offset, anchor)
       }
     end)
     :totable()
+end
+
+--- Resolve the target for a VCS operation.
+--- In particular, resolve default anchor if needed.
+---@param vcs Vcs The VCS instance.
+---@param target Target The target to resolve.
+function M.resolve_target(vcs, target)
+  local resolved_target = vim.deepcopy(target)
+  if not resolved_target.anchor then
+    resolved_target.anchor = vcs.head_revision
+  end
+  return resolved_target
 end
 
 return M

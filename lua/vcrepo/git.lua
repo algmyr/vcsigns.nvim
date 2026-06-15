@@ -5,6 +5,7 @@ local run = require "vclib.run"
 ---@type VcsInterface
 return {
   name = "Git",
+  head_revision = "HEAD",
   detect = function(dir)
     -- Check if git executable exists.
     if vim.fn.executable "git" == 0 then
@@ -20,8 +21,8 @@ return {
   end,
   ---@async
   show = function(self, target)
-    local anchor = target.anchor or "HEAD"
-    local revspec = string.format("%s~%d", anchor, target.offset)
+    target = common.resolve_target(self, target)
+    local revspec = string.format("%s~%d", target.anchor, target.offset)
     local cmd = {
       "git",
       "show",
@@ -32,8 +33,9 @@ return {
   end,
   ---@async
   get_changed_files = function(self, offset, anchor)
-    local anchor = anchor or "HEAD"
-    local revspec = string.format("%s~%d", anchor, offset + 1)
+    local target =
+      common.resolve_target(self, { offset = offset, anchor = anchor })
+    local revspec = string.format("%s~%d", target.anchor, target.offset + 1)
 
     -- Git is annoying and has no root commit.
     -- Diffing all commit would need to target it.
@@ -56,10 +58,10 @@ return {
       "diff",
       "--name-only",
       parent,
-      anchor,
+      target.anchor,
     }
     local out = util.run_async(cmd, { cwd = self.root })
-    return common.process_diff_result(out, self.root, offset, anchor)
+    return common.process_diff_result(out, self.root, offset, target.anchor)
   end,
   ---@async
   blame = function(self, file, template)

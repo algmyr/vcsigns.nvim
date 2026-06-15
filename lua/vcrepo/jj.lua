@@ -39,17 +39,6 @@ local function _reverse_apply_patch(current_lines, patch_output)
   return patch.apply_patch(current_lines, inverted)
 end
 
---- Construct a jj revset for the target commit, defaulting anchor to "@" if not set.
----@param target Target
----@return Target
-local function _resolve_target(target)
-  local resolved_target = vim.deepcopy(target)
-  if not resolved_target.anchor then
-    resolved_target.anchor = "@"
-  end
-  return resolved_target
-end
-
 local function _flatten(seqs)
   local result = {}
   for _, seq in ipairs(seqs) do
@@ -82,6 +71,7 @@ end
 ---@type VcsInterface
 return {
   name = "Jujutsu",
+  head_revision = "@",
   detect = function(dir)
     -- Check if jj executable exists.
     if vim.fn.executable "jj" == 0 then
@@ -97,7 +87,7 @@ return {
   end,
   ---@async
   show = function(self, target)
-    target = _resolve_target(target)
+    target = common.resolve_target(self, target)
     -- stylua: ignore
 
     local current_cmd = {
@@ -132,10 +122,10 @@ return {
   end,
   ---@async
   get_changed_files = function(self, offset, anchor)
-    local target = _resolve_target {
+    local target = common.resolve_target(self, {
       offset = offset,
       anchor = anchor,
-    }
+    })
     local cmd = _diff_cmd(target, { "--name-only" }, {})
     local out = util.run_async(cmd, { cwd = self.root })
     return common.process_diff_result(out, self.root, offset, anchor)
@@ -162,7 +152,7 @@ return {
   end,
   ---@async
   resolve_rename = function(self, target)
-    target = _resolve_target(target)
+    target = common.resolve_target(self, target)
     local target_rev = _jj_target(target)
     
     -- stylua: ignore

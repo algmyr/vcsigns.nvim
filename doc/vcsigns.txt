@@ -28,11 +28,13 @@ HUNK OPERATIONS
 
 DIFFBASE SELECTION
 
-:VCSigns newer    Diff against a newer commit.
-                  Accepts a number argument to specify how many steps to jump.
+:VCSigns diffbase_newer     Move diffbase forward to a newer commit.
+                            Accepts a number of steps to jump.
+                            Aliases: newer
 
-:VCSigns older    Diff against an older commit.
-                  Accepts a number argument to specify how many steps to jump.
+:VCSigns diffbase_older     Move diffbase backward to an older commit.
+                            Accepts a number of steps to jump.
+                            Aliases: older
 
 FOLDING
 

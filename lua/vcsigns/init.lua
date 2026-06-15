@@ -51,13 +51,19 @@ end
 local command_map = {
   start = _no_args(M.actions.start),
   stop = _no_args(M.actions.stop),
+  -- Diffbase selection.
+  diffbase_newer = _with_count(M.actions.target_newer_commit),
+  diffbase_older = _with_count(M.actions.target_older_commit),
+  -- Diffbase selection (aliases).
   newer = _with_count(M.actions.target_newer_commit),
   older = _with_count(M.actions.target_older_commit),
+  -- Hunk actions.
   fold = _no_args(M.actions.toggle_fold),
   hunk_next = _with_count(M.actions.hunk_next),
   hunk_prev = _with_count(M.actions.hunk_prev),
   hunk_undo = _with_range(M.actions.hunk_undo),
   hunk_diff = _no_args(M.actions.toggle_hunk_diff),
+  -- Other.
   diffview = _no_args(M.actions.diffview),
 }
 

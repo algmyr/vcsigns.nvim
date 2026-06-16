@@ -69,4 +69,16 @@ function M.repo_get(repo_path)
   return repo_state[repo_path]
 end
 
+--- Mark all VCSHandle instances associated with the one in the buffer as dirty, to be refreshed.
+---@param bufnr integer The buffer number (0 for current buffer).
+function M.mark_vcs_dirty(bufnr)
+  local vcs = M.get(bufnr).vcs.vcs
+  assert(vcs, "No VCS handle for buffer " .. bufnr)
+  for _, s in pairs(buffers) do
+    if s.vcs.vcs.name == vcs.name and s.vcs.vcs.root == vcs.root then
+      s.vcs.vcs.dirty = true
+    end
+  end
+end
+
 return M

@@ -101,7 +101,7 @@ function M.start(bufnr)
   s.vcs.vcs = vcs
 
   _set_buflocal_autocmds(bufnr)
-  updates.deep_update(bufnr, true)
+  updates.deep_update(bufnr)
 end
 
 --- Start VCSigns for the given buffer, but skip if detection was already done.
@@ -152,7 +152,8 @@ function M.target_older_commit(bufnr, steps)
   repo_state.offset = new_target
   _target_change_message(new_target)
   -- Target has changed, trigger a full update.
-  updates.deep_update(bufnr, true)
+  state.mark_vcs_dirty(bufnr)
+  updates.deep_update(bufnr)
 end
 
 --- Target a newer commit for diffing (go forward in history).
@@ -168,7 +169,8 @@ function M.target_newer_commit(bufnr, steps)
     repo_state.offset = new_target
     _target_change_message(new_target)
     -- Target has changed, trigger a full update.
-    updates.deep_update(bufnr, true)
+    state.mark_vcs_dirty(bufnr)
+    updates.deep_update(bufnr)
   else
     last_target_notification = vim.notify(
       "No timetravel! Cannot diff against HEAD~" .. new_target,

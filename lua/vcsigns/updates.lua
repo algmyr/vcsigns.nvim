@@ -101,11 +101,7 @@ end
 
 --- Expensive update including VCS querying for file contents.
 ---@param bufnr integer The buffer number.
----@param force_refresh boolean|nil Whether to clear the gitignore cache.
-function M.deep_update(bufnr, force_refresh)
-  if force_refresh then
-    ignore.clear_ignored_cache()
-  end
+function M.deep_update(bufnr)
   if util.is_special_buffer(bufnr) then
     -- Not a normal file buffer, don't do anything.
     util.verbose "Not a normal file buffer, skipping."
@@ -115,6 +111,12 @@ function M.deep_update(bufnr, force_refresh)
   if not vcs then
     util.verbose "No VCS detected for buffer, skipping."
     return
+  end
+  local force_refresh = vcs.dirty
+  vcs.dirty = false
+
+  if force_refresh then
+    ignore.clear_ignored_cache()
   end
 
   async.run(function()

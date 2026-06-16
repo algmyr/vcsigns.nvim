@@ -18,6 +18,7 @@ local _registry = {
 ---@class VcsHandle
 ---@field name string Human-readable name of the VCS.
 ---@field root string The root directory of the repository.
+---@field dirty boolean Whether a forced refresh is needed.
 ---@field _internal Vcs Internal VCS implementation (private).
 local VcsHandle = {}
 VcsHandle.__index = VcsHandle
@@ -116,6 +117,7 @@ function M.detect(file_dir)
   local handle = {
     name = vcs.name,
     root = vcs.root,
+    dirty = true,
     _internal = vcs,
   }
   setmetatable(handle, VcsHandle)

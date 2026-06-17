@@ -36,6 +36,11 @@ DIFFBASE SELECTION
                             Accepts a number of steps to jump.
                             Aliases: older
 
+:VCSigns diffbase_revset    Set diffbase to an absolute vcs specific revset,
+                            overrides the relative newer/older commands.
+                            The argument will be used as the diffbase revset.
+                            Given no argument, unsets the revset diffbase.
+
 FOLDING
 
 :VCSigns fold    Toggle folding of non-diff lines.

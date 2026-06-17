@@ -54,6 +54,14 @@ local command_map = {
   -- Diffbase selection.
   diffbase_newer = _with_count(M.actions.target_newer_commit),
   diffbase_older = _with_count(M.actions.target_older_commit),
+  diffbase_revset = function(bufnr, arg)
+    local args = vim.list_slice(arg.fargs, 2)
+    if #args > 1 then
+      error "VCSigns revset takes at most one argument (revset)"
+    end
+    local revset = args[1] or nil
+    M.actions.target_revset(bufnr, revset)
+  end,
   -- Diffbase selection (aliases).
   newer = _with_count(M.actions.target_newer_commit),
   older = _with_count(M.actions.target_older_commit),

@@ -183,6 +183,25 @@ function M.target_newer_commit(bufnr, steps)
   end
 end
 
+function M.target_revset(bufnr, revset)
+  local repo_root = state.get(bufnr).vcs.vcs.root
+  local repo_state = state.repo_get(repo_root)
+  if not revset or revset == "" then
+    repo_state.revset = nil
+    _target_change_message(repo_state.offset)
+  else
+    repo_state.revset = revset
+    repo_state.revset = revset
+    vim.notify(
+      "Now diffing against " .. revset,
+      vim.log.levels.INFO,
+      { title = "VCSigns" }
+    )
+  end
+  state.mark_vcs_dirty(bufnr)
+  updates.deep_update(bufnr, true)
+end
+
 ---@param bufnr integer The buffer number.
 ---@param count integer The number of hunks to navigate.
 ---@param forward boolean True for forward, false for backwards.

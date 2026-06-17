@@ -31,8 +31,12 @@ function M.show_file(bufnr, vcs)
   end
 
   local offset = state.repo_get(vcs.root).offset
+  local revset = state.repo_get(vcs.root).revset
   local anchor = state.get(bufnr).anchor
-  local target = vcs:create_target(bufnr, { offset = offset, anchor = anchor })
+  local target = vcs:create_target(
+    bufnr,
+    { offset = offset, anchor = anchor, revset = revset }
+  )
   local lines, resolved_file = vcs:show_file(target, { follow_renames = true })
 
   -- Check buffer still valid after async operation.

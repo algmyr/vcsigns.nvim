@@ -54,6 +54,7 @@ end
 
 ---@class RepoState
 ---@field offset integer Offset relative to anchor (-1 = anchor, 0 = parent, 1 = grandparent, etc.).
+---@field revset string|nil Buffer-specific revset override.
 
 ---@type table<string, RepoState>
 local repo_state = {}

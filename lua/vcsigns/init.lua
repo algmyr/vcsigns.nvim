@@ -3,6 +3,8 @@ local M = {}
 M.actions = require "vcsigns.actions"
 local sign = require "vcsigns.sign"
 local util = require "vcsigns.util"
+local vcrepo = require "vcrepo"
+local state = require "vcsigns.state"
 
 --- Decorator to wrap a function that takes no arguments.
 ---@param fun function
@@ -369,6 +371,14 @@ function M.setup(user_config)
   hl_fallbacks("VcsignsDiffDelete", { "DiffDelete" })
   hl_fallbacks("VcsignsDiffTextAdd", { "DiffText" })
   hl_fallbacks("VcsignsDiffTextDelete", { "DiffText" })
+
+  vim.schedule(function()
+    local cwd = vim.loop.cwd()
+    if not cwd then
+      return
+    end
+    state.start_dir_vcs = vcrepo.detect(cwd)
+  end)
 end
 
 return M

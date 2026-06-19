@@ -182,7 +182,7 @@ end
 --- Open a diff view for the current buffer's VCS changes.
 ---@param bufnr integer The buffer number.
 function M.diffview(bufnr)
-  local vcs = state.get(bufnr).vcs.vcs
+  local vcs = state.get(bufnr).vcs.vcs or state.start_dir_vcs
   if not vcs then
     vim.notify(
       "No VCS detected for this buffer.",

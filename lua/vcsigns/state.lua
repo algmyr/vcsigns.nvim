@@ -15,6 +15,9 @@ local M = {}
 ---@field vcs VcsHandle|nil
 ---@field detecting boolean|nil
 
+---@type VcsHandle?
+local start_dir_vcs = nil
+
 ---@type table<integer, BufferState>
 local buffers = {}
 

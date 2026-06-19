@@ -1,5 +1,6 @@
 local async = require "async"
 local state = require "vcsigns.state"
+local util = require "vcsigns.util"
 
 local M = {}
 
@@ -219,6 +220,11 @@ function M.diffview(bufnr)
   _populate_quickfix_list(vcs, layout, false)
 end
 
+local last_update = {
+  bufnr = nil,
+  timestamp = 0,
+}
+
 --- Trigger update of the diff base buffer content.
 ---@param bufnr integer The buffer number.
 function M.update_diffview(bufnr)
@@ -237,7 +243,22 @@ function M.update_diffview(bufnr)
   end
 
   local editable_buf = vim.api.nvim_win_get_buf(layout.editable_win)
-  local base_lines = state.get(editable_buf).diff.old_lines
+
+  -- Avoid updates in cases where the contents haven't changed.
+  -- Contents might only have changed if (compared to last update)
+  -- the buffer number is different, or the last update timestamp is different.
+  local s = state.get(editable_buf)
+  local last = s.diff.last_update
+  if last_update.bufnr == bufnr and last_update.timestamp == last then
+    util.verbose "Skipping diffview update, no changes."
+    return
+  else
+    util.verbose "Updating diffview with new base content."
+  end
+  last_update.bufnr = bufnr
+  last_update.timestamp = last
+
+  local base_lines = s.diff.old_lines
   _update_diff_buffer(layout.base_buf, base_lines, editable_buf)
   vim.cmd "diffupdate"
 

@@ -122,6 +122,11 @@ local function _setup_autocmds(layout)
     callback = function()
       local current_buf = vim.api.nvim_win_get_buf(layout.editable_win)
       if current_buf ~= last_buf then
+        -- Immediately update base buffer if we have old lines for the new buffer.
+        local old_lines = state.get(current_buf).diff.old_lines
+        if old_lines then
+          _update_diff_buffer(layout.base_buf, old_lines, current_buf)
+        end
         last_buf = current_buf
         _reapply_diff_mode(layout)
       end

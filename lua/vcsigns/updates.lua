@@ -1,6 +1,7 @@
 local M = {}
 
 local diff = require "vcsigns.diff"
+local diffview = require "vcsigns.diffview"
 local high = require "vcsigns.high"
 local repo = require "vcsigns.repo"
 local sign = require "vcsigns.sign"
@@ -41,6 +42,8 @@ function M.shallow_update(bufnr)
   else
     high.highlight_hunks(bufnr, {})
   end
+
+  diffview.update_diffview(bufnr)
 end
 
 --- Actually fetch the file contents from VCS.

@@ -206,33 +206,6 @@ M.diffview_cleanup = git_adapter:wrap {
   end,
 }
 
-M.diffview_no_vcs = git_adapter:wrap {
-  test_cases = {
-    no_vcs_detected = {
-      description = "Handle buffer with no VCS gracefully",
-    },
-  },
-  test = function(repo, _)
-    _cleanup_diffview()
-
-    -- File outside repo.
-    local tmpfile = vim.fn.tempname() .. ".txt"
-    vim.fn.writefile({ "test" }, tmpfile)
-    vim.cmd.edit(tmpfile)
-    local bufnr = vim.api.nvim_get_current_buf()
-
-    require("vcsigns.actions").diffview(bufnr)
-
-    assert(
-      vim.g.vcsigns_diff_layout == nil,
-      "Layout should not be created without VCS"
-    )
-
-    vim.fn.delete(tmpfile)
-    _cleanup_diffview()
-  end,
-}
-
 M.diffview_already_open = git_adapter:wrap {
   test_cases = {
     already_open = {

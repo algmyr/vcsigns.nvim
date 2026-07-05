@@ -79,7 +79,11 @@ function M.mark_vcs_dirty(bufnr)
   local vcs = M.get(bufnr).vcs.vcs
   assert(vcs, "No VCS handle for buffer " .. bufnr)
   for _, s in pairs(buffers) do
-    if s.vcs.vcs.name == vcs.name and s.vcs.vcs.root == vcs.root then
+    if
+      s.vcs.vcs
+      and s.vcs.vcs.name == vcs.name
+      and s.vcs.vcs.root == vcs.root
+    then
       s.vcs.vcs.dirty = true
     end
   end

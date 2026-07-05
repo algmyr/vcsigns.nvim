@@ -6,6 +6,8 @@ local diff = require "vcsigns.diff"
 local sign = require "vcsigns.sign"
 local testing = require "vclib.testing"
 local vcs_adapter = require "vcrepo.testing.vcs_adapter"
+local actions = require "vcsigns.actions"
+local state = require "vcsigns.state"
 
 -- Use git for integration tests.
 local git_adapter = vcs_adapter.new "git"
@@ -297,6 +299,44 @@ M.empty_diff = git_adapter:wrap {
     assert(#hunks == 0, "Expected no hunks for unchanged file, got " .. #hunks)
 
     vim.cmd "bdelete!"
+  end,
+}
+
+M.issue33_case = git_adapter:wrap {
+  test_cases = {
+    issue33 = {
+      description = "vcs.vcs is nil in target_older_commit",
+    },
+  },
+  test = function(repo, _)
+    -- Case:
+    -- * Open tracked file
+    -- * Open help page
+    -- * Trigger target_older_commit
+    -- * Close help page
+    -- * Trigger target_older_commit again in the tracked file
+    -- * Error happened because vcs.vcs is nil
+
+    repo:write_file("test.txt", "line1\nline2\n")
+    repo:add_files { "test.txt" }
+    repo:commit_all "Initial"
+
+    vim.cmd("edit " .. vim.fn.fnameescape(repo:path "test.txt"))
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    -- TODO(algmyr): Move this to a test utility.
+    if
+      not vim.wait(1000, function()
+        return state.get(bufnr).vcs.vcs ~= nil
+      end, 100)
+    then
+      error "VCS detection timed out"
+    end
+
+    vim.cmd "help"
+    actions.target_older_commit(0, 1)
+    vim.cmd "q"
+    actions.target_older_commit(0, 1)
   end,
 }
 

@@ -146,6 +146,14 @@ end
 ---@param bufnr integer The buffer number.
 ---@param steps integer Number of steps to go back in time.
 function M.target_older_commit(bufnr, steps)
+  if state.get(bufnr).vcs.vcs == nil then
+    vim.notify(
+      "Cannot target older commit: no VCS detected for buffer",
+      vim.log.levels.ERROR,
+      { title = "VCSigns" }
+    )
+    return
+  end
   local repo_root = state.get(bufnr).vcs.vcs.root
   local repo_state = state.repo_get(repo_root)
   local new_target = repo_state.offset + steps
@@ -162,6 +170,14 @@ end
 ---@param bufnr integer The buffer number.
 ---@param steps integer Number of steps to go forward in time.
 function M.target_newer_commit(bufnr, steps)
+  if state.get(bufnr).vcs.vcs == nil then
+    vim.notify(
+      "Cannot target newer commit: no VCS detected for buffer",
+      vim.log.levels.ERROR,
+      { title = "VCSigns" }
+    )
+    return
+  end
   local repo_root = state.get(bufnr).vcs.vcs.root
   local repo_state = state.repo_get(repo_root)
   local new_target = repo_state.offset - steps
@@ -184,6 +200,14 @@ function M.target_newer_commit(bufnr, steps)
 end
 
 function M.target_revset(bufnr, revset)
+  if state.get(bufnr).vcs.vcs == nil then
+    vim.notify(
+      "Cannot set target revset: no VCS detected for buffer",
+      vim.log.levels.ERROR,
+      { title = "VCSigns" }
+    )
+    return
+  end
   local repo_root = state.get(bufnr).vcs.vcs.root
   local repo_state = state.repo_get(repo_root)
   if not revset or revset == "" then

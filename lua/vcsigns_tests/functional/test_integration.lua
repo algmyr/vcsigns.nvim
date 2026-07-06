@@ -302,13 +302,13 @@ M.empty_diff = git_adapter:wrap {
   end,
 }
 
-M.issue33_case = git_adapter:wrap {
+M.issue33_case = git_adapter:wrap(testing.MessageInterceptor.wrap {
   test_cases = {
     issue33 = {
       description = "vcs.vcs is nil in target_older_commit",
     },
   },
-  test = function(repo, _)
+  test = function(interceptor, repo, _)
     -- Case:
     -- * Open tracked file
     -- * Open help page
@@ -335,9 +335,22 @@ M.issue33_case = git_adapter:wrap {
 
     vim.cmd "help"
     actions.target_older_commit(0, 1)
+    interceptor:assert_messages {
+      {
+        msg = "Cannot target older commit: no VCS detected for buffer",
+        level = vim.log.levels.ERROR,
+      },
+    }
+    interceptor:clear()
     vim.cmd "q"
     actions.target_older_commit(0, 1)
+    interceptor:assert_messages {
+      {
+        msg = "Now diffing against HEAD~1",
+        level = vim.log.levels.INFO,
+      },
+    }
   end,
-}
+})
 
 return M

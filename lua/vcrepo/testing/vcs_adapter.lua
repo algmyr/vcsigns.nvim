@@ -129,13 +129,13 @@ end
 ---@return table
 function VcsAdapter:wrap(test_def)
   local old_test = test_def.test
-  test_def.test = function(case)
+  test_def.test = function(...)
     local repo = self:create_repo()
     if not repo then
       error("Failed to create " .. self.name .. " test repo")
     end
     ---@diagnostic disable-next-line: redundant-parameter
-    old_test(repo, case)
+    old_test(repo, ...)
     repo:cleanup()
   end
   return test_def

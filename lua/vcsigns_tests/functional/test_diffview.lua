@@ -206,13 +206,13 @@ M.diffview_cleanup = git_adapter:wrap {
   end,
 }
 
-M.diffview_already_open = git_adapter:wrap {
+M.diffview_already_open = git_adapter:wrap(testing.MessageInterceptor.wrap {
   test_cases = {
     already_open = {
       description = "Prevent opening multiple diffviews",
     },
   },
-  test = function(repo, _)
+  test = function(interceptor, repo, _)
     _cleanup_diffview()
 
     repo:write_file("test.txt", "old\n")
@@ -234,9 +234,15 @@ M.diffview_already_open = git_adapter:wrap {
       vim.g.vcsigns_diff_layout.tabpage == first_layout.tabpage,
       "Should not create new layout"
     )
+    interceptor:assert_messages {
+      {
+        text = "A diff tabpage is already open.",
+        level = vim.log.levels.WARN,
+      },
+    }
 
     _cleanup_diffview()
   end,
-}
+})
 
 return M

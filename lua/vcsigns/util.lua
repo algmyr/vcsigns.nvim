@@ -1,10 +1,6 @@
 local M = {}
 
 local logging = require "vclib.logging"
-local run = require "vclib.run"
-
-local DEFAULT_TIMEOUT_MS = 2000
-local TERMINAL_WIDTH = 10000
 
 --- Print a message to the user if verbose mode is enabled.
 M.verbose = logging.verbose_logger "vcsigns"

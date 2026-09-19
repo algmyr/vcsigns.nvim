@@ -178,7 +178,8 @@ local default_config = {
   -- See `:help vim.text.diff()` for available algorithms.
   diff_opts = {
     algorithm = "histogram",
-    linematch = 60,
+    linematch = 0,
+    indent_heuristic = true,
   },
   fine_diff_opts = {},
 

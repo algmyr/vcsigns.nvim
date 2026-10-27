@@ -24,6 +24,9 @@ local updates = require "vcsigns.updates"
 
 ---@class HunkUndoOpts: BaseActionOpts
 ---@field range integer[]? Line range to undo hunks in, defaults to the visual selection.
+---
+---@class SetHunkDiffOpts: BaseActionOpts
+---@field enable boolean Whether to enable or disable hunk diff display.
 
 --- Set up buffer-local autocommands for VCSigns updates.
 --- Creates autocommands that trigger deep and shallow updates on various events.
@@ -357,15 +360,33 @@ function M._hunk_undo(opts)
   updates.shallow_update(bufnr)
 end
 
+--- Check if hunk diff display is enabled for the buffer or not.
+---@param opts BaseActionOpts|nil
+---@return boolean True if hunk diff display is enabled, false otherwise.
+function M.is_hunk_diff_enabled(opts)
+  opts = opts or {}
+  return vim.b[opts.bufnr or 0].vcsigns_show_hunk_diffs == true
+end
+
+--- Enable or disable inline hunk diff display.
+--- When enabled, shows detailed word-level diffs within hunks.
+---@param opts SetHunkDiffOpts
+function M.set_hunk_diff(opts)
+  opts = opts or {}
+  local enable = opts.enable
+  local bufnr = opts.bufnr or 0
+  vim.b[bufnr].vcsigns_show_hunk_diffs = enable
+  updates.shallow_update(bufnr)
+end
+
 --- Toggle inline hunk diff display.
 --- When enabled, shows detailed word-level diffs within hunks.
 ---@param opts BaseActionOpts|nil
 function M._toggle_hunk_diff(opts)
   opts = opts or {}
   local bufnr = opts.bufnr or 0
-  vim.b[bufnr].vcsigns_show_hunk_diffs =
-    not vim.b[bufnr].vcsigns_show_hunk_diffs
-  updates.shallow_update(bufnr)
+  local enabled = M.is_hunk_diff_enabled { bufnr = bufnr }
+  M.set_hunk_diff { bufnr = bufnr, enable = not enabled }
 end
 
 --- Toggle fold mode for hunks.

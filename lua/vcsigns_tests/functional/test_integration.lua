@@ -334,7 +334,7 @@ M.issue33_case = git_adapter:wrap(testing.MessageInterceptor.wrap {
     end
 
     vim.cmd "help"
-    actions.target_older_commit(0, 1)
+    actions.target_older_commit { bufnr = 0, steps = 1 }
     interceptor:assert_messages {
       {
         msg = "Cannot target older commit: no VCS detected for buffer",
@@ -343,7 +343,7 @@ M.issue33_case = git_adapter:wrap(testing.MessageInterceptor.wrap {
     }
     interceptor:clear()
     vim.cmd "q"
-    actions.target_older_commit(0, 1)
+    actions.target_older_commit { bufnr = 0, steps = 1 }
     interceptor:assert_messages {
       {
         msg = "Now diffing against HEAD~1",

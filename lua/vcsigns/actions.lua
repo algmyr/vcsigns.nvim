@@ -10,6 +10,21 @@ local state = require "vcsigns.state"
 local util = require "vcsigns.util"
 local updates = require "vcsigns.updates"
 
+---@class BaseActionOpts
+---@field bufnr integer? The buffer number, defaults to the current buffer.
+
+---@class TargetCommitOpts: BaseActionOpts
+---@field steps integer? Number of steps to move the target commit.
+
+---@class TargetRevsetOpts: BaseActionOpts
+---@field revset string? Revset to diff against, nil to fall back to an offset.
+
+---@class HunkNavOpts: BaseActionOpts
+---@field count integer? Number of hunks to navigate.
+
+---@class HunkUndoOpts: BaseActionOpts
+---@field range integer[]? Line range to undo hunks in, defaults to the visual selection.
+
 --- Set up buffer-local autocommands for VCSigns updates.
 --- Creates autocommands that trigger deep and shallow updates on various events.
 ---@param bufnr integer The buffer number to set up autocommands for.
@@ -84,8 +99,10 @@ end
 --- Start VCSigns for the given buffer, forcing a VCS detection.
 --- Clears any existing state and re-detects the VCS.
 --- Sets up buffer-local autocommands for automatic updates.
----@param bufnr integer The buffer number.
-function M.start(bufnr)
+---@param opts BaseActionOpts|nil
+function M._start(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
   -- Clear existing state.
   local s = state.get(bufnr)
   s.vcs.detecting = nil
@@ -106,17 +123,20 @@ end
 
 --- Start VCSigns for the given buffer, but skip if detection was already done.
 --- This is a no-op if the VCS has already been detected for this buffer.
----@param bufnr integer The buffer number.
-function M.start_if_needed(bufnr)
-  if state.get(bufnr).vcs.vcs == nil then
-    M.start(bufnr)
+---@param opts BaseActionOpts|nil
+function M._start_if_needed(opts)
+  opts = opts or {}
+  if state.get(opts.bufnr or 0).vcs.vcs == nil then
+    M._start(opts)
   end
 end
 
 --- Stop VCSigns for the given buffer.
 --- Clears autocommands, signs, and state associated with this buffer.
----@param bufnr integer The buffer number.
-function M.stop(bufnr)
+---@param opts BaseActionOpts|nil
+function M._stop(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
   -- Clear autocommands.
   local group = vim.api.nvim_create_augroup("VCSigns", { clear = false })
   vim.api.nvim_clear_autocmds { buffer = bufnr, group = group }
@@ -143,9 +163,11 @@ end
 
 --- Target an older commit for diffing (go back in history).
 --- Changes the target commit offset and triggers a full update.
----@param bufnr integer The buffer number.
----@param steps integer Number of steps to go back in time.
-function M.target_older_commit(bufnr, steps)
+---@param opts TargetCommitOpts|nil
+function M._target_older_commit(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
+  local steps = opts.steps or 1
   if state.get(bufnr).vcs.vcs == nil then
     vim.notify(
       "Cannot target older commit: no VCS detected for buffer",
@@ -167,9 +189,11 @@ end
 --- Target a newer commit for diffing (go forward in history).
 --- Changes the target commit offset and triggers a full update.
 --- Will not allow going beyond HEAD (negative offsets).
----@param bufnr integer The buffer number.
----@param steps integer Number of steps to go forward in time.
-function M.target_newer_commit(bufnr, steps)
+---@param opts TargetCommitOpts|nil
+function M._target_newer_commit(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
+  local steps = opts.steps or 1
   if state.get(bufnr).vcs.vcs == nil then
     vim.notify(
       "Cannot target newer commit: no VCS detected for buffer",
@@ -199,7 +223,13 @@ function M.target_newer_commit(bufnr, steps)
   end
 end
 
-function M.target_revset(bufnr, revset)
+--- Target a specific revset for diffing (instead of a commit offset).
+--- Clears the revset if none is given.
+---@param opts TargetRevsetOpts|nil
+function M._target_revset(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
+  local revset = opts.revset
   if state.get(bufnr).vcs.vcs == nil then
     vim.notify(
       "Cannot set target revset: no VCS detected for buffer",
@@ -250,18 +280,18 @@ end
 
 --- Navigate to the next hunk in the buffer.
 --- In diff mode, uses ]c command instead.
----@param bufnr integer The buffer number.
----@param count integer The number of hunks ahead.
-function M.hunk_next(bufnr, count)
-  return _hunk_navigation(bufnr, count, true)
+---@param opts HunkNavOpts|nil
+function M._hunk_next(opts)
+  opts = opts or {}
+  return _hunk_navigation(opts.bufnr or 0, opts.count or 1, true)
 end
 
 --- Navigate to the previous hunk in the buffer.
 --- In diff mode, uses [c command instead.
----@param bufnr integer The buffer number.
----@param count integer The number of hunks ahead.
-function M.hunk_prev(bufnr, count)
-  return _hunk_navigation(bufnr, count, false)
+---@param opts HunkNavOpts|nil
+function M._hunk_prev(opts)
+  opts = opts or {}
+  return _hunk_navigation(opts.bufnr or 0, opts.count or 1, false)
 end
 
 --- Get all hunks that overlap with the specified line range.
@@ -285,9 +315,11 @@ end
 --- Undo (revert) hunks in the specified line range.
 --- Restores the original content from the VCS for all hunks in the range.
 --- If no range is provided, uses the current visual selection.
----@param bufnr integer The buffer number.
----@param range integer[]|nil The range of lines to undo hunks in.
-function M.hunk_undo(bufnr, range)
+---@param opts HunkUndoOpts|nil
+function M._hunk_undo(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
+  local range = opts.range
   if not range then
     range = { vim.fn.line ".", vim.fn.line "v" }
   end
@@ -327,8 +359,10 @@ end
 
 --- Toggle inline hunk diff display.
 --- When enabled, shows detailed word-level diffs within hunks.
----@param bufnr integer The buffer number.
-function M.toggle_hunk_diff(bufnr)
+---@param opts BaseActionOpts|nil
+function M._toggle_hunk_diff(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or 0
   vim.b[bufnr].vcsigns_show_hunk_diffs =
     not vim.b[bufnr].vcsigns_show_hunk_diffs
   updates.shallow_update(bufnr)
@@ -336,16 +370,141 @@ end
 
 --- Toggle fold mode for hunks.
 --- When enabled, applies fold levels based on configured context sizes.
----@param bufnr integer The buffer number.
-function M.toggle_fold(bufnr)
-  fold.toggle(bufnr)
+---@param opts BaseActionOpts|nil
+function M._toggle_fold(opts)
+  opts = opts or {}
+  fold.toggle(opts.bufnr or 0)
 end
 
 --- Open a diff view for changed files.
 --- Relies on the current buffer having a detected VCS.
----@param bufnr integer The buffer number.
-function M.diffview(bufnr)
-  return diffview.diffview(bufnr)
+---@param opts BaseActionOpts|nil
+function M._diffview(opts)
+  opts = opts or {}
+  return diffview.diffview(opts.bufnr or 0)
+end
+
+-- Wrappers handling (deprecated) legacy API with positional arguments.
+
+--- Resolve the options table of a public action.
+--- Calls with positional arguments are translated to an options table,
+--- after warning that the positional API is deprecated.
+---@param opts_or_first any An options table, or the first positional argument.
+---@param legacy table Options translated from the positional arguments.
+---@return BaseActionOpts|nil opts
+local function _resolve_opts(opts_or_first, legacy)
+  if not opts_or_first or type(opts_or_first) == "table" then
+    return opts_or_first
+  end
+
+  local info = debug.getinfo(2, "n")
+  local fn_name = (info and info.name) or "function"
+  vim.deprecate(
+    fn_name .. "(...)",
+    fn_name .. "({ ... })",
+    "some future version",
+    "vcsigns.nvim"
+  )
+  return legacy
+end
+
+--- Start VCSigns for the given buffer, forcing a VCS detection.
+--- Clears any existing state and re-detects the VCS.
+--- Sets up buffer-local autocommands for automatic updates.
+---@param opts BaseActionOpts|nil
+---@overload fun(bufnr: integer): void
+function M.start(opts)
+  M._start(_resolve_opts(opts, { bufnr = opts }))
+end
+
+--- Start VCSigns for the given buffer, but skip if detection was already done.
+--- This is a no-op if the VCS has already been detected for this buffer.
+---@param opts BaseActionOpts|nil
+---@overload fun(bufnr: integer): void
+function M.start_if_needed(opts)
+  M._start_if_needed(_resolve_opts(opts, { bufnr = opts }))
+end
+
+--- Stop VCSigns for the given buffer.
+--- Clears autocommands, signs, and state associated with this buffer.
+---@param opts BaseActionOpts|nil
+---@overload fun(bufnr: integer): void
+function M.stop(opts)
+  M._stop(_resolve_opts(opts, { bufnr = opts }))
+end
+
+--- Target an older commit for diffing (go back in history).
+--- Changes the target commit offset and triggers a full update.
+---@param opts TargetCommitOpts|nil
+---@overload fun(bufnr: integer, steps: integer): void
+function M.target_older_commit(opts, steps)
+  M._target_older_commit(_resolve_opts(opts, { bufnr = opts, steps = steps }))
+end
+
+--- Target a newer commit for diffing (go forward in history).
+--- Changes the target commit offset and triggers a full update.
+--- Will not allow going beyond HEAD (negative offsets).
+---@param opts TargetCommitOpts|nil
+---@overload fun(bufnr: integer, steps: integer): void
+function M.target_newer_commit(opts, steps)
+  M._target_newer_commit(_resolve_opts(opts, { bufnr = opts, steps = steps }))
+end
+
+--- Target a specific revset for diffing (instead of a commit offset).
+--- Clears the revset if none is given.
+---@param opts TargetRevsetOpts|nil
+---@overload fun(bufnr: integer, revset: string?): void
+function M.target_revset(opts, revset)
+  M._target_revset(_resolve_opts(opts, { bufnr = opts, revset = revset }))
+end
+
+--- Navigate to the next hunk in the buffer.
+--- In diff mode, uses ]c command instead.
+---@param opts HunkNavOpts|nil
+---@overload fun(bufnr: integer, count: integer): void
+function M.hunk_next(opts, count)
+  return M._hunk_next(_resolve_opts(opts, { bufnr = opts, count = count }))
+end
+
+--- Navigate to the previous hunk in the buffer.
+--- In diff mode, uses [c command instead.
+---@param opts HunkNavOpts|nil
+---@overload fun(bufnr: integer, count: integer): void
+function M.hunk_prev(opts, count)
+  return M._hunk_prev(_resolve_opts(opts, { bufnr = opts, count = count }))
+end
+
+--- Undo (revert) hunks in the specified line range.
+--- Restores the original content from the VCS for all hunks in the range.
+--- If no range is provided, uses the current visual selection.
+---@param opts HunkUndoOpts|nil
+---@overload fun(bufnr: integer, range: integer[]?): void
+function M.hunk_undo(opts, range)
+  M._hunk_undo(_resolve_opts(opts, { bufnr = opts, range = range }))
+end
+
+--- Toggle inline hunk diff display.
+--- When enabled, shows detailed word-level diffs within hunks.
+---@param opts BaseActionOpts|nil
+---@overload fun(bufnr: integer): void
+function M.toggle_hunk_diff(opts)
+  M._toggle_hunk_diff(_resolve_opts(opts, { bufnr = opts }))
+end
+
+--- Toggle fold mode for hunks.
+--- When enabled, applies fold levels based on configured context sizes.
+---@param opts BaseActionOpts|nil
+---@overload fun(bufnr: integer): void
+function M.toggle_fold(opts)
+  M._toggle_fold(_resolve_opts(opts, { bufnr = opts }))
+end
+
+--- Open a diff view for changed files.
+--- Relies on the current buffer having a detected VCS.
+---@param opts BaseActionOpts|nil
+---@overload fun(bufnr: integer): void
+function M.diffview(opts)
+  return M._diffview(_resolve_opts(opts, { bufnr = opts }))
 end
 
 return M

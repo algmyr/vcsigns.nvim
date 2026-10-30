@@ -15,7 +15,7 @@ local function _no_args(fun)
     if #args > 0 then
       error "This VCSigns command does not take any arguments"
     end
-    fun(bufnr)
+    fun { bufnr = bufnr }
   end
   return wrap
 end
@@ -30,7 +30,7 @@ local function _with_range(fun)
       error "This VCSigns command does not take any arguments"
     end
     local range = { arg.line1, arg.line2 }
-    fun(bufnr, range)
+    fun { bufnr = bufnr, range = range }
   end
   return wrap
 end
@@ -45,7 +45,7 @@ local function _with_count(fun)
       error "This VCSigns command takes at most one argument"
     end
     local count = tonumber(args[1]) or 1
-    fun(bufnr, count)
+    fun { bufnr = bufnr, count = count }
   end
   return wrap
 end
@@ -62,7 +62,7 @@ local command_map = {
       error "VCSigns revset takes at most one argument (revset)"
     end
     local revset = args[1] or nil
-    M.actions.target_revset(bufnr, revset)
+    M.actions.target_revset { bufnr = bufnr, revset = revset }
   end,
   -- Diffbase selection (aliases).
   newer = _with_count(M.actions.target_newer_commit),
@@ -312,7 +312,7 @@ function M.setup(user_config)
             return
           end
           if not util.is_special_buffer(bufnr) then
-            M.actions.start_if_needed(bufnr)
+            M.actions.start_if_needed { bufnr = bufnr }
           end
         end, 100)
       end,

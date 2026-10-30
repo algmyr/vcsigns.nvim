@@ -19,12 +19,12 @@ local function _cleanup_diffview()
   vim.fn.setqflist({}, "r")
 end
 
----@param bufnr number
+---@param bufnr integer
 local function _buffer_contents(bufnr)
   return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 end
 
----@param bufnr number
+---@param bufnr integer
 local function _start_diffview(bufnr)
   if
     not vim.wait(1000, function()
@@ -33,7 +33,7 @@ local function _start_diffview(bufnr)
   then
     error "VCS detection timed out"
   end
-  require("vcsigns.actions").diffview(bufnr)
+  require("vcsigns.actions").diffview { bufnr = bufnr }
   if
     not vim.wait(1000, function()
       if #vim.fn.getqflist() == 0 then
@@ -228,7 +228,7 @@ M.diffview_already_open = git_adapter:wrap(testing.MessageInterceptor.wrap {
     local first_layout = vim.g.vcsigns_diff_layout
     assert(first_layout ~= nil, "First layout not created")
 
-    require("vcsigns.actions").diffview(bufnr)
+    require("vcsigns.actions").diffview { bufnr = bufnr }
 
     assert(
       vim.g.vcsigns_diff_layout.tabpage == first_layout.tabpage,
